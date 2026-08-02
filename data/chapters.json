@@ -1,0 +1,2770 @@
+{
+  "schema_version": 1,
+  "chapters": [
+    {
+      "chapter_index": 0,
+      "internal_name": "L00",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 418,
+        "windowTextId": 413,
+        "windowDataType": "defeat_boss",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 1,
+        "obj2Id": 0,
+        "paletteId": 2,
+        "tileConfigId": 3,
+        "mainLayerId": 4,
+        "objAnimId": 5,
+        "paletteAnimId": 0,
+        "changeLayerId": 6
+      },
+      "assets": {
+        "object_1": "ObjectType1",
+        "object_2": null,
+        "palette": "MapPalette1",
+        "tile_configuration": "TileConfiguration1",
+        "layout": "PrologueMap",
+        "object_animation": "TileAnimations1",
+        "palette_animation": null,
+        "map_changes": "PrologueMapChanges"
+      }
+    },
+    {
+      "chapter_index": 1,
+      "internal_name": "L01",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 419,
+        "windowTextId": 415,
+        "windowDataType": "seize",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 1,
+        "obj2Id": 0,
+        "paletteId": 2,
+        "tileConfigId": 3,
+        "mainLayerId": 8,
+        "objAnimId": 5,
+        "paletteAnimId": 0,
+        "changeLayerId": 9
+      },
+      "assets": {
+        "object_1": "ObjectType1",
+        "object_2": null,
+        "palette": "MapPalette1",
+        "tile_configuration": "TileConfiguration1",
+        "layout": "Ch1Map",
+        "object_animation": "TileAnimations1",
+        "palette_animation": null,
+        "map_changes": "Ch1MapChanges"
+      }
+    },
+    {
+      "chapter_index": 2,
+      "internal_name": "L02",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 420,
+        "windowTextId": 414,
+        "windowDataType": "defeat_all",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 1,
+        "obj2Id": 0,
+        "paletteId": 2,
+        "tileConfigId": 3,
+        "mainLayerId": 11,
+        "objAnimId": 5,
+        "paletteAnimId": 0,
+        "changeLayerId": 12
+      },
+      "assets": {
+        "object_1": "ObjectType1",
+        "object_2": null,
+        "palette": "MapPalette1",
+        "tile_configuration": "TileConfiguration1",
+        "layout": "Ch2Map",
+        "object_animation": "TileAnimations1",
+        "palette_animation": null,
+        "map_changes": "Ch2TileChanges"
+      }
+    },
+    {
+      "chapter_index": 3,
+      "internal_name": "L03",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 421,
+        "windowTextId": 417,
+        "windowDataType": "seize",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 14,
+        "obj2Id": 0,
+        "paletteId": 15,
+        "tileConfigId": 16,
+        "mainLayerId": 17,
+        "objAnimId": 18,
+        "paletteAnimId": 0,
+        "changeLayerId": 19
+      },
+      "assets": {
+        "object_1": "ObjectType2",
+        "object_2": null,
+        "palette": "MapPalette2",
+        "tile_configuration": "TileConfiguration2",
+        "layout": "Ch3Map",
+        "object_animation": "TileAnimations2",
+        "palette_animation": null,
+        "map_changes": "Ch3MapChanges"
+      }
+    },
+    {
+      "chapter_index": 4,
+      "internal_name": "L04",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 422,
+        "windowTextId": 414,
+        "windowDataType": "defeat_all",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 1,
+        "obj2Id": 0,
+        "paletteId": 2,
+        "tileConfigId": 3,
+        "mainLayerId": 21,
+        "objAnimId": 5,
+        "paletteAnimId": 0,
+        "changeLayerId": 22
+      },
+      "assets": {
+        "object_1": "ObjectType1",
+        "object_2": null,
+        "palette": "MapPalette1",
+        "tile_configuration": "TileConfiguration1",
+        "layout": "Ch4Map",
+        "object_animation": "TileAnimations1",
+        "palette_animation": null,
+        "map_changes": "Ch4MapChanges"
+      }
+    },
+    {
+      "chapter_index": 5,
+      "internal_name": "I05",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 424,
+        "windowTextId": 417,
+        "windowDataType": "seize",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 24,
+        "obj2Id": 0,
+        "paletteId": 25,
+        "tileConfigId": 26,
+        "mainLayerId": 27,
+        "objAnimId": 28,
+        "paletteAnimId": 0,
+        "changeLayerId": 29
+      },
+      "assets": {
+        "object_1": "ObjectType3",
+        "object_2": null,
+        "palette": "MapPalette3",
+        "tile_configuration": "TileConfiguration3",
+        "layout": "Ch5XMap",
+        "object_animation": "TileAnimations3",
+        "palette_animation": null,
+        "map_changes": "Ch5XMapChanges"
+      }
+    },
+    {
+      "chapter_index": 6,
+      "internal_name": "L05",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 423,
+        "windowTextId": 413,
+        "windowDataType": "defeat_boss",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 14,
+        "obj2Id": 0,
+        "paletteId": 15,
+        "tileConfigId": 16,
+        "mainLayerId": 31,
+        "objAnimId": 18,
+        "paletteAnimId": 0,
+        "changeLayerId": 32
+      },
+      "assets": {
+        "object_1": "ObjectType2",
+        "object_2": null,
+        "palette": "MapPalette2",
+        "tile_configuration": "TileConfiguration2",
+        "layout": "Ch5Map",
+        "object_animation": "TileAnimations2",
+        "palette_animation": null,
+        "map_changes": "Ch5MapChanges"
+      }
+    },
+    {
+      "chapter_index": 7,
+      "internal_name": "L06",
+      "initial_weather": "fine",
+      "initial_fog_level": 3,
+      "goal": {
+        "statusObjectiveTextId": 425,
+        "windowTextId": 413,
+        "windowDataType": "defeat_boss",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 1,
+        "obj2Id": 0,
+        "paletteId": 2,
+        "tileConfigId": 3,
+        "mainLayerId": 34,
+        "objAnimId": 0,
+        "paletteAnimId": 0,
+        "changeLayerId": 35
+      },
+      "assets": {
+        "object_1": "ObjectType1",
+        "object_2": null,
+        "palette": "MapPalette1",
+        "tile_configuration": "TileConfiguration1",
+        "layout": "Ch6Map",
+        "object_animation": null,
+        "palette_animation": null,
+        "map_changes": "Ch6MapChanges"
+      }
+    },
+    {
+      "chapter_index": 8,
+      "internal_name": "L07",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 426,
+        "windowTextId": 415,
+        "windowDataType": "seize",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 1,
+        "obj2Id": 0,
+        "paletteId": 2,
+        "tileConfigId": 3,
+        "mainLayerId": 37,
+        "objAnimId": 5,
+        "paletteAnimId": 0,
+        "changeLayerId": 38
+      },
+      "assets": {
+        "object_1": "ObjectType1",
+        "object_2": null,
+        "palette": "MapPalette1",
+        "tile_configuration": "TileConfiguration1",
+        "layout": "Ch7Map",
+        "object_animation": "TileAnimations1",
+        "palette_animation": null,
+        "map_changes": "Ch7MapChanges"
+      }
+    },
+    {
+      "chapter_index": 9,
+      "internal_name": "L08",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 427,
+        "windowTextId": 417,
+        "windowDataType": "seize",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 24,
+        "obj2Id": 0,
+        "paletteId": 25,
+        "tileConfigId": 26,
+        "mainLayerId": 40,
+        "objAnimId": 28,
+        "paletteAnimId": 0,
+        "changeLayerId": 41
+      },
+      "assets": {
+        "object_1": "ObjectType3",
+        "object_2": null,
+        "palette": "MapPalette3",
+        "tile_configuration": "TileConfiguration3",
+        "layout": "Ch8Map",
+        "object_animation": "TileAnimations3",
+        "palette_animation": null,
+        "map_changes": "Ch8MapChanges"
+      }
+    },
+    {
+      "chapter_index": 10,
+      "internal_name": "E09",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 428,
+        "windowTextId": 414,
+        "windowDataType": "defeat_all",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 14,
+        "obj2Id": 0,
+        "paletteId": 15,
+        "tileConfigId": 16,
+        "mainLayerId": 43,
+        "objAnimId": 18,
+        "paletteAnimId": 0,
+        "changeLayerId": 44
+      },
+      "assets": {
+        "object_1": "ObjectType2",
+        "object_2": null,
+        "palette": "MapPalette2",
+        "tile_configuration": "TileConfiguration2",
+        "layout": "Ch9EirikaMap",
+        "object_animation": "TileAnimations2",
+        "palette_animation": null,
+        "map_changes": "Ch9EirikaMapChanges"
+      }
+    },
+    {
+      "chapter_index": 11,
+      "internal_name": "E10",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 429,
+        "windowTextId": 415,
+        "windowDataType": "seize",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 46,
+        "obj2Id": 0,
+        "paletteId": 47,
+        "tileConfigId": 48,
+        "mainLayerId": 49,
+        "objAnimId": 0,
+        "paletteAnimId": 0,
+        "changeLayerId": 50
+      },
+      "assets": {
+        "object_1": "ObjectType4",
+        "object_2": null,
+        "palette": "MapPalette4",
+        "tile_configuration": "TileConfiguration4",
+        "layout": "Ch10EirikaMap",
+        "object_animation": null,
+        "palette_animation": null,
+        "map_changes": "Ch10EirikaMapChanges"
+      }
+    },
+    {
+      "chapter_index": 12,
+      "internal_name": "E11",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 431,
+        "windowTextId": 414,
+        "windowDataType": "defeat_all",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 46,
+        "obj2Id": 0,
+        "paletteId": 52,
+        "tileConfigId": 48,
+        "mainLayerId": 53,
+        "objAnimId": 0,
+        "paletteAnimId": 0,
+        "changeLayerId": 54
+      },
+      "assets": {
+        "object_1": "ObjectType4",
+        "object_2": null,
+        "palette": "MapPalette5",
+        "tile_configuration": "TileConfiguration4",
+        "layout": "Ch12EirikaMap",
+        "object_animation": null,
+        "palette_animation": null,
+        "map_changes": "Ch12EirikaMapChanges"
+      }
+    },
+    {
+      "chapter_index": 13,
+      "internal_name": "E12",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 432,
+        "windowTextId": 412,
+        "windowDataType": "defense",
+        "windowEndTurnNumber": 12,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 1,
+        "obj2Id": 0,
+        "paletteId": 56,
+        "tileConfigId": 3,
+        "mainLayerId": 57,
+        "objAnimId": 5,
+        "paletteAnimId": 0,
+        "changeLayerId": 58
+      },
+      "assets": {
+        "object_1": "ObjectType1",
+        "object_2": null,
+        "palette": "MapPalette6",
+        "tile_configuration": "TileConfiguration1",
+        "layout": "Ch13EirikaMap",
+        "object_animation": "TileAnimations1",
+        "palette_animation": null,
+        "map_changes": "Ch13EirikaMapChanges"
+      }
+    },
+    {
+      "chapter_index": 14,
+      "internal_name": "E13",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 433,
+        "windowTextId": 417,
+        "windowDataType": "seize",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 60,
+        "obj2Id": 0,
+        "paletteId": 61,
+        "tileConfigId": 62,
+        "mainLayerId": 63,
+        "objAnimId": 0,
+        "paletteAnimId": 0,
+        "changeLayerId": 64
+      },
+      "assets": {
+        "object_1": "ObjectType5",
+        "object_2": null,
+        "palette": "MapPalette7",
+        "tile_configuration": "TileConfiguration5",
+        "layout": "Ch14EirikaMap",
+        "object_animation": null,
+        "palette_animation": null,
+        "map_changes": "Ch14EirikaMapChanges"
+      }
+    },
+    {
+      "chapter_index": 15,
+      "internal_name": "E14",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 434,
+        "windowTextId": 414,
+        "windowDataType": "defeat_all",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 66,
+        "obj2Id": 0,
+        "paletteId": 67,
+        "tileConfigId": 68,
+        "mainLayerId": 69,
+        "objAnimId": 5,
+        "paletteAnimId": 0,
+        "changeLayerId": 70
+      },
+      "assets": {
+        "object_1": "ObjectType6",
+        "object_2": null,
+        "palette": "MapPalette8",
+        "tile_configuration": "TileConfiguration6",
+        "layout": "Ch15Map",
+        "object_animation": "TileAnimations1",
+        "palette_animation": null,
+        "map_changes": "Ch15MapChanges"
+      }
+    },
+    {
+      "chapter_index": 16,
+      "internal_name": "E15",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 435,
+        "windowTextId": 417,
+        "windowDataType": "seize",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 24,
+        "obj2Id": 0,
+        "paletteId": 72,
+        "tileConfigId": 26,
+        "mainLayerId": 73,
+        "objAnimId": 28,
+        "paletteAnimId": 0,
+        "changeLayerId": 74
+      },
+      "assets": {
+        "object_1": "ObjectType3",
+        "object_2": null,
+        "palette": "MapPalette9",
+        "tile_configuration": "TileConfiguration3",
+        "layout": "Ch16Map",
+        "object_animation": "TileAnimations3",
+        "palette_animation": null,
+        "map_changes": "Ch16MapChanges"
+      }
+    },
+    {
+      "chapter_index": 17,
+      "internal_name": "E16",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 436,
+        "windowTextId": 413,
+        "windowDataType": "defeat_boss",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 1,
+        "obj2Id": 0,
+        "paletteId": 76,
+        "tileConfigId": 3,
+        "mainLayerId": 77,
+        "objAnimId": 5,
+        "paletteAnimId": 0,
+        "changeLayerId": 78
+      },
+      "assets": {
+        "object_1": "ObjectType1",
+        "object_2": null,
+        "palette": "MapPalette10",
+        "tile_configuration": "TileConfiguration1",
+        "layout": "Ch17Map",
+        "object_animation": "TileAnimations1",
+        "palette_animation": null,
+        "map_changes": "Ch17MapChanges"
+      }
+    },
+    {
+      "chapter_index": 18,
+      "internal_name": "E17",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 437,
+        "windowTextId": 414,
+        "windowDataType": "defeat_all",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 80,
+        "obj2Id": 0,
+        "paletteId": 81,
+        "tileConfigId": 82,
+        "mainLayerId": 83,
+        "objAnimId": 0,
+        "paletteAnimId": 84,
+        "changeLayerId": 85
+      },
+      "assets": {
+        "object_1": "ObjectType7",
+        "object_2": null,
+        "palette": "MapPalette11",
+        "tile_configuration": "TileConfiguration7",
+        "layout": "Ch18Map",
+        "object_animation": null,
+        "palette_animation": "TileAnimations4",
+        "map_changes": "Ch18MapChanges"
+      }
+    },
+    {
+      "chapter_index": 19,
+      "internal_name": "E18",
+      "initial_weather": "fine",
+      "initial_fog_level": 3,
+      "goal": {
+        "statusObjectiveTextId": 438,
+        "windowTextId": 412,
+        "windowDataType": "defense",
+        "windowEndTurnNumber": 14,
+        "protectCharacterIndex": 200,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 24,
+        "obj2Id": 0,
+        "paletteId": 87,
+        "tileConfigId": 26,
+        "mainLayerId": 88,
+        "objAnimId": 28,
+        "paletteAnimId": 0,
+        "changeLayerId": 89
+      },
+      "assets": {
+        "object_1": "ObjectType3",
+        "object_2": null,
+        "palette": "MapPalette12",
+        "tile_configuration": "TileConfiguration3",
+        "layout": "Ch19Map",
+        "object_animation": "TileAnimations3",
+        "palette_animation": null,
+        "map_changes": "Ch19MapChanges"
+      }
+    },
+    {
+      "chapter_index": 20,
+      "internal_name": "E19",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 439,
+        "windowTextId": 416,
+        "windowDataType": "seize",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 1,
+        "obj2Id": 0,
+        "paletteId": 91,
+        "tileConfigId": 3,
+        "mainLayerId": 92,
+        "objAnimId": 5,
+        "paletteAnimId": 0,
+        "changeLayerId": 93
+      },
+      "assets": {
+        "object_1": "ObjectType1",
+        "object_2": null,
+        "palette": "MapPalette13",
+        "tile_configuration": "TileConfiguration1",
+        "layout": "Ch20Map",
+        "object_animation": "TileAnimations1",
+        "palette_animation": null,
+        "map_changes": "Ch20MapChanges"
+      }
+    },
+    {
+      "chapter_index": 21,
+      "internal_name": "E20",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 440,
+        "windowTextId": 413,
+        "windowDataType": "defeat_boss",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 95,
+        "obj2Id": 0,
+        "paletteId": 96,
+        "tileConfigId": 97,
+        "mainLayerId": 98,
+        "objAnimId": 0,
+        "paletteAnimId": 0,
+        "changeLayerId": 99
+      },
+      "assets": {
+        "object_1": "ObjectType8",
+        "object_2": null,
+        "palette": "MapPalette14",
+        "tile_configuration": "TileConfiguration8",
+        "layout": "FinalChapterMap1",
+        "object_animation": null,
+        "palette_animation": null,
+        "map_changes": "FinalChapterMap1Changes"
+      }
+    },
+    {
+      "chapter_index": 22,
+      "internal_name": "E20B",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 441,
+        "windowTextId": 413,
+        "windowDataType": "defeat_boss",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 95,
+        "obj2Id": 0,
+        "paletteId": 96,
+        "tileConfigId": 97,
+        "mainLayerId": 101,
+        "objAnimId": 0,
+        "paletteAnimId": 0,
+        "changeLayerId": 102
+      },
+      "assets": {
+        "object_1": "ObjectType8",
+        "object_2": null,
+        "palette": "MapPalette14",
+        "tile_configuration": "TileConfiguration8",
+        "layout": "FinalChapterMap2",
+        "object_animation": null,
+        "palette_animation": null,
+        "map_changes": "FinalChapterMap2Changes"
+      }
+    },
+    {
+      "chapter_index": 23,
+      "internal_name": "I09",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 442,
+        "windowTextId": 417,
+        "windowDataType": "seize",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 60,
+        "obj2Id": 0,
+        "paletteId": 104,
+        "tileConfigId": 62,
+        "mainLayerId": 105,
+        "objAnimId": 0,
+        "paletteAnimId": 0,
+        "changeLayerId": 106
+      },
+      "assets": {
+        "object_1": "ObjectType5",
+        "object_2": null,
+        "palette": "MapPalette15",
+        "tile_configuration": "TileConfiguration5",
+        "layout": "Ch9EphMap",
+        "object_animation": null,
+        "palette_animation": null,
+        "map_changes": "Ch9EphMapChanges"
+      }
+    },
+    {
+      "chapter_index": 24,
+      "internal_name": "I10",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 443,
+        "windowTextId": 412,
+        "windowDataType": "defense",
+        "windowEndTurnNumber": 11,
+        "protectCharacterIndex": 29,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 108,
+        "obj2Id": 0,
+        "paletteId": 109,
+        "tileConfigId": 110,
+        "mainLayerId": 111,
+        "objAnimId": 5,
+        "paletteAnimId": 0,
+        "changeLayerId": 112
+      },
+      "assets": {
+        "object_1": "ObjectType9",
+        "object_2": null,
+        "palette": "MapPalette16",
+        "tile_configuration": "TileConfiguration9",
+        "layout": "Ch10EphraimMap",
+        "object_animation": "TileAnimations1",
+        "palette_animation": null,
+        "map_changes": "Ch10EphraimMapChanges"
+      }
+    },
+    {
+      "chapter_index": 25,
+      "internal_name": "I11",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 445,
+        "windowTextId": 413,
+        "windowDataType": "defeat_boss",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 14,
+        "obj2Id": 0,
+        "paletteId": 114,
+        "tileConfigId": 16,
+        "mainLayerId": 115,
+        "objAnimId": 18,
+        "paletteAnimId": 0,
+        "changeLayerId": 116
+      },
+      "assets": {
+        "object_1": "ObjectType2",
+        "object_2": null,
+        "palette": "MapPalette17",
+        "tile_configuration": "TileConfiguration2",
+        "layout": "Ch12EphraimMap",
+        "object_animation": "TileAnimations2",
+        "palette_animation": null,
+        "map_changes": "Ch12EphraimMapChanges"
+      }
+    },
+    {
+      "chapter_index": 26,
+      "internal_name": "I12",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 446,
+        "windowTextId": 414,
+        "windowDataType": "defeat_all",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 1,
+        "obj2Id": 0,
+        "paletteId": 2,
+        "tileConfigId": 3,
+        "mainLayerId": 118,
+        "objAnimId": 5,
+        "paletteAnimId": 0,
+        "changeLayerId": 119
+      },
+      "assets": {
+        "object_1": "ObjectType1",
+        "object_2": null,
+        "palette": "MapPalette1",
+        "tile_configuration": "TileConfiguration1",
+        "layout": "Ch13EphraimMap",
+        "object_animation": "TileAnimations1",
+        "palette_animation": null,
+        "map_changes": "Ch13EphraimMapChanges"
+      }
+    },
+    {
+      "chapter_index": 27,
+      "internal_name": "I13",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 447,
+        "windowTextId": 417,
+        "windowDataType": "seize",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 121,
+        "obj2Id": 0,
+        "paletteId": 122,
+        "tileConfigId": 123,
+        "mainLayerId": 124,
+        "objAnimId": 125,
+        "paletteAnimId": 0,
+        "changeLayerId": 126
+      },
+      "assets": {
+        "object_1": "ObjectType10",
+        "object_2": null,
+        "palette": "MapPalette18",
+        "tile_configuration": "TileConfiguration10",
+        "layout": "Ch14EphraimMap",
+        "object_animation": "TileAnimations5",
+        "palette_animation": null,
+        "map_changes": "Ch14EphraimMapChanges"
+      }
+    },
+    {
+      "chapter_index": 28,
+      "internal_name": "I14",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 434,
+        "windowTextId": 414,
+        "windowDataType": "defeat_all",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 66,
+        "obj2Id": 0,
+        "paletteId": 67,
+        "tileConfigId": 68,
+        "mainLayerId": 69,
+        "objAnimId": 5,
+        "paletteAnimId": 0,
+        "changeLayerId": 70
+      },
+      "assets": {
+        "object_1": "ObjectType6",
+        "object_2": null,
+        "palette": "MapPalette8",
+        "tile_configuration": "TileConfiguration6",
+        "layout": "Ch15Map",
+        "object_animation": "TileAnimations1",
+        "palette_animation": null,
+        "map_changes": "Ch15MapChanges"
+      }
+    },
+    {
+      "chapter_index": 29,
+      "internal_name": "I15",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 435,
+        "windowTextId": 417,
+        "windowDataType": "seize",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 24,
+        "obj2Id": 0,
+        "paletteId": 72,
+        "tileConfigId": 26,
+        "mainLayerId": 73,
+        "objAnimId": 28,
+        "paletteAnimId": 0,
+        "changeLayerId": 74
+      },
+      "assets": {
+        "object_1": "ObjectType3",
+        "object_2": null,
+        "palette": "MapPalette9",
+        "tile_configuration": "TileConfiguration3",
+        "layout": "Ch16Map",
+        "object_animation": "TileAnimations3",
+        "palette_animation": null,
+        "map_changes": "Ch16MapChanges"
+      }
+    },
+    {
+      "chapter_index": 30,
+      "internal_name": "I16",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 436,
+        "windowTextId": 413,
+        "windowDataType": "defeat_boss",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 1,
+        "obj2Id": 0,
+        "paletteId": 76,
+        "tileConfigId": 3,
+        "mainLayerId": 77,
+        "objAnimId": 5,
+        "paletteAnimId": 0,
+        "changeLayerId": 78
+      },
+      "assets": {
+        "object_1": "ObjectType1",
+        "object_2": null,
+        "palette": "MapPalette10",
+        "tile_configuration": "TileConfiguration1",
+        "layout": "Ch17Map",
+        "object_animation": "TileAnimations1",
+        "palette_animation": null,
+        "map_changes": "Ch17MapChanges"
+      }
+    },
+    {
+      "chapter_index": 31,
+      "internal_name": "I17",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 437,
+        "windowTextId": 414,
+        "windowDataType": "defeat_all",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 80,
+        "obj2Id": 0,
+        "paletteId": 81,
+        "tileConfigId": 82,
+        "mainLayerId": 83,
+        "objAnimId": 0,
+        "paletteAnimId": 84,
+        "changeLayerId": 85
+      },
+      "assets": {
+        "object_1": "ObjectType7",
+        "object_2": null,
+        "palette": "MapPalette11",
+        "tile_configuration": "TileConfiguration7",
+        "layout": "Ch18Map",
+        "object_animation": null,
+        "palette_animation": "TileAnimations4",
+        "map_changes": "Ch18MapChanges"
+      }
+    },
+    {
+      "chapter_index": 32,
+      "internal_name": "I18",
+      "initial_weather": "fine",
+      "initial_fog_level": 3,
+      "goal": {
+        "statusObjectiveTextId": 438,
+        "windowTextId": 412,
+        "windowDataType": "defense",
+        "windowEndTurnNumber": 14,
+        "protectCharacterIndex": 200,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 24,
+        "obj2Id": 0,
+        "paletteId": 87,
+        "tileConfigId": 26,
+        "mainLayerId": 88,
+        "objAnimId": 28,
+        "paletteAnimId": 0,
+        "changeLayerId": 89
+      },
+      "assets": {
+        "object_1": "ObjectType3",
+        "object_2": null,
+        "palette": "MapPalette12",
+        "tile_configuration": "TileConfiguration3",
+        "layout": "Ch19Map",
+        "object_animation": "TileAnimations3",
+        "palette_animation": null,
+        "map_changes": "Ch19MapChanges"
+      }
+    },
+    {
+      "chapter_index": 33,
+      "internal_name": "I19",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 439,
+        "windowTextId": 416,
+        "windowDataType": "seize",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 1,
+        "obj2Id": 0,
+        "paletteId": 91,
+        "tileConfigId": 3,
+        "mainLayerId": 92,
+        "objAnimId": 5,
+        "paletteAnimId": 0,
+        "changeLayerId": 93
+      },
+      "assets": {
+        "object_1": "ObjectType1",
+        "object_2": null,
+        "palette": "MapPalette13",
+        "tile_configuration": "TileConfiguration1",
+        "layout": "Ch20Map",
+        "object_animation": "TileAnimations1",
+        "palette_animation": null,
+        "map_changes": "Ch20MapChanges"
+      }
+    },
+    {
+      "chapter_index": 34,
+      "internal_name": "I20",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 440,
+        "windowTextId": 413,
+        "windowDataType": "defeat_boss",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 95,
+        "obj2Id": 0,
+        "paletteId": 96,
+        "tileConfigId": 97,
+        "mainLayerId": 98,
+        "objAnimId": 0,
+        "paletteAnimId": 0,
+        "changeLayerId": 99
+      },
+      "assets": {
+        "object_1": "ObjectType8",
+        "object_2": null,
+        "palette": "MapPalette14",
+        "tile_configuration": "TileConfiguration8",
+        "layout": "FinalChapterMap1",
+        "object_animation": null,
+        "palette_animation": null,
+        "map_changes": "FinalChapterMap1Changes"
+      }
+    },
+    {
+      "chapter_index": 35,
+      "internal_name": "I20B",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 441,
+        "windowTextId": 413,
+        "windowDataType": "defeat_boss",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 95,
+        "obj2Id": 0,
+        "paletteId": 96,
+        "tileConfigId": 97,
+        "mainLayerId": 101,
+        "objAnimId": 0,
+        "paletteAnimId": 0,
+        "changeLayerId": 102
+      },
+      "assets": {
+        "object_1": "ObjectType8",
+        "object_2": null,
+        "palette": "MapPalette14",
+        "tile_configuration": "TileConfiguration8",
+        "layout": "FinalChapterMap2",
+        "object_animation": null,
+        "palette_animation": null,
+        "map_changes": "FinalChapterMap2Changes"
+      }
+    },
+    {
+      "chapter_index": 36,
+      "internal_name": "T01",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 448,
+        "windowTextId": 414,
+        "windowDataType": "defeat_all",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 136,
+        "obj2Id": 0,
+        "paletteId": 137,
+        "tileConfigId": 138,
+        "mainLayerId": 139,
+        "objAnimId": 0,
+        "paletteAnimId": 0,
+        "changeLayerId": 140
+      },
+      "assets": {
+        "object_1": "TowerOfValniObjectType",
+        "object_2": null,
+        "palette": "TowerOfValniMapPalette",
+        "tile_configuration": "TowerOfValniTileConfiguration",
+        "layout": "TowerOfValni1Map",
+        "object_animation": null,
+        "palette_animation": null,
+        "map_changes": "TowerOfValni1MapChanges"
+      }
+    },
+    {
+      "chapter_index": 37,
+      "internal_name": "T02",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 448,
+        "windowTextId": 414,
+        "windowDataType": "defeat_all",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 136,
+        "obj2Id": 0,
+        "paletteId": 137,
+        "tileConfigId": 138,
+        "mainLayerId": 142,
+        "objAnimId": 0,
+        "paletteAnimId": 0,
+        "changeLayerId": 143
+      },
+      "assets": {
+        "object_1": "TowerOfValniObjectType",
+        "object_2": null,
+        "palette": "TowerOfValniMapPalette",
+        "tile_configuration": "TowerOfValniTileConfiguration",
+        "layout": "TowerOfValni2Map",
+        "object_animation": null,
+        "palette_animation": null,
+        "map_changes": "TowerOfValni2MapChanges"
+      }
+    },
+    {
+      "chapter_index": 38,
+      "internal_name": "T03",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 448,
+        "windowTextId": 414,
+        "windowDataType": "defeat_all",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 136,
+        "obj2Id": 0,
+        "paletteId": 137,
+        "tileConfigId": 138,
+        "mainLayerId": 145,
+        "objAnimId": 0,
+        "paletteAnimId": 0,
+        "changeLayerId": 146
+      },
+      "assets": {
+        "object_1": "TowerOfValniObjectType",
+        "object_2": null,
+        "palette": "TowerOfValniMapPalette",
+        "tile_configuration": "TowerOfValniTileConfiguration",
+        "layout": "TowerOfValni3Map",
+        "object_animation": null,
+        "palette_animation": null,
+        "map_changes": "TowerOfValni3MapChanges"
+      }
+    },
+    {
+      "chapter_index": 39,
+      "internal_name": "T04",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 448,
+        "windowTextId": 414,
+        "windowDataType": "defeat_all",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 136,
+        "obj2Id": 0,
+        "paletteId": 137,
+        "tileConfigId": 138,
+        "mainLayerId": 148,
+        "objAnimId": 0,
+        "paletteAnimId": 0,
+        "changeLayerId": 149
+      },
+      "assets": {
+        "object_1": "TowerOfValniObjectType",
+        "object_2": null,
+        "palette": "TowerOfValniMapPalette",
+        "tile_configuration": "TowerOfValniTileConfiguration",
+        "layout": "TowerOfValni4Map",
+        "object_animation": null,
+        "palette_animation": null,
+        "map_changes": "TowerOfValni4MapChanges"
+      }
+    },
+    {
+      "chapter_index": 40,
+      "internal_name": "T05",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 448,
+        "windowTextId": 414,
+        "windowDataType": "defeat_all",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 136,
+        "obj2Id": 0,
+        "paletteId": 137,
+        "tileConfigId": 138,
+        "mainLayerId": 151,
+        "objAnimId": 0,
+        "paletteAnimId": 0,
+        "changeLayerId": 152
+      },
+      "assets": {
+        "object_1": "TowerOfValniObjectType",
+        "object_2": null,
+        "palette": "TowerOfValniMapPalette",
+        "tile_configuration": "TowerOfValniTileConfiguration",
+        "layout": "TowerOfValni5Map",
+        "object_animation": null,
+        "palette_animation": null,
+        "map_changes": "TowerOfValni5MapChanges"
+      }
+    },
+    {
+      "chapter_index": 41,
+      "internal_name": "T06",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 448,
+        "windowTextId": 414,
+        "windowDataType": "defeat_all",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 136,
+        "obj2Id": 0,
+        "paletteId": 137,
+        "tileConfigId": 138,
+        "mainLayerId": 154,
+        "objAnimId": 0,
+        "paletteAnimId": 0,
+        "changeLayerId": 155
+      },
+      "assets": {
+        "object_1": "TowerOfValniObjectType",
+        "object_2": null,
+        "palette": "TowerOfValniMapPalette",
+        "tile_configuration": "TowerOfValniTileConfiguration",
+        "layout": "TowerOfValni6Map",
+        "object_animation": null,
+        "palette_animation": null,
+        "map_changes": "TowerOfValni6MapChanges"
+      }
+    },
+    {
+      "chapter_index": 42,
+      "internal_name": "T07",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 448,
+        "windowTextId": 414,
+        "windowDataType": "defeat_all",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 136,
+        "obj2Id": 0,
+        "paletteId": 137,
+        "tileConfigId": 138,
+        "mainLayerId": 157,
+        "objAnimId": 0,
+        "paletteAnimId": 0,
+        "changeLayerId": 158
+      },
+      "assets": {
+        "object_1": "TowerOfValniObjectType",
+        "object_2": null,
+        "palette": "TowerOfValniMapPalette",
+        "tile_configuration": "TowerOfValniTileConfiguration",
+        "layout": "TowerOfValni7Map",
+        "object_animation": null,
+        "palette_animation": null,
+        "map_changes": "TowerOfValni7MapChanges"
+      }
+    },
+    {
+      "chapter_index": 43,
+      "internal_name": "T08",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 448,
+        "windowTextId": 414,
+        "windowDataType": "defeat_all",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 136,
+        "obj2Id": 0,
+        "paletteId": 137,
+        "tileConfigId": 138,
+        "mainLayerId": 160,
+        "objAnimId": 0,
+        "paletteAnimId": 0,
+        "changeLayerId": 161
+      },
+      "assets": {
+        "object_1": "TowerOfValniObjectType",
+        "object_2": null,
+        "palette": "TowerOfValniMapPalette",
+        "tile_configuration": "TowerOfValniTileConfiguration",
+        "layout": "TowerOfValni8Map",
+        "object_animation": null,
+        "palette_animation": null,
+        "map_changes": "TowerOfValni8MapChanges"
+      }
+    },
+    {
+      "chapter_index": 44,
+      "internal_name": "",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 0,
+        "windowTextId": 0,
+        "windowDataType": "seize",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 136,
+        "obj2Id": 0,
+        "paletteId": 137,
+        "tileConfigId": 138,
+        "mainLayerId": 160,
+        "objAnimId": 0,
+        "paletteAnimId": 0,
+        "changeLayerId": 161
+      },
+      "assets": {
+        "object_1": "TowerOfValniObjectType",
+        "object_2": null,
+        "palette": "TowerOfValniMapPalette",
+        "tile_configuration": "TowerOfValniTileConfiguration",
+        "layout": "TowerOfValni8Map",
+        "object_animation": null,
+        "palette_animation": null,
+        "map_changes": "TowerOfValni8MapChanges"
+      }
+    },
+    {
+      "chapter_index": 45,
+      "internal_name": "",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 0,
+        "windowTextId": 0,
+        "windowDataType": "seize",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 136,
+        "obj2Id": 0,
+        "paletteId": 137,
+        "tileConfigId": 138,
+        "mainLayerId": 160,
+        "objAnimId": 0,
+        "paletteAnimId": 0,
+        "changeLayerId": 161
+      },
+      "assets": {
+        "object_1": "TowerOfValniObjectType",
+        "object_2": null,
+        "palette": "TowerOfValniMapPalette",
+        "tile_configuration": "TowerOfValniTileConfiguration",
+        "layout": "TowerOfValni8Map",
+        "object_animation": null,
+        "palette_animation": null,
+        "map_changes": "TowerOfValni8MapChanges"
+      }
+    },
+    {
+      "chapter_index": 46,
+      "internal_name": "R01",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 448,
+        "windowTextId": 414,
+        "windowDataType": "defeat_all",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 108,
+        "obj2Id": 0,
+        "paletteId": 163,
+        "tileConfigId": 110,
+        "mainLayerId": 164,
+        "objAnimId": 5,
+        "paletteAnimId": 0,
+        "changeLayerId": 165
+      },
+      "assets": {
+        "object_1": "ObjectType9",
+        "object_2": null,
+        "palette": "LagdouRuinsPalette",
+        "tile_configuration": "TileConfiguration9",
+        "layout": "LagdouRuins1Map",
+        "object_animation": "TileAnimations1",
+        "palette_animation": null,
+        "map_changes": "LagdouRuins1MapChanges"
+      }
+    },
+    {
+      "chapter_index": 47,
+      "internal_name": "R02",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 448,
+        "windowTextId": 414,
+        "windowDataType": "defeat_all",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 108,
+        "obj2Id": 0,
+        "paletteId": 163,
+        "tileConfigId": 110,
+        "mainLayerId": 167,
+        "objAnimId": 5,
+        "paletteAnimId": 0,
+        "changeLayerId": 168
+      },
+      "assets": {
+        "object_1": "ObjectType9",
+        "object_2": null,
+        "palette": "LagdouRuinsPalette",
+        "tile_configuration": "TileConfiguration9",
+        "layout": "LagdouRuins2Map",
+        "object_animation": "TileAnimations1",
+        "palette_animation": null,
+        "map_changes": "LagdouRuins2MapChanges"
+      }
+    },
+    {
+      "chapter_index": 48,
+      "internal_name": "R03",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 448,
+        "windowTextId": 414,
+        "windowDataType": "defeat_all",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 108,
+        "obj2Id": 0,
+        "paletteId": 163,
+        "tileConfigId": 110,
+        "mainLayerId": 170,
+        "objAnimId": 5,
+        "paletteAnimId": 0,
+        "changeLayerId": 171
+      },
+      "assets": {
+        "object_1": "ObjectType9",
+        "object_2": null,
+        "palette": "LagdouRuinsPalette",
+        "tile_configuration": "TileConfiguration9",
+        "layout": "LagdouRuins3Map",
+        "object_animation": "TileAnimations1",
+        "palette_animation": null,
+        "map_changes": "LagdouRuins3MapChanges"
+      }
+    },
+    {
+      "chapter_index": 49,
+      "internal_name": "R04",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 448,
+        "windowTextId": 414,
+        "windowDataType": "defeat_all",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 108,
+        "obj2Id": 0,
+        "paletteId": 163,
+        "tileConfigId": 110,
+        "mainLayerId": 173,
+        "objAnimId": 5,
+        "paletteAnimId": 0,
+        "changeLayerId": 174
+      },
+      "assets": {
+        "object_1": "ObjectType9",
+        "object_2": null,
+        "palette": "LagdouRuinsPalette",
+        "tile_configuration": "TileConfiguration9",
+        "layout": "LagdouRuins4Map",
+        "object_animation": "TileAnimations1",
+        "palette_animation": null,
+        "map_changes": "LagdouRuins4MapChanges"
+      }
+    },
+    {
+      "chapter_index": 50,
+      "internal_name": "R05",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 448,
+        "windowTextId": 414,
+        "windowDataType": "defeat_all",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 108,
+        "obj2Id": 0,
+        "paletteId": 163,
+        "tileConfigId": 110,
+        "mainLayerId": 176,
+        "objAnimId": 5,
+        "paletteAnimId": 0,
+        "changeLayerId": 177
+      },
+      "assets": {
+        "object_1": "ObjectType9",
+        "object_2": null,
+        "palette": "LagdouRuinsPalette",
+        "tile_configuration": "TileConfiguration9",
+        "layout": "LagdouRuins5Map",
+        "object_animation": "TileAnimations1",
+        "palette_animation": null,
+        "map_changes": "LagdouRuins5MapChanges"
+      }
+    },
+    {
+      "chapter_index": 51,
+      "internal_name": "R06",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 448,
+        "windowTextId": 414,
+        "windowDataType": "defeat_all",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 108,
+        "obj2Id": 0,
+        "paletteId": 163,
+        "tileConfigId": 110,
+        "mainLayerId": 179,
+        "objAnimId": 5,
+        "paletteAnimId": 0,
+        "changeLayerId": 180
+      },
+      "assets": {
+        "object_1": "ObjectType9",
+        "object_2": null,
+        "palette": "LagdouRuinsPalette",
+        "tile_configuration": "TileConfiguration9",
+        "layout": "LagdouRuins6Map",
+        "object_animation": "TileAnimations1",
+        "palette_animation": null,
+        "map_changes": "LagdouRuins6MapChanges"
+      }
+    },
+    {
+      "chapter_index": 52,
+      "internal_name": "R07",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 448,
+        "windowTextId": 414,
+        "windowDataType": "defeat_all",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 108,
+        "obj2Id": 0,
+        "paletteId": 163,
+        "tileConfigId": 110,
+        "mainLayerId": 182,
+        "objAnimId": 5,
+        "paletteAnimId": 0,
+        "changeLayerId": 183
+      },
+      "assets": {
+        "object_1": "ObjectType9",
+        "object_2": null,
+        "palette": "LagdouRuinsPalette",
+        "tile_configuration": "TileConfiguration9",
+        "layout": "LagdouRuins7Map",
+        "object_animation": "TileAnimations1",
+        "palette_animation": null,
+        "map_changes": "LagdouRuins7MapChanges"
+      }
+    },
+    {
+      "chapter_index": 53,
+      "internal_name": "R08",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 448,
+        "windowTextId": 414,
+        "windowDataType": "defeat_all",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 24,
+        "obj2Id": 0,
+        "paletteId": 185,
+        "tileConfigId": 26,
+        "mainLayerId": 186,
+        "objAnimId": 28,
+        "paletteAnimId": 0,
+        "changeLayerId": 187
+      },
+      "assets": {
+        "object_1": "ObjectType3",
+        "object_2": null,
+        "palette": "LagdouRuins8Palette",
+        "tile_configuration": "TileConfiguration3",
+        "layout": "LagdouRuins8Map",
+        "object_animation": "TileAnimations3",
+        "palette_animation": null,
+        "map_changes": "LagdouRuins8MapChanges"
+      }
+    },
+    {
+      "chapter_index": 54,
+      "internal_name": "R09",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 448,
+        "windowTextId": 414,
+        "windowDataType": "defeat_all",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 80,
+        "obj2Id": 0,
+        "paletteId": 81,
+        "tileConfigId": 82,
+        "mainLayerId": 189,
+        "objAnimId": 0,
+        "paletteAnimId": 84,
+        "changeLayerId": 190
+      },
+      "assets": {
+        "object_1": "ObjectType7",
+        "object_2": null,
+        "palette": "MapPalette11",
+        "tile_configuration": "TileConfiguration7",
+        "layout": "LagdouRuins9Map",
+        "object_animation": null,
+        "palette_animation": "TileAnimations4",
+        "map_changes": "LagdouRuins9MapChanges"
+      }
+    },
+    {
+      "chapter_index": 55,
+      "internal_name": "R10",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 448,
+        "windowTextId": 414,
+        "windowDataType": "defeat_all",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 108,
+        "obj2Id": 0,
+        "paletteId": 163,
+        "tileConfigId": 110,
+        "mainLayerId": 192,
+        "objAnimId": 5,
+        "paletteAnimId": 0,
+        "changeLayerId": 193
+      },
+      "assets": {
+        "object_1": "ObjectType9",
+        "object_2": null,
+        "palette": "LagdouRuinsPalette",
+        "tile_configuration": "TileConfiguration9",
+        "layout": "LagdouRuins10Map",
+        "object_animation": "TileAnimations1",
+        "palette_animation": null,
+        "map_changes": "LagdouRuins10MapChanges"
+      }
+    },
+    {
+      "chapter_index": 56,
+      "internal_name": "C00",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 448,
+        "windowTextId": 414,
+        "windowDataType": "defeat_all",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 1,
+        "obj2Id": 0,
+        "paletteId": 2,
+        "tileConfigId": 3,
+        "mainLayerId": 195,
+        "objAnimId": 5,
+        "paletteAnimId": 0,
+        "changeLayerId": 196
+      },
+      "assets": {
+        "object_1": "ObjectType1",
+        "object_2": null,
+        "palette": "MapPalette1",
+        "tile_configuration": "TileConfiguration1",
+        "layout": "LordsSplitMap",
+        "object_animation": "TileAnimations1",
+        "palette_animation": null,
+        "map_changes": "LordsSplitMapChanges"
+      }
+    },
+    {
+      "chapter_index": 57,
+      "internal_name": "H00",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 448,
+        "windowTextId": 414,
+        "windowDataType": "defeat_all",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 1,
+        "obj2Id": 0,
+        "paletteId": 2,
+        "tileConfigId": 3,
+        "mainLayerId": 198,
+        "objAnimId": 5,
+        "paletteAnimId": 0,
+        "changeLayerId": 199
+      },
+      "assets": {
+        "object_1": "ObjectType1",
+        "object_2": null,
+        "palette": "MapPalette1",
+        "tile_configuration": "TileConfiguration1",
+        "layout": "MelkaenCoastMap",
+        "object_animation": "TileAnimations1",
+        "palette_animation": null,
+        "map_changes": "MelkaenCoastMapChanges"
+      }
+    },
+    {
+      "chapter_index": 58,
+      "internal_name": "",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 0,
+        "windowTextId": 0,
+        "windowDataType": "seize",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 60,
+        "obj2Id": 0,
+        "paletteId": 104,
+        "tileConfigId": 62,
+        "mainLayerId": 201,
+        "objAnimId": 0,
+        "paletteAnimId": 0,
+        "changeLayerId": 0
+      },
+      "assets": {
+        "object_1": "ObjectType5",
+        "object_2": null,
+        "palette": "MapPalette15",
+        "tile_configuration": "TileConfiguration5",
+        "layout": "LinkArenaMap",
+        "object_animation": null,
+        "palette_animation": null,
+        "map_changes": null
+      }
+    },
+    {
+      "chapter_index": 59,
+      "internal_name": "D00",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 448,
+        "windowTextId": 414,
+        "windowDataType": "defeat_all",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 14,
+        "obj2Id": 0,
+        "paletteId": 15,
+        "tileConfigId": 16,
+        "mainLayerId": 202,
+        "objAnimId": 18,
+        "paletteAnimId": 0,
+        "changeLayerId": 0
+      },
+      "assets": {
+        "object_1": "ObjectType2",
+        "object_2": null,
+        "palette": "MapPalette2",
+        "tile_configuration": "TileConfiguration2",
+        "layout": "AnInterestingMap",
+        "object_animation": "TileAnimations2",
+        "palette_animation": null,
+        "map_changes": null
+      }
+    },
+    {
+      "chapter_index": 60,
+      "internal_name": "D01",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 448,
+        "windowTextId": 414,
+        "windowDataType": "defeat_all",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 1,
+        "obj2Id": 0,
+        "paletteId": 2,
+        "tileConfigId": 3,
+        "mainLayerId": 204,
+        "objAnimId": 5,
+        "paletteAnimId": 0,
+        "changeLayerId": 0
+      },
+      "assets": {
+        "object_1": "ObjectType1",
+        "object_2": null,
+        "palette": "MapPalette1",
+        "tile_configuration": "TileConfiguration1",
+        "layout": "DebugMap",
+        "object_animation": "TileAnimations1",
+        "palette_animation": null,
+        "map_changes": null
+      }
+    },
+    {
+      "chapter_index": 61,
+      "internal_name": "E10x",
+      "initial_weather": "fine",
+      "initial_fog_level": 3,
+      "goal": {
+        "statusObjectiveTextId": 430,
+        "windowTextId": 414,
+        "windowDataType": "defeat_all",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 60,
+        "obj2Id": 0,
+        "paletteId": 206,
+        "tileConfigId": 62,
+        "mainLayerId": 207,
+        "objAnimId": 0,
+        "paletteAnimId": 0,
+        "changeLayerId": 208
+      },
+      "assets": {
+        "object_1": "ObjectType5",
+        "object_2": null,
+        "palette": "MapPalette19",
+        "tile_configuration": "TileConfiguration5",
+        "layout": "Ch11EirikaMap",
+        "object_animation": null,
+        "palette_animation": null,
+        "map_changes": "Ch11EirikaMapChanges"
+      }
+    },
+    {
+      "chapter_index": 62,
+      "internal_name": "I10x",
+      "initial_weather": "fine",
+      "initial_fog_level": 3,
+      "goal": {
+        "statusObjectiveTextId": 444,
+        "windowTextId": 414,
+        "windowDataType": "defeat_all",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 14,
+        "obj2Id": 0,
+        "paletteId": 114,
+        "tileConfigId": 16,
+        "mainLayerId": 210,
+        "objAnimId": 211,
+        "paletteAnimId": 0,
+        "changeLayerId": 212
+      },
+      "assets": {
+        "object_1": "ObjectType2",
+        "object_2": null,
+        "palette": "MapPalette17",
+        "tile_configuration": "TileConfiguration2",
+        "layout": "Ch11EphraimMap",
+        "object_animation": "Ch11EphraimTileAnimations",
+        "palette_animation": null,
+        "map_changes": "Ch11EphraimMapChanges"
+      }
+    },
+    {
+      "chapter_index": 63,
+      "internal_name": "",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 0,
+        "windowTextId": 0,
+        "windowDataType": "seize",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 1,
+        "obj2Id": 0,
+        "paletteId": 2,
+        "tileConfigId": 3,
+        "mainLayerId": 214,
+        "objAnimId": 5,
+        "paletteAnimId": 0,
+        "changeLayerId": 0
+      },
+      "assets": {
+        "object_1": "ObjectType1",
+        "object_2": null,
+        "palette": "MapPalette1",
+        "tile_configuration": "TileConfiguration1",
+        "layout": "GradoCastleMap",
+        "object_animation": "TileAnimations1",
+        "palette_animation": null,
+        "map_changes": null
+      }
+    },
+    {
+      "chapter_index": 64,
+      "internal_name": "",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 0,
+        "windowTextId": 0,
+        "windowDataType": "seize",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 1,
+        "obj2Id": 0,
+        "paletteId": 2,
+        "tileConfigId": 3,
+        "mainLayerId": 215,
+        "objAnimId": 5,
+        "paletteAnimId": 0,
+        "changeLayerId": 0
+      },
+      "assets": {
+        "object_1": "ObjectType1",
+        "object_2": null,
+        "palette": "MapPalette1",
+        "tile_configuration": "TileConfiguration1",
+        "layout": "RenaisCastleMap",
+        "object_animation": "TileAnimations1",
+        "palette_animation": null,
+        "map_changes": null
+      }
+    },
+    {
+      "chapter_index": 65,
+      "internal_name": "",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 0,
+        "windowTextId": 0,
+        "windowDataType": "seize",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 46,
+        "obj2Id": 0,
+        "paletteId": 52,
+        "tileConfigId": 48,
+        "mainLayerId": 216,
+        "objAnimId": 0,
+        "paletteAnimId": 0,
+        "changeLayerId": 0
+      },
+      "assets": {
+        "object_1": "ObjectType4",
+        "object_2": null,
+        "palette": "MapPalette5",
+        "tile_configuration": "TileConfiguration4",
+        "layout": "CaerPelynMap",
+        "object_animation": null,
+        "palette_animation": null,
+        "map_changes": null
+      }
+    },
+    {
+      "chapter_index": 66,
+      "internal_name": "",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 0,
+        "windowTextId": 0,
+        "windowDataType": "seize",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 24,
+        "obj2Id": 0,
+        "paletteId": 72,
+        "tileConfigId": 26,
+        "mainLayerId": 217,
+        "objAnimId": 28,
+        "paletteAnimId": 0,
+        "changeLayerId": 218
+      },
+      "assets": {
+        "object_1": "ObjectType3",
+        "object_2": null,
+        "palette": "MapPalette9",
+        "tile_configuration": "TileConfiguration3",
+        "layout": "RenaisThroneMap",
+        "object_animation": "TileAnimations3",
+        "palette_animation": null,
+        "map_changes": "RenaisThroneMapChanges"
+      }
+    },
+    {
+      "chapter_index": 67,
+      "internal_name": "",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 0,
+        "windowTextId": 0,
+        "windowDataType": "seize",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 24,
+        "obj2Id": 0,
+        "paletteId": 72,
+        "tileConfigId": 26,
+        "mainLayerId": 219,
+        "objAnimId": 28,
+        "paletteAnimId": 0,
+        "changeLayerId": 0
+      },
+      "assets": {
+        "object_1": "ObjectType3",
+        "object_2": null,
+        "palette": "MapPalette9",
+        "tile_configuration": "TileConfiguration3",
+        "layout": "RenaisAudienceMap",
+        "object_animation": "TileAnimations3",
+        "palette_animation": null,
+        "map_changes": null
+      }
+    },
+    {
+      "chapter_index": 68,
+      "internal_name": "",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 0,
+        "windowTextId": 0,
+        "windowDataType": "seize",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 24,
+        "obj2Id": 0,
+        "paletteId": 25,
+        "tileConfigId": 26,
+        "mainLayerId": 220,
+        "objAnimId": 28,
+        "paletteAnimId": 0,
+        "changeLayerId": 0
+      },
+      "assets": {
+        "object_1": "ObjectType3",
+        "object_2": null,
+        "palette": "MapPalette3",
+        "tile_configuration": "TileConfiguration3",
+        "layout": "RenvalGateMap",
+        "object_animation": "TileAnimations3",
+        "palette_animation": null,
+        "map_changes": null
+      }
+    },
+    {
+      "chapter_index": 69,
+      "internal_name": "",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 0,
+        "windowTextId": 0,
+        "windowDataType": "seize",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 1,
+        "obj2Id": 0,
+        "paletteId": 2,
+        "tileConfigId": 3,
+        "mainLayerId": 221,
+        "objAnimId": 5,
+        "paletteAnimId": 0,
+        "changeLayerId": 0
+      },
+      "assets": {
+        "object_1": "ObjectType1",
+        "object_2": null,
+        "palette": "MapPalette1",
+        "tile_configuration": "TileConfiguration1",
+        "layout": "GradoBordersMap",
+        "object_animation": "TileAnimations1",
+        "palette_animation": null,
+        "map_changes": null
+      }
+    },
+    {
+      "chapter_index": 70,
+      "internal_name": "",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 0,
+        "windowTextId": 0,
+        "windowDataType": "seize",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 121,
+        "obj2Id": 0,
+        "paletteId": 122,
+        "tileConfigId": 123,
+        "mainLayerId": 222,
+        "objAnimId": 125,
+        "paletteAnimId": 0,
+        "changeLayerId": 223
+      },
+      "assets": {
+        "object_1": "ObjectType10",
+        "object_2": null,
+        "palette": "MapPalette18",
+        "tile_configuration": "TileConfiguration10",
+        "layout": "GradoPrisonMap",
+        "object_animation": "TileAnimations5",
+        "palette_animation": null,
+        "map_changes": "GradoPrisonMapChanges"
+      }
+    },
+    {
+      "chapter_index": 71,
+      "internal_name": "",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 0,
+        "windowTextId": 0,
+        "windowDataType": "seize",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 24,
+        "obj2Id": 0,
+        "paletteId": 72,
+        "tileConfigId": 26,
+        "mainLayerId": 224,
+        "objAnimId": 28,
+        "paletteAnimId": 0,
+        "changeLayerId": 225
+      },
+      "assets": {
+        "object_1": "ObjectType3",
+        "object_2": null,
+        "palette": "MapPalette9",
+        "tile_configuration": "TileConfiguration3",
+        "layout": "GradoShrineMapPast",
+        "object_animation": "TileAnimations3",
+        "palette_animation": null,
+        "map_changes": "GradoShrineMapChangesPast"
+      }
+    },
+    {
+      "chapter_index": 72,
+      "internal_name": "",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 0,
+        "windowTextId": 0,
+        "windowDataType": "seize",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 24,
+        "obj2Id": 0,
+        "paletteId": 87,
+        "tileConfigId": 26,
+        "mainLayerId": 226,
+        "objAnimId": 28,
+        "paletteAnimId": 0,
+        "changeLayerId": 227
+      },
+      "assets": {
+        "object_1": "ObjectType3",
+        "object_2": null,
+        "palette": "MapPalette12",
+        "tile_configuration": "TileConfiguration3",
+        "layout": "RenaisShrineMap",
+        "object_animation": "TileAnimations3",
+        "palette_animation": null,
+        "map_changes": "RenaisShrineMapChanges"
+      }
+    },
+    {
+      "chapter_index": 73,
+      "internal_name": "",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 0,
+        "windowTextId": 0,
+        "windowDataType": "seize",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 1,
+        "obj2Id": 0,
+        "paletteId": 2,
+        "tileConfigId": 3,
+        "mainLayerId": 228,
+        "objAnimId": 5,
+        "paletteAnimId": 0,
+        "changeLayerId": 0
+      },
+      "assets": {
+        "object_1": "ObjectType1",
+        "object_2": null,
+        "palette": "MapPalette1",
+        "tile_configuration": "TileConfiguration1",
+        "layout": "SomePathMap",
+        "object_animation": "TileAnimations1",
+        "palette_animation": null,
+        "map_changes": null
+      }
+    },
+    {
+      "chapter_index": 74,
+      "internal_name": "",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 0,
+        "windowTextId": 0,
+        "windowDataType": "seize",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 60,
+        "obj2Id": 0,
+        "paletteId": 104,
+        "tileConfigId": 62,
+        "mainLayerId": 229,
+        "objAnimId": 0,
+        "paletteAnimId": 0,
+        "changeLayerId": 0
+      },
+      "assets": {
+        "object_1": "ObjectType5",
+        "object_2": null,
+        "palette": "MapPalette15",
+        "tile_configuration": "TileConfiguration5",
+        "layout": "SomeBuildingMap",
+        "object_animation": null,
+        "palette_animation": null,
+        "map_changes": null
+      }
+    },
+    {
+      "chapter_index": 75,
+      "internal_name": "",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 0,
+        "windowTextId": 0,
+        "windowDataType": "seize",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 121,
+        "obj2Id": 0,
+        "paletteId": 230,
+        "tileConfigId": 123,
+        "mainLayerId": 231,
+        "objAnimId": 125,
+        "paletteAnimId": 0,
+        "changeLayerId": 0
+      },
+      "assets": {
+        "object_1": "ObjectType10",
+        "object_2": null,
+        "palette": "AnotherShrinePalette",
+        "tile_configuration": "TileConfiguration10",
+        "layout": "AnotherShrineMap",
+        "object_animation": "TileAnimations5",
+        "palette_animation": null,
+        "map_changes": null
+      }
+    },
+    {
+      "chapter_index": 76,
+      "internal_name": "",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 0,
+        "windowTextId": 0,
+        "windowDataType": "seize",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 1,
+        "obj2Id": 0,
+        "paletteId": 2,
+        "tileConfigId": 3,
+        "mainLayerId": 232,
+        "objAnimId": 5,
+        "paletteAnimId": 0,
+        "changeLayerId": 0
+      },
+      "assets": {
+        "object_1": "ObjectType1",
+        "object_2": null,
+        "palette": "MapPalette1",
+        "tile_configuration": "TileConfiguration1",
+        "layout": "AnotherPathMap",
+        "object_animation": "TileAnimations1",
+        "palette_animation": null,
+        "map_changes": null
+      }
+    },
+    {
+      "chapter_index": 77,
+      "internal_name": "",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 0,
+        "windowTextId": 0,
+        "windowDataType": "seize",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 121,
+        "obj2Id": 0,
+        "paletteId": 122,
+        "tileConfigId": 123,
+        "mainLayerId": 233,
+        "objAnimId": 125,
+        "paletteAnimId": 0,
+        "changeLayerId": 0
+      },
+      "assets": {
+        "object_1": "ObjectType10",
+        "object_2": null,
+        "palette": "MapPalette18",
+        "tile_configuration": "TileConfiguration10",
+        "layout": "GradoShrineMapPresent",
+        "object_animation": "TileAnimations5",
+        "palette_animation": null,
+        "map_changes": null
+      }
+    },
+    {
+      "chapter_index": 78,
+      "internal_name": "",
+      "initial_weather": "fine",
+      "initial_fog_level": 0,
+      "goal": {
+        "statusObjectiveTextId": 0,
+        "windowTextId": 0,
+        "windowDataType": "seize",
+        "windowEndTurnNumber": 0,
+        "protectCharacterIndex": 0,
+        "destPosX": 255,
+        "destPosY": 0
+      },
+      "map": {
+        "obj1Id": 14,
+        "obj2Id": 0,
+        "paletteId": 234,
+        "tileConfigId": 16,
+        "mainLayerId": 235,
+        "objAnimId": 18,
+        "paletteAnimId": 0,
+        "changeLayerId": 0
+      },
+      "assets": {
+        "object_1": "ObjectType2",
+        "object_2": null,
+        "palette": "Ch5TownPalettePast",
+        "tile_configuration": "TileConfiguration2",
+        "layout": "Ch5TownMapPast",
+        "object_animation": "TileAnimations2",
+        "palette_animation": null,
+        "map_changes": null
+      }
+    }
+  ]
+}

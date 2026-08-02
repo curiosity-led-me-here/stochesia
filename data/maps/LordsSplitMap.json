@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "id": "LordsSplitMap",
+  "width": 2,
+  "height": 2,
+  "source_assets": {
+    "layout_metadata": "assets/graphics_map/layout/LordsSplitMap.json",
+    "raw_layout": "assets/graphics_map/layout/LordsSplitMap.mar"
+  },
+  "tile_configuration_entry_rows": [
+    [
+      524,
+      524
+    ],
+    [
+      524,
+      524
+    ]
+  ],
+  "metatile_rows": [
+    [
+      131,
+      131
+    ],
+    [
+      131,
+      131
+    ]
+  ],
+  "variants": [
+    {
+      "chapter_index": 56,
+      "internal_name": "C00",
+      "tile_configuration": "TileConfiguration1",
+      "palette": "MapPalette1",
+      "object_1": "ObjectType1",
+      "object_2": null,
+      "map_changes": "LordsSplitMapChanges",
+      "terrain_rows": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ]
+    }
+  ]
+}
