@@ -1,9 +1,9 @@
 __pycache__/
 
-FE8-files
-fe_map_builder_api
+FE8-files/
+fe_map_builder_api/
 src/*~
 src/.#*
 include/*~
 include/.#*
-output
+output/
