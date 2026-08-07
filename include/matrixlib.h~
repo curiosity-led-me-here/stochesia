@@ -1,0 +1,71 @@
+#pragma once
+#include <vector>
+#include <string>
+#include <iostream>
+
+std::vector<int> build_plain(const std::vector<int>& dims, int tile);
+{
+    std::vector<double> out;
+    int len = dims[0] * dims[1];
+    for (int i=0; i < len; i++)
+    {
+	out.push_back(tile);
+    }
+    return out;
+}
+
+
+template <typename T>
+void print(std::vector<T> values)
+{
+    for (int i=0 ; i < values.size(); i++)
+    {
+	if (i == 0)
+	{
+	    std::cout << "[";
+	}
+	std::cout << values[i];
+	if (i == values.size()-1)
+	{
+	    std::cout << "]";
+	}
+	else
+	{
+	    std::cout << ", ";	
+	}
+    }
+}
+
+class Map
+{
+    private:
+	int tiles;
+	std::vector<double> data;
+	std::vector<int> dimensions;
+	std::vector<int> strides;
+	std::vector<int> get_strides(std::vector<int> dims)
+	{
+	    std::vector<int> out;
+	    for (int j=0; j < dims.size()-1; j++)
+	    {
+		int a = 1;
+		for (int i=j+1; i < dims.size(); i++)
+		{
+		    a = a*dims[i];
+		}
+		out.push_back(a);
+	    }
+	    out.push_back(1);
+	    return out;
+	}
+    public:
+	// constructor overloading
+	Map(const std::vector<double>& values, const std::vector<int>& dims) : data(values), dimensions(dims), strides(get_strides(dims))
+	{
+	    if (strides[0]*dimensions[0] != data.size())
+	    {
+		throw std::invalid_argument("Dimensions do not match with flattened data vector!");
+	    }
+	};
+	Map(const std::vector<int>& dims) : data(build_plain(dims),  tiles), dimensions(dims), strides(get_strides(dimensions)) {};
+};

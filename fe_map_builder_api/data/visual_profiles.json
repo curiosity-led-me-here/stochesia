@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "description": "Automatic visual-theme preferences. They bias sprite selection but never override terrain topology.",
+  "profiles": {
+    "temperate": {
+      "origins": ["Fire Emblem 8/Chapters/06", "Fire Emblem 8/Chapters/07", "Fire Emblem 8/Skirmishes/Adlas Plains"]
+    },
+    "highland": {
+      "origins": ["Fire Emblem 8/Chapters/17", "Fire Emblem 8/Skirmishes/Narube River", "Fire Emblem 8/Chapters/20"]
+    },
+    "coastal": {
+      "origins": ["Fire Emblem 8/Chapters/09Eirika", "Fire Emblem 8/Skirmishes/Melkaen Coast", "Fire Emblem 8/Chapters/12Ephraim"]
+    },
+    "desert": {
+      "origins": ["Fire Emblem 8/Chapters/15", "Fire Emblem 8/Chapters/14Eirika"]
+    },
+    "fortress": {
+      "origins": ["Fire Emblem 8/Chapters/14Ephraim", "Fire Emblem 8/Cutscenes/Grado Chamber", "Fire Emblem 8/Tower of Valni/4"]
+    }
+  },
+  "terrain_profiles": {
+    "0": "temperate", "1": "temperate", "2": "temperate", "6": "temperate", "7": "temperate", "9": "temperate",
+    "3": "desert", "20": "desert", "37": "desert",
+    "4": "highland", "21": "highland", "38": "highland", "49": "highland",
+    "5": "coastal", "23": "coastal", "24": "coastal", "54": "coastal", "60": "coastal",
+    "8": "fortress", "10": "fortress", "17": "fortress", "18": "fortress", "25": "fortress", "27": "fortress", "29": "fortress", "30": "fortress", "31": "fortress", "34": "fortress", "35": "fortress", "36": "fortress",
+    "73": "highland", "77": "desert", "82": "fortress", "83": "fortress", "84": "temperate", "93": "highland", "94": "highland", "96": "temperate", "97": "temperate", "98": "coastal", "99": "temperate", "102": "desert", "103": "coastal", "109": "highland", "113": "fortress", "115": "fortress", "116": "coastal"
+  },
+  "terrain_families": {
+    "2": "forest", "19": "forest",
+    "3": "desert", "20": "desert", "37": "desert",
+    "4": "highland", "21": "highland", "38": "highland", "49": "highland",
+    "5": "river",
+    "8": "wall", "27": "wall",
+    "10": "floor", "17": "floor", "25": "floor",
+    "23": "sea", "24": "sea", "54": "sea", "60": "sea",
+
+    "73": "highland", "77": "desert", "82": "floor", "83": "floor",
+    "84": "forest", "93": "highland", "94": "highland", "96": "plain",
+    "97": "road", "98": "river", "99": "road", "102": "desert",
+    "103": "sea", "109": "highland", "113": "wall", "115": "wall",
+    "116": "river"
+  }
+}

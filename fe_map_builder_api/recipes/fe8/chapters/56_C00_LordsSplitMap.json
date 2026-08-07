@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "chapter_index": 56,
+  "internal_name": "C00",
+  "layout": "LordsSplitMap",
+  "width": 2,
+  "height": 2,
+  "terrain_id_scheme": "strategic_procedural_generation_v1",
+  "terrain_rows": [
+    [
+      0,
+      0
+    ],
+    [
+      0,
+      0
+    ]
+  ]
+}

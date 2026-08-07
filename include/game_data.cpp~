@@ -1,0 +1,53 @@
+#include <vector>
+#include "game_data.h"
+
+const std::vector<Weapon> Armory=
+{
+    // NAME, CAT_NAME, MIN_RNK, RNKEXP, ID, CAT, DUR, MT, WT, HIT, CRIT, MINRG, MAXRG
+
+    {"Iron Sword", "Sword", "E",  1, IRON_SWORD, SWORD, 46, 5,  5, 90, 0, 1, 1},
+    {"Iron Lance", "Lance", "E",  1, IRON_LANCE, LANCE, 45, 7,  8, 80, 0, 1, 1},
+    {"Iron Axe",   "Axe",   "E",  1, IRON_AXE, AXE,   45, 8, 10, 75, 0, 1, 1},
+    {"Iron Bow",   "Bow",   "E",  1, IRON_BOW, BOW,   45, 6,  5, 85, 0, 2, 2},
+
+    {"Fire",       "Anima", "E",  1, FIRE, ANIMA, 40, 5,  4, 90, 0, 1, 2},
+    {"Lightning",  "Light", "E",  1, LIGHTNING, LIGHT, 35, 4,  6, 95, 5, 1, 2},
+    {"Flux",       "Dark",  "D", 31, FLUX, DARK,  45, 7,  8, 80, 0, 1, 2},
+
+    {"Thunder",    "Anima", "D", 31, THUNDER, ANIMA, 35, 8,  6, 80, 5, 1, 2},
+};
+
+const std::vector<Rank> TierInfo=
+{
+    // ID, minexp, maxexp
+
+    {E,   1,  30},
+    {D,  31,  70},
+    {C,  71, 120},
+    {B, 121, 180},
+    {A, 181, 250},
+    {S, 251, 251},
+};
+
+Weapon get_weapon(const std::vector<Weapon>& Armory, int id)
+{
+    return findbyid(Armory, id);
+}
+
+void get_next_rank(WeaponLevelExp& x)
+{
+    if (x.rank.ID != S)
+    {
+	if (x.current >= x.rank.maxexp)
+	{
+	    x.rank.ID = static_cast<alpharank>(x.rank.ID+1);
+	    x.current = x.current - x.rank.maxexp;
+	    Rank new_rank_stats = findbyid(TierInfo, x.rank.ID);
+	    x.rank = new_rank_stats;
+	    if (x.current >= x.rank.maxexp)
+	    {
+		get_next_rank(x);
+	    }
+	}
+    }
+}

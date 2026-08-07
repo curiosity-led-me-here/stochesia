@@ -1,0 +1,18 @@
+#pragma once
+#include <vector>
+#include "game_data.h"
+
+const std::vector<Terrain> base_topo=
+{
+    {PLAINS,   1.00, 0.00, 0, "Plains"},
+    {ROAD,     1.00, 0.00, 0, "Road"},
+    {WOODS,    0.50, 0.20, 1, "Woods"},
+    {DESERT,   0.50, 0.00, 0, "Desert"},
+    {MOUNTAIN, 0.25, 0.30, 1, "Mountain"},
+    {RIVER,    0.20, 0.00, 0, "River"},
+    {BRIDGE,   1.00, 0.00, 0, "Bridge"},
+    {FORT,     0.50, 0.20, 2, "Fort"},
+    {WALL,     0.00, 0.00, 1, "Wall"},
+    {VILLAGE,  1.00, 0.00, 0, "Village"},
+    {FLOOR,    1.00, 0.00, 0, "Floor"},
+};

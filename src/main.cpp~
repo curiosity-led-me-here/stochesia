@@ -1,0 +1,23 @@
+#include <iostream>
+#include "/Users/ashu/Strategic-Procedural-Generation/include/game_data.h"
+#include "/Users/ashu/Strategic-Procedural-Generation/include/api.h"
+
+
+int main()
+{
+    fe_map_builder::TerrainMap map = {
+	{PLAINS, PLAINS, PLAINS},
+	{PLAINS, ROAD,   PLAINS},
+    };
+
+    fe_map_builder::BuildOptions options{
+	"/Users/ashu/Strategic-Procedural-Generation/fe_map_builder_api",
+	"/Users/ashu/Fire-Emblem-Tile-Map-Editor",
+	"output/my_map",
+	"Fire Emblem 8/Chapters/06"
+    };
+
+    auto result = fe_map_builder::Build(map, options);
+    return 0;
+}
+

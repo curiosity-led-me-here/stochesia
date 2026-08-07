@@ -1,0 +1,275 @@
+#include "game_data.h"
+#include <vector>
+#include <cmath>
+#include <iostream>
+#include <string>
+#include <stdexcept>
+#include <random>
+
+int seed = 42;
+
+bool random_binary(double probability, int seed)
+{
+    static std::mt19937 generator(seed);
+    std::bernoulli_distribution distribution(probability);
+    return distribution(generator);
+}
+
+
+std::vector<std::vector<int>> WeaponTriangle
+{
+     //S L Ax B An L D  <--- Entity A
+     {0, 1, -1, 0, 0, 0, 0},
+     {-1, 0, 1, 0, 0, 0, 0},
+     {1, -1, 0, 0, 0, 0, 0},
+     {0, 0, 0, 0, 0, -1, 1},
+     {0, 0, 0, 0, 1, 0, -1},
+     {0, 0, 0, 0, -1, 1, 0},
+};
+
+std::vector<int> WeaponTriangleAdv(const Weapon& A, const Weapon& B)
+{
+    int BONUS_MT=1; int BONUS_HIT=15;
+    int Bonus =  WeaponTriangle[A.CAT][B.CAT];
+    return {Bonus*BONUS_MT, Bonus*BONUS_HIT};
+}
+
+int get_ATK_SPD(const Stats& As, const Weapon& Aw)
+{
+    int ATK_SPD = 0;
+    if (Aw.WT > As.CON)
+    {
+	ATK_SPD += As.SPD + (As.CON - Aw.WT);
+    }
+    else if (Aw.WT <= As.CON)
+    {
+	ATK_SPD += As.SPD;
+    }
+    return ATK_SPD;
+}
+
+CombatInfo info(const Entity& A,const Entity& B)
+{
+    Stats As = A.stats;
+    Stats Bs = B.stats;
+    
+    if (A.inventory.EquippedSlot < 0)
+    {
+	return {As.HP, 0, 0, false, 0};
+    }
+    else
+    {
+	Weapon Aw = get_weapon(Armory, A.inventory.EquippedSlot);
+	Weapon Bw = get_weapon(Armory, B.inventory.EquippedSlot);
+	std::vector<int> WTA = WeaponTriangleAdv(Aw, Bw);
+	if (WTA[0] > 0)
+	{
+	    std::cout << "Weapon triangle advantage to " << A.name;
+	}
+	else if (WTA[0] < 0)
+	{
+	    std::cout << "Weapon triangle advantage to " << B.name;
+	}
+	else
+	{
+	    std::cout << "No weapon triangle advantage!";
+	}
+	int AVD = (As.SPD * 2) + As.LUC; // Bonus to add later
+	int HIT = (As.SKL * 2) + (0.5 * As.LUC) - AVD + Aw.HIT + WTA[1]; // Bonus to add later
+	// Double mechanic to add
+	int EFF_W_MT = (Aw.MT + WTA[0])*1; // effectiveness (*2) pending
+	int MT = As.STR + EFF_W_MT - Bs.DEF; // Bonus pending
+	int CRIT_EVADE_B = Bs.LUC + 0; // Bonus pending
+	int CRIT = Aw.CRIT + (0.5 * As.SKL) - CRIT_EVADE_B + 0; // Bonus pending
+	int ATK_SPD_A = get_ATK_SPD(As, Aw);
+	int ATK_SPD_B = get_ATK_SPD(Bs, Bw);
+	bool DB = false;
+	if ((ATK_SPD_A - ATK_SPD_B) > 3)
+	{
+	    DB = true;
+	}
+
+	if (HIT > 100)
+	{
+	    HIT = 100;
+	}
+	
+	if (CRIT > 100)
+	{
+	    CRIT = 100;
+	}
+	return {As.HP, MT, HIT, DB, CRIT};
+    }
+}
+
+void death(Entity& X)
+{
+    X.group->remove(X);
+}
+
+std::vector<CombatInfo> interact(const Entity& A,const Entity& B)
+{
+    std::vector<CombatInfo> out;
+    CombatInfo info_A = info(A, B);
+    CombatInfo info_B = info(B, A);
+    out.push_back(info_A);
+    out.push_back(info_B);
+    return out;
+}
+
+void attack_sequence(Entity& A, Entity& B, CombatInfo& A_perf, CombatInfo& B_perf)
+{
+    if (random_binary(A_perf.HIT, seed))
+    {
+	if (random_binary(A_perf.CRIT, seed))
+	{
+	    std::cout << "Critical hit!" << "HP reduced from " << B.stats.HP;
+	    // (1) B Hp reduced (2) A weapon dur -1
+	    B.stats.HP -= (A_perf.MT*3);
+	    std::cout << " to " << B.stats.HP;
+	    A.inventory.slot[A.inventory.EquippedSlot].usesRemaining --;
+	    // exp calculation pending.
+	}
+	else
+	{
+	    // normal hit
+	    std::cout << "Attack hit!" << "HP reduced from " << B.stats.HP;
+	    // (1) B Hp reduced (2) A weapon dur -1
+	    B.stats.HP -= (A_perf.MT);
+	    std::cout << " to " << B.stats.HP;
+	    A.inventory.slot[A.inventory.EquippedSlot].usesRemaining --;
+	}
+    }
+    else
+    {
+	// miss
+	std::cout << "Attack miss!";
+	A.inventory.slot[A.inventory.EquippedSlot].usesRemaining --;
+    }
+}
+
+void entity_attack(Entity& A, Entity& B, CombatInfo& A_perf, CombatInfo& B_perf, bool A_first, bool db) // Assume first entity attacks twice if db = True
+{
+    if (db)
+    {
+	if (A_first)
+	{
+	    attack_sequence(A, B, A_perf, B_perf);
+	    if (B.stats.HP > 0)
+	    {
+		attack_sequence(B, A, B_perf, A_perf);
+		if (A.stats.HP > 0)
+		{
+		    attack_sequence(A, B, A_perf, B_perf);
+		    if (B.stats.HP <= 0)
+		    {
+			// B dies from A's second attack.
+			death(B);
+		    }
+		}
+		else
+		{
+		    // A dies from B's retaliation.
+		    death(A);
+		}
+	    }
+	    else
+	    {
+		// B dies from A's first attack.
+		death(B);
+	    }
+	}
+	else
+	{
+	    attack_sequence(B, A, B_perf, A_perf);
+	    if (A.stats.HP > 0)
+	    {
+		attack_sequence(A, B, A_perf, B_perf);
+		if (B.stats.HP > 0)
+		{
+		    attack_sequence(A, B, A_perf, B_perf);
+		    if (B.stats.HP <= 0)
+		    {
+			// B dies from A's second attack.
+			death(B);
+		    }
+		}
+		else
+		{
+		    // B dies from A's first attack.
+		    death(B);
+		}
+	    }
+	    else
+	    {
+		// A dies in first turn from B's attack.
+		death(A);
+	    }	    
+	}
+    }
+    else
+    {
+	attack_sequence(A, B, A_perf, B_perf);
+	if (B.stats.HP > 0)
+	{
+	    attack_sequence(B, A, B_perf, A_perf);
+	    if (A.stats.HP <= 0)
+	    {
+		// A's death from retaliation from B.
+		death(A);
+	    }
+	}
+	else
+	{
+	    // B's Death on A's attack
+	    death(B);
+	}
+    }
+}
+
+void battle(Entity& A, Entity& B)
+{
+    std::vector<CombatInfo> out = interact(A, B);
+    CombatInfo A_perf = out[0]; CombatInfo B_perf = out[1];
+    if (A_perf.DB == B_perf.DB)
+    {
+	throw std::invalid_argument("Both units cannot double! Some flaw in the logic code.");
+    }
+    if (A_perf.DB)
+    {
+	entity_attack(A, B, A_perf, B_perf, true, A_perf.DB);
+    }
+    else if (B_perf.DB)
+    {
+	entity_attack(A, B, A_perf, B_perf, false, B_perf.DB);
+    }
+    else
+    {
+	entity_attack(A, B, A_perf, B_perf, true, false);
+    }
+    // if(doubles) --> if(hits) --> if(crits) --> (B.Hp - (A.MT*(1 || 3)*(1 || 2))) && (Aw.DUR - (1 || 2)) && (A.Hp - (B.MT*(1 || 3)*(1 || 2))) && (Bw.DUR - (1 || 2))
+    
+}
+
+void Heal(Entity& A, const int invslot)
+{
+    int item = A.inventory.slot[invslot].ID;
+    Healer elixir = get_heal(HealingData, item);
+    if (elixir.CAT == STAFF)
+    {
+	throw std::invalid_argument("Use Heal(Entity& Caster, Entity& A, const int id) instead");
+    }
+    A.stats.HP += elixir.HEALHP;
+    A.inventory.slot[invslot].usesRemaining --;
+}
+
+void Heal(Entity& Caster, Entity& A, const int id)
+{
+    Healer staff = get_heal(HealingData, id);
+    if (staff.CAT == NONETYPE)
+    {
+	Heal(A, id);
+    }
+    A.stats.HP += staff.HEALHP;
+    Caster.inventory.slot[Caster.inventory.EquippedSlot].usesRemaining --;
+}

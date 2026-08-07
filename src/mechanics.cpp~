@@ -1,0 +1,104 @@
+#include "game_data.h"
+#include <vector>
+#include <cmath>
+#include <iostream>
+#include <string>
+#include <stdexcept>
+#include <random>
+
+
+
+std::vector<std::vector<int>> WeaponTriangle
+{
+     //S L Ax B An L D  <--- Entity A
+     {0, 1, -1, 0, 0, 0, 0},
+     {-1, 0, 1, 0, 0, 0, 0},
+     {1, -1, 0, 0, 0, 0, 0},
+     {0, 0, 0, 0, 0, -1, 1},
+     {0, 0, 0, 0, 1, 0, -1},
+     {0, 0, 0, 0, -1, 1, 0},
+};
+
+std::vector<int> WeaponTriangleAdv(const Weapon& A, const Weapon& B)
+{
+    int BONUS_MT=1; int BONUS_HIT=15;
+    int Bonus =  WeaponTriangle[A.CAT][B.CAT];
+    return {Bonus*BONUS_MT, Bonus*BONUS_HIT};
+}
+
+int get_ATK_SPD(const Stats& As, const Weapon& Aw)
+{
+    int ATK_SPD = 0;
+    if (Aw.WT > As.CON)
+    {
+	ATK_SPD += As.SPD + (As.CON - Aw.WT);
+    }
+    else if (Aw.WT <= As.CON)
+    {
+	ATK_SPD += As.SPD;
+    }
+    return ATK_SPD;
+}
+
+CombatInfo info(const Entity& A,const Entity& B)
+{
+    Stats As = A.stats;
+    Stats Bs = B.stats;
+    
+    if (A.inventory.EquippedSlot < 0)
+    {
+	return {As.HP, 0, 0, false, 0};
+    }
+    else
+    {
+	Weapon Aw = get_weapon(Armory, A.inventory.EquippedSlot);
+	Weapon Bw = get_weapon(Armory, B.inventory.EquippedSlot);
+	std::vector<int> WTA = WeaponTriangleAdv(Aw, Bw);
+	int AVD = (As.SPD * 2) + As.LUC; // Bonus to add later
+	int HIT = (As.SKL * 2) + (0.5 * As.LUC) - AVD + Aw.HIT + WTA[1]; // Bonus to add later
+	// Double mechanic to add
+	int EFF_W_MT = (Aw.MT + WTA[0])*1; // effectiveness (*2) pending
+	int MT = As.STR + EFF_W_MT - Bs.DEF; // Bonus pending
+	int CRIT_EVADE_B = Bs.LUC + 0; // Bonus pending
+	int CRIT = Aw.CRIT + (0.5 * As.SKL) - CRIT_EVADE_B + 0; // Bonus pending
+	int ATK_SPD_A = get_ATK_SPD(As, Aw);
+	int ATK_SPD_B = get_ATK_SPD(Bs, Bw);
+	bool DB = false;
+	if ((ATK_SPD_A - ATK_SPD_B) > 3)
+	{
+	    DB = true;
+	}
+
+	if (HIT > 100)
+	{
+	    HIT = 100;
+	}
+	
+	if (CRIT > 100)
+	{
+	    CRIT = 100;
+	}
+	return {As.HP, MT, HIT, DB, CRIT};
+    }
+}
+
+std::vector<CombatInfo> interact(const Entity& A,const Entity& B)
+{
+    std::vector<CombatInfo> out;
+    CombatInfo info_A = info(A, B);
+    CombatInfo info_B = info(B, A);
+    out.push_back(info_A);
+    out.push_back(info_B);
+    return out;
+}
+
+void battle(Entity& A, Entity& B)
+{
+    // if(doubles) --> if(hits) --> if(crits) --> (B.Hp - (A.MT*(1 || 3)*(1 || 2))) && (Aw.DUR - (1 || 2)) && (A.Hp - (B.MT*(1 || 3)*(1 || 2))) && (Bw.DUR - (1 || 2))
+    
+}
+
+void Heal(Entity& A, int item)
+{
+    //
+}

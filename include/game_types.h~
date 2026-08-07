@@ -1,0 +1,315 @@
+#pragma once
+#include <vector>
+#include <string>
+
+enum TerrainCategory
+{
+    // Existing sandbox IDs: keep these stable.
+    PLAINS = 0,
+    ROAD,
+    WOODS,
+    DESERT,
+    MOUNTAIN,
+    RIVER,
+    BRIDGE,
+    FORT,
+    WALL,
+    VILLAGE,
+    FLOOR,
+
+    // Expanded FE8 terrain vocabulary.
+    NONE,
+    VILLAGE_CLOSED,
+    HOUSE,
+    ARMORY,
+    VENDOR,
+    ARENA,
+    CHAMBER,
+    CASTLE_GATE,
+    THICKET,
+    SAND,
+    PEAK,
+    BRIDGE_14,
+    SEA,
+    LAKE,
+    MAGIC_FLOOR,
+    FENCE,
+    DAMAGED_WALL,
+    RUBBLE,
+    PILLAR,
+    DOOR,
+    THRONE,
+    CHEST_EMPTY,
+    CHEST_FULL,
+    ROOF,
+    GATE,
+    CHURCH,
+    RUINS,
+    CLIFF,
+    BALLISTA,
+    LONGBALLISTA,
+    KILLER_BALLISTA,
+    SHIP,
+    SHIP_WRECK,
+    SPECIAL_2C,
+    STAIRS,
+    SPECIAL_2E,
+    GLACIER,
+    ARENA_30,
+    VALLEY,
+    FENCE_32,
+    SNAG,
+    BRIDGE_SNAG,
+    SKY,
+    DEEPS,
+    RUINS_VILLAGE,
+    INN,
+    BARREL,
+    BONE,
+    DARK_TERRAIN, // DARK already belongs to WeaponCategory.
+    WATER,
+    GUNNELS,
+    DECK,
+    BRACE,
+    MAST,
+
+    TERRAIN_COUNT
+};
+
+// IDs 65–116 select an exact visual group in fe_map_builder. They are for the
+// renderer only: do not index base_topo with them. The gameplay terrain beneath
+// a visual cell remains a TerrainCategory value from the enum above.
+enum VisualTerrainID
+{
+    VISUAL_ARENA = 65,
+    VISUAL_ARMORY,
+    VISUAL_BARREL,
+    VISUAL_BONE,
+    VISUAL_BRACE,
+    VISUAL_BRACE_WALL,
+    VISUAL_BRIDGE,
+    VISUAL_CHEST,
+    VISUAL_CLIFF,
+    VISUAL_DARK,
+    VISUAL_DASHDASH,
+    VISUAL_DECK,
+    VISUAL_DESERT,
+    VISUAL_DOOR,
+    VISUAL_FENCE,
+    VISUAL_FENCE_BRACE,
+    VISUAL_FENCE_WALL,
+    VISUAL_FLAT,
+    VISUAL_FLOOR,
+    VISUAL_FOREST,
+    VISUAL_FORT,
+    VISUAL_GATE,
+    VISUAL_GUNNELS,
+    VISUAL_HOUSE,
+    VISUAL_INN,
+    VISUAL_LAKE,
+    VISUAL_LAKE_CLIFF,
+    VISUAL_MAST,
+    VISUAL_MOUNTAIN,
+    VISUAL_PEAK,
+    VISUAL_PILLAR,
+    VISUAL_PLAIN,
+    VISUAL_PLAIN_ROAD,
+    VISUAL_RIVER,
+    VISUAL_ROAD,
+    VISUAL_ROOF,
+    VISUAL_RUINS,
+    VISUAL_SAND,
+    VISUAL_SEA,
+    VISUAL_SNAG,
+    VISUAL_STAIRS,
+    VISUAL_THICKET,
+    VISUAL_THRONE,
+    VISUAL_UNDEFINED,
+    VISUAL_VALLEY,
+    VISUAL_VENDOR,
+    VISUAL_VILLAGE,
+    VISUAL_VILLAGE_HOUSE,
+    VISUAL_WALL,
+    VISUAL_WALL_BRACE,
+    VISUAL_WALL2,
+    VISUAL_WATER,
+
+    VISUAL_TERRAIN_COUNT
+};
+
+enum WeaponCategory
+{
+    SWORD = 0,
+    LANCE = 1,
+    AXE   = 2,
+    BOW   = 3,
+    ANIMA = 4,
+    LIGHT = 5,
+    DARK  = 6,
+};
+
+enum ItemID
+{
+    NO_ITEM = -1,
+    IRON_SWORD = 0,
+    IRON_LANCE = 1,
+    IRON_AXE = 2,
+    IRON_BOW = 3,
+    FIRE = 4,
+    LIGHTNING = 5,
+    FLUX = 6,
+    VULNERARY = 7,
+    KEY = 8,
+    THUNDER = 9,
+};
+
+struct Weapon
+{
+    std::string NAME;
+    std::string CAT_NAME;
+    std::string MIN_RNK;
+    int RNKEXP;
+    ItemID ID;
+    WeaponCategory CAT;
+    int DUR;
+    int MT;
+    int WT;
+    int HIT;
+    int CRIT;
+    int MINRG;
+    int MAXRG;
+};
+
+struct Location
+{
+    int x;
+    int y;
+};
+
+struct Stats
+{
+    int HP;
+    int STR;
+    int MAG;
+    int SKL;
+    int SPD;
+    int LUC;
+    int DEF;
+    int RES;
+    int MOV;
+    int CON;
+};
+
+struct Growth
+{
+    double HP;
+    double STR;
+    double MAG;
+    double SKL;
+    double SPD;
+    double LUC;
+    double DEF;
+    double RES;
+    double MOV;
+    double CON;
+};
+
+struct Terrain
+{
+    TerrainCategory category;
+    double TRV;
+    double HEAL;
+    double AVO;
+    int DEF;
+    std::string info;
+};
+
+struct TerrainOverride
+{
+    TerrainCategory ID;
+    double TRV;
+};
+
+struct LevelExp
+{
+    int current;
+    int next;
+};
+
+enum alpharank
+{
+    E = 0,
+    D = 1,
+    C = 2,
+    B = 3,
+    A = 4,
+    S = 5,
+};
+
+struct Rank
+{
+    alpharank ID;
+    int minexp;
+    int maxexp;
+};
+
+struct WeaponLevelExp
+{
+    Rank rank;
+    int current;
+};
+
+struct EntityWeaponExp
+{
+    WeaponLevelExp Sword;
+    WeaponLevelExp Axe;
+    WeaponLevelExp Lance;
+    WeaponLevelExp Bow;
+    WeaponLevelExp Anima;
+    WeaponLevelExp Light;
+    WeaponLevelExp Dark;
+    WeaponLevelExp Staff;
+};
+
+struct ItemStack
+{
+    ItemID ID = NO_ITEM;
+    int usesRemaining = 0;
+};
+
+struct Inventory
+{
+    ItemStack slot[5];
+    int EquippedSlot;
+};
+
+struct WeaponAffinity
+{
+   std::vector<WeaponCategory> UsableWeapons;
+};
+
+struct Entity
+{
+    std::string name;
+    WeaponAffinity type;
+    int Lvl;
+    LevelExp Exp;
+    Location location;
+    Stats stats;
+    Inventory inventory;
+    EntityWeaponExp WExp;
+    Growth growth;
+    std::vector<TerrainOverride> terrain;
+};
+
+struct CombatInfo
+{
+    int HP_A;
+    int MT_A;
+    int HIT_A;
+    int CRIT_A;
+    int HP_B;
+    int MT_B;
+    int HIT_B;
+    int CRIT_B;
+};

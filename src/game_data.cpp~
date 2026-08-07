@@ -1,0 +1,125 @@
+#include <vector>
+#include "game_data.h"
+
+const std::vector<Weapon> Armory=
+{
+    // NAME, CAT_NAME, MIN_RNK, RNKEXP, ID, CAT, DUR, MT, WT, HIT, CRIT, MINRG, MAXRG
+
+    {"Iron Sword", "Sword", "E",  1, IRON_SWORD, SWORD, 46, 5,  5, 90, 0, 1, 1},
+    {"Iron Lance", "Lance", "E",  1, IRON_LANCE, LANCE, 45, 7,  8, 80, 0, 1, 1},
+    {"Iron Axe",   "Axe",   "E",  1, IRON_AXE, AXE,   45, 8, 10, 75, 0, 1, 1},
+    {"Iron Bow",   "Bow",   "E",  1, IRON_BOW, BOW,   45, 6,  5, 85, 0, 2, 2},
+
+    {"Fire",       "Anima", "E",  1, FIRE, ANIMA, 40, 5,  4, 90, 0, 1, 2},
+    {"Lightning",  "Light", "E",  1, LIGHTNING, LIGHT, 35, 4,  6, 95, 5, 1, 2},
+    {"Flux",       "Dark",  "D", 31, FLUX, DARK,  45, 7,  8, 80, 0, 1, 2},
+
+    {"Thunder",    "Anima", "D", 31, THUNDER, ANIMA, 35, 8,  6, 80, 5, 1, 2},
+};
+
+// category, TRV, HEAL, AVO, DEF, info
+const std::vector<Terrain> base_topo =
+{
+    {PLAINS,         1.00, 0.00, 0.00, 0, "Plains"},
+    {ROAD,           1.00, 0.00, 0.00, 0, "Road"},
+    {WOODS,          0.50, 0.00, 0.20, 1, "Woods / Forest"},
+    {DESERT,         0.50, 0.00, 0.05, 0, "Desert"},
+    {MOUNTAIN,       0.25, 0.00, 0.30, 1, "Mountain"},
+    {RIVER,          0.20, 0.00, 0.00, 0, "River"},
+    {BRIDGE,         1.00, 0.00, 0.00, 0, "Bridge"},
+    {FORT,           0.50, 0.20, 0.20, 2, "Fort"},
+    {WALL,           0.00, 0.00, 0.20, 1, "Wall"},
+    {VILLAGE,        1.00, 0.00, 0.10, 0, "Village"},
+    {FLOOR,          1.00, 0.00, 0.00, 0, "Indoor floor"},
+
+    {NONE,           0.00, 0.00, 0.00, 0, "No terrain / void"},
+    {VILLAGE_CLOSED, 0.00, 0.00, 0.10, 0, "Closed village"},
+    {HOUSE,          1.00, 0.00, 0.10, 0, "House"},
+    {ARMORY,         1.00, 0.00, 0.10, 0, "Armory"},
+    {VENDOR,         1.00, 0.00, 0.10, 0, "Vendor"},
+    {ARENA,          1.00, 0.00, 0.10, 0, "Arena"},
+    {CHAMBER,        1.00, 0.00, 0.10, 0, "Chamber"},
+    {CASTLE_GATE,    1.00, 0.10, 0.20, 3, "Castle gate"},
+    {THICKET,        0.00, 0.00, 0.30, 2, "Thicket"},
+    {SAND,           1.00, 0.00, 0.05, 0, "Sand"},
+    {PEAK,           0.00, 0.00, 0.40, 2, "Peak"},
+    {BRIDGE_14,      0.00, 0.00, 0.00, 0, "Special bridge"},
+    {SEA,            0.00, 0.00, 0.10, 0, "Sea"},
+    {LAKE,           0.00, 0.00, 0.10, 0, "Lake"},
+    {MAGIC_FLOOR,    1.00, 0.00, 0.00, 0, "Magic floor"},
+    {FENCE,          0.00, 0.00, 0.20, 1, "Fence"},
+    {DAMAGED_WALL,   0.00, 0.00, 0.00, 0, "Destructible wall"},
+    {RUBBLE,         1.00, 0.00, 0.05, 0, "Rubble"},
+    {PILLAR,         0.50, 0.00, 0.20, 1, "Pillar"},
+    {DOOR,           0.00, 0.00, 0.00, 0, "Locked door"},
+    {THRONE,         1.00, 0.10, 0.30, 3, "Throne"},
+    {CHEST_EMPTY,    1.00, 0.00, 0.00, 0, "Opened chest"},
+    {CHEST_FULL,     1.00, 0.00, 0.00, 0, "Treasure chest"},
+    {ROOF,           0.00, 0.00, 0.00, 0, "Roof"},
+    {GATE,           1.00, 0.10, 0.30, 3, "Gate"},
+    {CHURCH,         1.00, 0.10, 0.15, 0, "Church"},
+    {RUINS,          0.50, 0.00, 0.00, 0, "Ruins"},
+    {CLIFF,          0.00, 0.00, 0.00, 0, "Cliff"},
+    {BALLISTA,       0.50, 0.00, 0.05, 0, "Ballista emplacement"},
+    {LONGBALLISTA,   0.50, 0.00, 0.05, 0, "Long ballista emplacement"},
+    {KILLER_BALLISTA,0.50, 0.00, 0.05, 0, "Killer ballista emplacement"},
+    {SHIP,           1.00, 0.00, 0.00, 0, "Ship"},
+    {SHIP_WRECK,     1.00, 0.00, 0.00, 0, "Ship wreck"},
+    {SPECIAL_2C,     0.00, 0.00, 0.00, 0, "FE8 special terrain 0x2C"},
+    {STAIRS,         1.00, 0.00, 0.00, 0, "Stairs"},
+    {SPECIAL_2E,     0.00, 0.00, 0.00, 0, "FE8 special terrain 0x2E"},
+    {GLACIER,        1.00, 0.00, 0.00, 0, "Glacier"},
+    {ARENA_30,       1.00, 0.00, 0.00, 0, "Arena variant"},
+    {VALLEY,         0.00, 0.00, 0.20, 1, "Valley"},
+    {FENCE_32,       0.00, 0.00, 0.20, 1, "Fence variant"},
+    {SNAG,           0.00, 0.00, 0.00, 0, "Destructible snag"},
+    {BRIDGE_SNAG,    1.00, 0.00, 0.00, 0, "Destroyed bridge"},
+    {SKY,            0.00, 0.00, 0.00, 0, "Sky"},
+    {DEEPS,          0.00, 0.00, 0.00, 0, "Deep water"},
+    {RUINS_VILLAGE,  1.00, 0.00, 0.10, 0, "Ruined village"},
+    {INN,            1.00, 0.00, 0.10, 0, "Inn"},
+    {BARREL,         0.00, 0.00, 0.00, 0, "Barrel"},
+    {BONE,           0.00, 0.00, 0.00, 0, "Bone"},
+    {DARK_TERRAIN,   0.00, 0.00, 0.00, 0, "Darkness"},
+    {WATER,          0.00, 0.00, 0.10, 0, "Water"},
+    {GUNNELS,        0.00, 0.00, 0.00, 0, "Ship gunnels"},
+    {DECK,           1.00, 0.00, 0.00, 0, "Ship deck"},
+    {BRACE,          0.00, 0.00, 0.20, 1, "Ship brace"},
+    {MAST,           0.00, 0.00, 0.20, 1, "Ship mast"},
+};
+
+const std::vector<Rank> TierInfo=
+{
+    // ID, minexp, maxexp
+
+    {E,   1,  30},
+    {D,  31,  70},
+    {C,  71, 120},
+    {B, 121, 180},
+    {A, 181, 250},
+    {S, 251, 251},
+};
+
+Weapon get_weapon(const std::vector<Weapon>& Armory, int id)
+{
+    return findbyid(Armory, id);
+}
+
+void get_next_rank(WeaponLevelExp& x)
+{
+    if (x.rank.ID != S)
+    {
+	if (x.current >= x.rank.maxexp)
+	{
+	    x.rank.ID = static_cast<alpharank>(x.rank.ID+1);
+	    x.current = x.current - x.rank.maxexp;
+	    Rank new_rank_stats = findbyid(TierInfo, x.rank.ID);
+	    x.rank = new_rank_stats;
+	    if (x.current >= x.rank.maxexp)
+	    {
+		get_next_rank(x);
+	    }
+	}
+    }
+}
+
