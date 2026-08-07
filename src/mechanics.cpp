@@ -259,7 +259,18 @@ void Heal(Entity& A, const int invslot)
     {
 	throw std::invalid_argument("Use Heal(Entity& Caster, Entity& A, const int id) instead");
     }
-    A.stats.HP += elixir.HEALHP;
+    if  (elixir.HEALHP == -1)
+    {
+	A.stats.HP = A.ogstats.HP;
+    }
+    else
+    {
+	A.stats.HP += elixir.HEALHP;
+	if (A.stats.HP > A.ogstats.HP)
+	{
+	    A.stats.HP = A.ogstats.HP;
+	}
+    }
     A.inventory.slot[invslot].usesRemaining --;
 }
 
@@ -271,5 +282,14 @@ void Heal(Entity& Caster, Entity& A, const int id)
 	Heal(A, id);
     }
     A.stats.HP += staff.HEALHP;
+    if (A.stats.HP > A.ogstats.HP)
+    {
+	A.stats.HP = A.ogstats.HP;
+    }
     Caster.inventory.slot[Caster.inventory.EquippedSlot].usesRemaining --;
+    if (Caster.inventory.slot[Caster.inventory.EquippedSlot].usesRemaining == 0)
+    {
+	Caster.inventory.slot[Caster.inventory.EquippedSlot].ID = NO_ITEM;
+	Caster.inventory.slot[Caster.inventory.EquippedSlot].usesRemaining = 0;
+    }
 }

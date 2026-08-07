@@ -7,6 +7,7 @@
 #include "game_data.h"
 #include <algorithm>
 #include <utility>
+#include <stdexcept>
 
 // n = impassable terrain tiles
 // m = passable forest tiles
@@ -198,110 +199,131 @@ class Mapmaker
     private:
 	std::vector<std::vector<int>> map;
 	std::vector<int> dimensions;
-	std::vector<std::vector<int>> current_coords;
+	std::vector<std::vector<int>> occupancy;
 	std::vector<std::vector<int>> generate_map(const std::vector<int>& dimensions)
 	{
 	    std::vector<std::vector<int>> out(dimensions[0], std::vector<int>(dimensions[1], 0));
 	    return out;
 	}
 
-    public:
-	Mapmaker(const std::vector<int>& dimensions, int units) : map(generate_map(dimensions)), dimensions(dimensions), current_coords(units, std::vector<int>({0,0})) {}
+	void pathtrace(std::vector<int> current_coord, int budget, std::vector<std::vector<int>> state)
+	{
+	    for (std::vector<int> i : std::vector<std::vector<int>>({{0, 1},{0, -1},{1, 0},{-1, 0}}))
+	    {
+		std::vector<int> next_coord =
+		{
+		    current_coord[0] += i[0],
+		    current_coord[1] += i[1],
+		};
 
+		int x = next_coord[0];
+		int y = next_coord[1];
+		
+		if (x < 0 || y < 0 || x >= state[0].size() || y >= state.size() || !findbyid(base_topo, map[y][x]).PASSTHROUGH)              // Obstacle
+		{
+		    continue;
+		}
+		int tiletype = map[y][x];
+		Terrain terraininfo = findbyid(base_topo, tiletype);
+		int penalty = terraininfo.TRV;
+		int rem_budget = budget - penalty;                              // Terrain manipulation
+		if (rem_budget < 0)
+		{
+		    continue;
+		}
+		else if (state[y][x] < rem_budget)
+		{
+		    state[y][x] = rem_budget;
+		}
+		else
+		{
+		    continue;
+		}
+		pathtrace(next_coord, rem_budget, state);
+	    }
+	}
+	void move(Entity& unit, std::vector<int>& coord, std::vector<std::vector<int>>& out)
+	{
+	    std::vector<std::vector<int>> state = unit.path;
+	    if (state[coord[1]][coord[0]] == -1)
+	    {
+		throw std::invalid_argument("Unreachable tile");
+	    }
+	    for (std::vector<int> i : std::vector<std::vector<int>>({{0, 1},{0, -1},{1, 0},{-1, 0}}))
+	    {
+		std::vector<int> next_coord =
+		{
+		    coord[0] + i[0],
+		    coord[1] + i[1],
+		};
+		
+		int old_x = coord[0];
+		int old_y = coord[1];
+		int new_x = next_coord[0];
+		int new_y = next_coord[1];
+
+		if (new_x >= map[0].size() || new_y >= map.size() || new_x < 0 || new_y < 0)
+		{
+		    continue;
+		}
+		
+		if (state[new_y][new_x] != state[old_y][old_x]+findbyid(base_topo, map[old_y][old_x]).TRV)
+		{
+		    continue;
+		}
+		out.push_back(next_coord);
+		move(unit, next_coord, out);
+		return;
+	    }
+	}
+
+    public:
+	Mapmaker(const std::vector<int>& dimensions, int units) : map(generate_map(dimensions)), dimensions(dimensions) {}
 	std::vector<std::vector<int>> get_map()
 	{
 	    return map;
 	}
-	
-	void pointer(const std::vector<int>& coords, int pointer_id)
+
+	void place_unit(const std::vector<int>& coords, Entity& unit)
 	{
-	    map[coords[0]][coords[1]]++;
-	    current_coords[pointer_id] = {coords[0], coords[1]};
+	    if (occupancy[coords[0]][coords[1]] == 0)
+	    {
+		occupancy[coords[0]][coords[1]] += unit.entity_id;
+		unit.location = coords;
+		unit.path = generate_map(dimensions);
+	    }
+	    else
+	    {
+		throw std::invalid_argument("Unit already placed here!");
+	    }
 	}
 
-	void pathtrace(const std::vector<int>& start, std::vector<std::vector<int>>& out, int MOV, std::vector<std::vector<int>>& state, std::vector<std::vector<int>>& map)
+	void path_trace(Entity& unit)
 	{
-	    std::vector<int> current_coord = start;
-	    int budget = MOV;
-	    for (std::vector<int> i : std::vector<std::vector<int>>({{0, 1},{0, -1},{1, 0},{-1, 0}}))
+	    for (std::vector<int> row : unit.path)
 	    {
-		current_coord[0] += i[0];
-		current_coord[1] += i[1];
-		if (current_coord[0] < 0 || current_coord[1] < 0 || current_coord[0] >= state[0].size() || current_coord[1] >= state.size() || !findbyid(base_topo, map[current_coord[1]][current_coord[0]]).PASSTHROUGH)              // Obstacle
-		{
-		    current_coord = start;
-		    budget = MOV;
-		    continue;
-		}
-		int tiletype = map[current_coord[1]][current_coord[0]];
-		Terrain terraininfo = findbyid(base_topo, tiletype);
-		int penalty = terraininfo.TRV;
-		budget -= penalty;                              // Terrain manipulation
-		if (!contains(out,current_coord))
-		{
-		    out.push_back(current_coord);
-		    if (budget >= 0)
-		    {
-			state[current_coord[1]][current_coord[0]] = budget;
-		    }
-		    else
-		    {
-			state[current_coord[1]][current_coord[0]] = 0;
-		    }
-		}
-		else
-		{
-		    if (state[current_coord[1]][current_coord[0]] < budget)
-		    {
-			if (budget >= 0)
-			{
-			    state[current_coord[1]][current_coord[0]] = budget;
-			}
-			else
-			{
-			    state[current_coord[1]][current_coord[0]] = 0;
-			}
-		    }
-		    else
-		    {
-			current_coord = start;
-			budget = MOV;
-			continue;
-		    }
-		}
-		if (budget <= 0)
-		{
-		    current_coord = start;
-		    budget = MOV;
-		    continue;
-		}
-		pathtrace(current_coord, out, budget, state, map);
-		current_coord = start;
-		budget = MOV;
+		std::fill(row.begin(), row.end(), -1);
 	    }
+
+	    unit.path[unit.location[1]][unit.location[0]] = unit.stats.MOV;
+
+	    pathtrace(unit.location, unit.stats.MOV, unit.path);
+	}
+
+	void move(Entity& unit, std::vector<int>& coord)
+	{
+	    std::vector<std::vector<int>> out;
+	    out.push_back(coord);
+	    move(unit, coord, out);
+	    for (int i=static_cast<int>(out.size())-1; i >= 0; i--)
+	    {
+		unit.location = out[i];
+	    }
+	    path_trace(unit);
 	}
     };
     
 int main()
 {
-    std::vector<int> coord = {6, 6};
-    std::vector<int> prev;
-    std::vector<std::vector<int>> out;
-    out.push_back(coord);
-    int MOV = 5;
-    std::vector<std::vector<int>> state = generate_map({12,12});
-    std::vector<std::vector<int>> intmap = state;
-    add_random_obstacles(intmap, 10, 40);
-    state[coord[1]][coord[0]] += MOV;
-    pathtrace(coord, out, MOV, state, intmap);
-    std::cout << '\n';
-    std::cout << '\n';
-    print(intmap);
-    std::cout << '\n';
-    std::cout << '\n';
-    print(state);
-    std::cout << '\n';
-    std::cout << '\n';
-    plot_points(out, 0, 15, 0, 15, coord);
     return 0;
 }

@@ -122,12 +122,6 @@ struct Healer
     int HEALHP;
 };
 
-struct Location
-{
-    int x;
-    int y;
-};
-
 struct Stats
 {
     int HP;
@@ -236,10 +230,12 @@ struct Guild;
 struct Entity
 {
     std::string name;
+    int entity_id;
+    std::vector<int> location;
+    std::vector<std::vector<int>> path;
     WeaponAffinity type;
     int Lvl;
     LevelExp Exp;
-    Location location;
     Stats ogstats;
     Stats stats;
     Inventory inventory;
@@ -253,6 +249,7 @@ struct Entity
 struct Guild
 {
     std::string name;
+    int guild_id;
     std::vector<Entity*> members;
     void add(Entity& unit)
     {
