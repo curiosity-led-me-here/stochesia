@@ -1,9 +1,18 @@
 __pycache__/
 
+.gitignore
 FE8-files/
 fe_map_builder_api/
 src/*~
 src/.#*
+src/#*
 include/*~
 include/.#*
+include/#*
 output/
+/main
+/pathfinder
+/output
+
+*.o
+*.out
