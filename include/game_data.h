@@ -30,3 +30,4 @@ extern Weapon get_weapon(const std::vector<Weapon>& Armory, int id);
 extern Healer get_heal(const std::vector<Healer> HealingData, int id);
 
 extern void get_next_rank(WeaponLevelExp& x);
+

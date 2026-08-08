@@ -217,7 +217,7 @@ struct ItemStack
 struct Inventory
 {
     ItemStack slot[5];
-    int EquippedSlot;
+    int EquippedSlot = -1;
 };
 
 struct WeaponAffinity
@@ -274,4 +274,5 @@ struct CombatInfo
     int HIT;
     bool DB;
     int CRIT;
+    int WTA;
 };

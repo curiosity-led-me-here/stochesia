@@ -5,12 +5,12 @@
 #include <string>
 #include <stdexcept>
 #include <random>
+#include "mechanics_ascii.h"
 
-int seed = 42;
-
+long seed = 1289428362;
+std::mt19937 generator(seed);
 bool random_binary(double probability, int seed)
 {
-    static std::mt19937 generator(seed);
     std::bernoulli_distribution distribution(probability);
     return distribution(generator);
 }
@@ -18,17 +18,23 @@ bool random_binary(double probability, int seed)
 
 std::vector<std::vector<int>> WeaponTriangle
 {
-     //S L Ax B An L D  <--- Entity A
-     {0, 1, -1, 0, 0, 0, 0},
-     {-1, 0, 1, 0, 0, 0, 0},
-     {1, -1, 0, 0, 0, 0, 0},
-     {0, 0, 0, 0, 0, -1, 1},
-     {0, 0, 0, 0, 1, 0, -1},
-     {0, 0, 0, 0, -1, 1, 0},
+    // S   L   Ax  B   An  Li  D   St
+    { 0,  1, -1,  0,  0,  0,  0,  0 }, // SWORD
+    {-1,  0,  1,  0,  0,  0,  0,  0 }, // LANCE
+    { 1, -1,  0,  0,  0,  0,  0,  0 }, // AXE
+    { 0,  0,  0,  0,  0,  0,  0,  0 }, // BOW
+    { 0,  0,  0,  0,  0, -1,  1,  0 }, // ANIMA
+    { 0,  0,  0,  0,  1,  0, -1,  0 }, // LIGHT
+    { 0,  0,  0,  0, -1,  1,  0,  0 }, // DARK
+    { 0,  0,  0,  0,  0,  0,  0,  0 }, // STAFF
 };
 
 std::vector<int> WeaponTriangleAdv(const Weapon& A, const Weapon& B)
 {
+    if (A.CAT == -1 ||  B.CAT == -1)
+    {
+	return {0, 0};
+    }
     int BONUS_MT=1; int BONUS_HIT=15;
     int Bonus =  WeaponTriangle[A.CAT][B.CAT];
     return {Bonus*BONUS_MT, Bonus*BONUS_HIT};
@@ -62,6 +68,7 @@ CombatInfo info(const Entity& A,const Entity& B)
 	Weapon Aw = get_weapon(Armory, A.inventory.EquippedSlot);
 	Weapon Bw = get_weapon(Armory, B.inventory.EquippedSlot);
 	std::vector<int> WTA = WeaponTriangleAdv(Aw, Bw);
+	/*
 	if (WTA[0] > 0)
 	{
 	    std::cout << "Weapon triangle advantage to " << A.name;
@@ -70,10 +77,7 @@ CombatInfo info(const Entity& A,const Entity& B)
 	{
 	    std::cout << "Weapon triangle advantage to " << B.name;
 	}
-	else
-	{
-	    std::cout << "No weapon triangle advantage!";
-	}
+	*/
 	int AVD = (As.SPD * 2) + As.LUC; // Bonus to add later
 	int HIT = (As.SKL * 2) + (0.5 * As.LUC) - AVD + Aw.HIT + WTA[1]; // Bonus to add later
 	// Double mechanic to add
@@ -88,22 +92,19 @@ CombatInfo info(const Entity& A,const Entity& B)
 	{
 	    DB = true;
 	}
-
-	if (HIT > 100)
-	{
-	    HIT = 100;
-	}
-	
-	if (CRIT > 100)
-	{
-	    CRIT = 100;
-	}
-	return {As.HP, MT, HIT, DB, CRIT};
+	HIT = std::clamp(HIT, 0, 100);
+	CRIT = std::clamp(CRIT, 0, 100);
+	return {As.HP, MT, HIT, DB, CRIT, WTA[0]};
     }
 }
 
 void death(Entity& X)
 {
+    if (X.group == nullptr)
+    {
+        throw std::runtime_error("death(): entity has no guild");
+    }
+
     X.group->remove(X);
 }
 
@@ -119,31 +120,58 @@ std::vector<CombatInfo> interact(const Entity& A,const Entity& B)
 
 void attack_sequence(Entity& A, Entity& B, CombatInfo& A_perf, CombatInfo& B_perf)
 {
-    if (random_binary(A_perf.HIT, seed))
+    if (random_binary(A_perf.HIT / 100.0, seed))
     {
-	if (random_binary(A_perf.CRIT, seed))
+	if (random_binary(A_perf.CRIT / 100.0, seed))
 	{
-	    std::cout << "Critical hit!" << "HP reduced from " << B.stats.HP;
+	    std::cout << A.name << "'s turn.....";
+	    std::cout << "Critical hit! ";
 	    // (1) B Hp reduced (2) A weapon dur -1
+	    int temp = B.stats.HP;
 	    B.stats.HP -= (A_perf.MT*3);
-	    std::cout << " to " << B.stats.HP;
+	    if (B.stats.HP < 0)
+	    {
+		B.stats.HP = 0;
+	    }
+	    if (B.stats.HP != temp)
+	    {
+		std::cout << "HP reduced from " << temp << " to " << B.stats.HP << "\n";
+	    }
+	    else
+	    {
+		std::cout << "No damage!" << "\n";
+	    }
 	    A.inventory.slot[A.inventory.EquippedSlot].usesRemaining --;
 	    // exp calculation pending.
 	}
 	else
 	{
 	    // normal hit
-	    std::cout << "Attack hit!" << "HP reduced from " << B.stats.HP;
+	    std::cout << A.name << "'s turn.....";
+	    std::cout << "Attack hit! ";
 	    // (1) B Hp reduced (2) A weapon dur -1
+	    int temp = B.stats.HP;
 	    B.stats.HP -= (A_perf.MT);
-	    std::cout << " to " << B.stats.HP;
+	    if (B.stats.HP < 0)
+	    {
+		B.stats.HP = 0;
+	    }
+	    if (B.stats.HP != temp)
+	    {
+		std::cout << "HP reduced from " << temp << " to " << B.stats.HP << "\n";
+	    }
+	    else
+	    {
+		std::cout << "No damage!" << "\n";
+	    }
 	    A.inventory.slot[A.inventory.EquippedSlot].usesRemaining --;
 	}
     }
     else
     {
 	// miss
-	std::cout << "Attack miss!";
+	std::cout << A.name << "'s turn.....";
+	std::cout << "Attack miss!" << "\n";
 	A.inventory.slot[A.inventory.EquippedSlot].usesRemaining --;
     }
 }
@@ -231,7 +259,7 @@ void battle(Entity& A, Entity& B)
 {
     std::vector<CombatInfo> out = interact(A, B);
     CombatInfo A_perf = out[0]; CombatInfo B_perf = out[1];
-    if (A_perf.DB == B_perf.DB)
+    if (A_perf.DB  &&  B_perf.DB)
     {
 	throw std::invalid_argument("Both units cannot double! Some flaw in the logic code.");
     }
@@ -250,6 +278,8 @@ void battle(Entity& A, Entity& B)
     // if(doubles) --> if(hits) --> if(crits) --> (B.Hp - (A.MT*(1 || 3)*(1 || 2))) && (Aw.DUR - (1 || 2)) && (A.Hp - (B.MT*(1 || 3)*(1 || 2))) && (Bw.DUR - (1 || 2))
     
 }
+
+/*
 
 void Heal(Entity& A, const int invslot)
 {
@@ -293,3 +323,5 @@ void Heal(Entity& Caster, Entity& A, const int id)
 	Caster.inventory.slot[Caster.inventory.EquippedSlot].usesRemaining = 0;
     }
 }
+
+*/

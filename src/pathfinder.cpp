@@ -7,323 +7,155 @@
 #include "game_data.h"
 #include <algorithm>
 #include <utility>
-#include <stdexcept>
+#include "pathfinder.h"
 
-// n = impassable terrain tiles
-// m = passable forest tiles
-void add_random_obstacles(
-    std::vector<std::vector<int>>& map,
-    int n,
-    int m
-)
+void plot_points(const std::vector<std::vector<int>>& terrain_map, int min_x, int max_x, int min_y, int max_y, const std::vector<int>& start)
 {
-    if (map.empty() || n < 0 || m < 0)
-        return;
-
-    std::vector<int> obstacle_ids;
-    std::vector<std::pair<int, int>> open_tiles; // {x, y}
-
-    // Build a list of all impassable terrain IDs.
-    for (const Terrain& terrain : base_topo)
+    for (int y = std::min(max_y, static_cast<int>(terrain_map.size()) - 1); y >= std::max(min_y, 0); --y)
     {
-        if (!terrain.PASSTHROUGH && terrain.ID != 11) // 11 = NONE / void
+        for (int x = std::max(min_x, 0); x <= std::min(max_x, static_cast<int>(terrain_map[0].size()) - 1); ++x)
         {
-            obstacle_ids.push_back(terrain.ID);
+            if (x == start[0] && y == start[1]) std::cout << "S ";
+            else if (!findbyid(base_topo, terrain_map[y][x]).PASSTHROUGH) std::cout << "# ";
+            else if (terrain_map[y][x] == 2) std::cout << "W ";
+            else std::cout << ". ";
         }
-    }
-
-    // Find all currently passable cells.
-    for (int y = 0; y < static_cast<int>(map.size()); y++)
-    {
-        for (int x = 0; x < static_cast<int>(map[y].size()); x++)
-        {
-            int terrain_id = map[y][x];
-
-            if (terrain_id >= 0 &&
-                terrain_id < static_cast<int>(base_topo.size()) &&
-                base_topo[terrain_id].PASSTHROUGH)
-            {
-                open_tiles.push_back({x, y});
-            }
-        }
-    }
-
-    std::random_device seed;
-    std::mt19937 rng(seed());
-
-    std::shuffle(open_tiles.begin(), open_tiles.end(), rng);
-
-    int blocker_count = std::min(n, static_cast<int>(open_tiles.size()));
-
-    std::uniform_int_distribution<int> choose_obstacle(
-        0,
-        static_cast<int>(obstacle_ids.size()) - 1
-    );
-
-    // Place blockers first.
-    for (int i = 0; i < blocker_count; i++)
-    {
-        int x = open_tiles[i].first;
-        int y = open_tiles[i].second;
-
-        map[y][x] = obstacle_ids[choose_obstacle(rng)];
-    }
-
-    // 2 = WOODS in your new integer terrain vocabulary.
-    int forest_count = std::min(
-        m,
-        static_cast<int>(open_tiles.size()) - blocker_count
-    );
-
-    for (int i = 0; i < forest_count; i++)
-    {
-        int index = blocker_count + i;
-
-        int x = open_tiles[index].first;
-        int y = open_tiles[index].second;
-
-        map[y][x] = 2;
-    }
-}
-
-
-void plot_points(
-    const std::vector<std::vector<int>>& points,
-    int min_x,
-    int max_x,
-    int min_y,
-    int max_y,
-    const std::vector<int>& start
-)
-{
-    for (int y = max_y; y >= min_y; y--)
-    {
-        for (int x = min_x; x <= max_x; x++)
-        {
-            bool point_exists = false;
-
-            for (const auto& point : points)
-            {
-                if (point[0] == x && point[1] == y)
-                {
-                    point_exists = true;
-                    break;
-                }
-            }
-
-            if (x == start[0] && y == start[1])
-            {
-                std::cout << "o ";
-            }
-            else if (point_exists)
-            {
-                std::cout << ". ";
-            }
-            else if (x == 0 && y == 0)
-            {
-                std::cout << "+ ";
-            }
-            else if (x == 0)
-            {
-                std::cout << "| ";
-            }
-            else if (y == 0)
-            {
-                std::cout << "- ";
-            }
-            else
-            {
-                std::cout << " ";
-            }
-        }
-
         std::cout << '\n';
     }
 }
 
-void print(const std::vector<int>& values)
+void plot_state(const std::vector<std::vector<int>>& state, int min_x, int max_x, int min_y, int max_y, const std::vector<int>& start)
 {
-    for (int i=0 ; i < values.size(); i++)
+    for (int y = std::min(max_y, static_cast<int>(state.size()) - 1); y >= std::max(min_y, 0); --y)
     {
-	if (i == 0)
-	{
-	    std::cout << "[";
-	}
-	std::cout << values[i];
-	if (i == values.size()-1)
-	{
-	    std::cout << "]";
-	}
-	else
-	{
-	    std::cout << ", ";	
-	}
+        for (int x = std::max(min_x, 0); x <= std::min(max_x, static_cast<int>(state[0].size()) - 1); ++x)
+        {
+            if (x == start[0] && y == start[1]) std::cout << "S ";
+            else if (state[y][x] == -1) std::cout << "- ";
+            else std::cout << state[y][x] << ' ';
+        }
+        std::cout << '\n';
     }
 }
 
-void print(const std::vector<std::vector<int>>& out)
+void plot_travel_history(const std::vector<std::vector<int>>& route, int current_index, int width, int height)
 {
-    for (int i=0; i < out[0].size(); i++)
-    {	
-	print(out[i]);
-	if (i != out[0].size()-1)
-	{
-	    std::cout << "\n";
-	}
-    }
-}
-
-
-bool contains(const std::vector<std::vector<int>>& vec, std::vector<int> element)
-{
-    return std::find(vec.begin(), vec.end(), element) != vec.end();
-}
-
-int find_query(const std::vector<std::vector<int>>& vec, std::vector<int> element)
-{
-    auto it = std::find(vec.begin(), vec.end(), element);
-
-    if (it != vec.end())
+    for (int y = height - 1; y >= 0; --y)
     {
-	int location = it - vec.begin();
-	return location;
+        for (int x = 0; x < width; ++x)
+        {
+            char marker = '-';
+            for (int i = static_cast<int>(route.size()) - 1; i > current_index; --i)
+            {
+                const std::vector<int>& from = route[i];
+                const std::vector<int>& to = route[i - 1];
+                if (x != from[0] || y != from[1]) continue;
+                if (to[0] > from[0]) marker = '>';
+                if (to[0] < from[0]) marker = '<';
+                if (to[1] > from[1]) marker = '^';
+                if (to[1] < from[1]) marker = 'v';
+            }
+            if (!route.empty() && x == route[current_index][0] && y == route[current_index][1]) marker = 'o';
+            std::cout << marker << ' ';
+        }
+        std::cout << '\n';
     }
-    else
+    std::cout << '\n';
+}
+
+
+std::vector<std::vector<int>> Mapmaker::generate_map(const std::vector<int>& dimensions)
+{
+    return std::vector<std::vector<int>>(dimensions[0], std::vector<int>(dimensions[1], 0));
+}
+
+void Mapmaker::pathtrace(std::vector<int> current_coord, int budget, std::vector<std::vector<int>>& state)
+{
+    for (std::vector<int> i : std::vector<std::vector<int>>({{0, 1}, {0, -1}, {1, 0}, {-1, 0}}))
     {
-	return -1;
+        std::vector<int> next_coord = { current_coord[0] + i[0], current_coord[1] + i[1] };
+        int x = next_coord[0];
+        int y = next_coord[1];
+        if (x < 0 || y < 0 || x >= state[0].size() || y >= state.size() || !findbyid(base_topo, map[y][x]).PASSTHROUGH || occupancy[y][x] != 0) continue;
+        int penalty = findbyid(base_topo, map[y][x]).TRV;
+        int rem_budget = budget - penalty;
+        if (rem_budget < 0) continue;
+        if (state[y][x] < rem_budget) state[y][x] = rem_budget;
+        else continue;
+        pathtrace(next_coord, rem_budget, state);
     }
 }
 
-class Mapmaker
+void Mapmaker::move(Entity& unit, std::vector<int>& coord, std::vector<std::vector<int>>& out)
 {
-    private:
-	std::vector<std::vector<int>> map;
-	std::vector<int> dimensions;
-	std::vector<std::vector<int>> occupancy;
-	std::vector<std::vector<int>> generate_map(const std::vector<int>& dimensions)
-	{
-	    std::vector<std::vector<int>> out(dimensions[0], std::vector<int>(dimensions[1], 0));
-	    return out;
-	}
+    std::vector<std::vector<int>>& state = unit.path;
+    if (state[coord[1]][coord[0]] == -1) throw std::invalid_argument("Unreachable tile");
+    for (std::vector<int> i : std::vector<std::vector<int>>({{0, 1}, {0, -1}, {1, 0}, {-1, 0}}))
+    {
+        std::vector<int> next_coord = {coord[0] + i[0], coord[1] + i[1]};
+        int old_x = coord[0], old_y = coord[1], new_x = next_coord[0], new_y = next_coord[1];
+        if (new_x >= map[0].size() || new_y >= map.size() || new_x < 0 || new_y < 0) continue;
+        if (state[new_y][new_x] != state[old_y][old_x] + findbyid(base_topo, map[old_y][old_x]).TRV) continue;
+        out.push_back(next_coord);
+        move(unit, next_coord, out);
+        return;
+    }
+}
 
-	void pathtrace(std::vector<int> current_coord, int budget, std::vector<std::vector<int>> state)
-	{
-	    for (std::vector<int> i : std::vector<std::vector<int>>({{0, 1},{0, -1},{1, 0},{-1, 0}}))
-	    {
-		std::vector<int> next_coord =
-		{
-		    current_coord[0] += i[0],
-		    current_coord[1] += i[1],
-		};
 
-		int x = next_coord[0];
-		int y = next_coord[1];
-		
-		if (x < 0 || y < 0 || x >= state[0].size() || y >= state.size() || !findbyid(base_topo, map[y][x]).PASSTHROUGH)              // Obstacle
-		{
-		    continue;
-		}
-		int tiletype = map[y][x];
-		Terrain terraininfo = findbyid(base_topo, tiletype);
-		int penalty = terraininfo.TRV;
-		int rem_budget = budget - penalty;                              // Terrain manipulation
-		if (rem_budget < 0)
-		{
-		    continue;
-		}
-		else if (state[y][x] < rem_budget)
-		{
-		    state[y][x] = rem_budget;
-		}
-		else
-		{
-		    continue;
-		}
-		pathtrace(next_coord, rem_budget, state);
-	    }
-	}
-	void move(Entity& unit, std::vector<int>& coord, std::vector<std::vector<int>>& out)
-	{
-	    std::vector<std::vector<int>> state = unit.path;
-	    if (state[coord[1]][coord[0]] == -1)
-	    {
-		throw std::invalid_argument("Unreachable tile");
-	    }
-	    for (std::vector<int> i : std::vector<std::vector<int>>({{0, 1},{0, -1},{1, 0},{-1, 0}}))
-	    {
-		std::vector<int> next_coord =
-		{
-		    coord[0] + i[0],
-		    coord[1] + i[1],
-		};
-		
-		int old_x = coord[0];
-		int old_y = coord[1];
-		int new_x = next_coord[0];
-		int new_y = next_coord[1];
+Mapmaker::Mapmaker(const std::vector<int>& dimensions, int units) : map(generate_map(dimensions)), dimensions(dimensions), occupancy(generate_map(dimensions)) {}
+std::vector<std::vector<int>> Mapmaker::get_generate() { return generate_map(dimensions); }
+std::vector<std::vector<int>> Mapmaker::get_map() { return map; }
 
-		if (new_x >= map[0].size() || new_y >= map.size() || new_x < 0 || new_y < 0)
-		{
-		    continue;
-		}
-		
-		if (state[new_y][new_x] != state[old_y][old_x]+findbyid(base_topo, map[old_y][old_x]).TRV)
-		{
-		    continue;
-		}
-		out.push_back(next_coord);
-		move(unit, next_coord, out);
-		return;
-	    }
-	}
-
-    public:
-	Mapmaker(const std::vector<int>& dimensions, int units) : map(generate_map(dimensions)), dimensions(dimensions) {}
-	std::vector<std::vector<int>> get_map()
-	{
-	    return map;
-	}
-
-	void place_unit(const std::vector<int>& coords, Entity& unit)
-	{
-	    if (occupancy[coords[0]][coords[1]] == 0)
-	    {
-		occupancy[coords[0]][coords[1]] += unit.entity_id;
-		unit.location = coords;
-		unit.path = generate_map(dimensions);
-	    }
-	    else
-	    {
-		throw std::invalid_argument("Unit already placed here!");
-	    }
-	}
-
-	void path_trace(Entity& unit)
-	{
-	    for (std::vector<int> row : unit.path)
-	    {
-		std::fill(row.begin(), row.end(), -1);
-	    }
-
-	    unit.path[unit.location[1]][unit.location[0]] = unit.stats.MOV;
-
-	    pathtrace(unit.location, unit.stats.MOV, unit.path);
-	}
-
-	void move(Entity& unit, std::vector<int>& coord)
-	{
-	    std::vector<std::vector<int>> out;
-	    out.push_back(coord);
-	    move(unit, coord, out);
-	    for (int i=static_cast<int>(out.size())-1; i >= 0; i--)
-	    {
-		unit.location = out[i];
-	    }
-	    path_trace(unit);
-	}
-    };
-    
-int main()
+void Mapmaker::place_unit(Entity& unit)
 {
-    return 0;
+    std::vector<int> coords = unit.location;
+    if (occupancy[coords[1]][coords[0]] == 0)
+    {
+        occupancy[coords[1]][coords[0]] = unit.entity_id;
+        unit.location = coords;
+        unit.path = generate_map(dimensions);
+    }
+    else throw std::invalid_argument("Unit already placed here!");
+}
+
+void Mapmaker::add_random_obstacles(int n, int m)
+{
+    std::vector<int> obstacle_ids;
+    for (const Terrain& terrain : base_topo) if (!terrain.PASSTHROUGH) obstacle_ids.push_back(terrain.ID);
+    std::random_device rd;
+    std::mt19937 rng(rd());
+    std::uniform_int_distribution<int> x_dist(0, static_cast<int>(map[0].size()) - 1);
+    std::uniform_int_distribution<int> y_dist(0, static_cast<int>(map.size()) - 1);
+    std::uniform_int_distribution<int> obstacle_dist(0, static_cast<int>(obstacle_ids.size()) - 1);
+    int placed = 0;
+    while (placed < n)
+    {
+        int x = x_dist(rng), y = y_dist(rng);
+        if (map[y][x] == 0) { map[y][x] = obstacle_ids[obstacle_dist(rng)]; ++placed; }
+    }
+    placed = 0;
+    while (placed < m)
+    {
+        int x = x_dist(rng), y = y_dist(rng);
+        if (map[y][x] == 0) { map[y][x] = 2; ++placed; }
+    }
+}
+
+void Mapmaker::path_trace(Entity& unit)
+{
+    for (std::vector<int>& row : unit.path) std::fill(row.begin(), row.end(), -1);
+    unit.path[unit.location[1]][unit.location[0]] = unit.stats.MOV;
+    pathtrace(unit.location, unit.stats.MOV, unit.path);
+}
+
+void Mapmaker::move(Entity& unit, std::vector<int> delta_coord)
+{
+    std::vector<int> coord = {unit.location[0]+delta_coord[0], unit.location[1]+delta_coord[1]};
+    std::vector<std::vector<int>> out;
+    out.push_back(coord);
+    move(unit, coord, out);
+    for (int i = static_cast<int>(out.size()) - 1; i >= 0; --i) unit.location = out[i];
+    plot_travel_history(out, 0, static_cast<int>(map[0].size()), static_cast<int>(map.size()));
+    path_trace(unit);
 }
