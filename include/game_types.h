@@ -2,7 +2,7 @@
 #include <vector>
 #include <string>
 #include <algorithm>
-
+#include <cassert>
 
 // IDs 65–116 select an exact visual group in fe_map_builder. They are for the
 // renderer only: do not index base_topo with them. The gameplay terrain beneath
@@ -233,6 +233,7 @@ struct Entity
     int entity_id;
     std::vector<int> location;
     std::vector<std::vector<int>> path;
+    std::vector<std::vector<int>> attack_range;
     WeaponAffinity type;
     int Lvl;
     LevelExp Exp;
@@ -249,7 +250,7 @@ struct Entity
 struct Guild
 {
     std::string name;
-    int guild_id;
+    int guild_id = -1; // Guild_ID can never be zero
     std::vector<Entity*> members;
     void add(Entity& unit)
     {
