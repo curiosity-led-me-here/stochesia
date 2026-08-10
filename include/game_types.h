@@ -3,6 +3,7 @@
 #include <string>
 #include <algorithm>
 #include <cassert>
+#include <unordered_map>
 
 // IDs 65–116 select an exact visual group in fe_map_builder. They are for the
 // renderer only: do not index base_topo with them. The gameplay terrain beneath
@@ -229,6 +230,8 @@ struct Guild;
 
 struct Entity
 {
+    bool alive=true;
+    bool turn=true;
     std::string name;
     int entity_id;
     std::vector<int> location;
@@ -245,7 +248,6 @@ struct Entity
     std::vector<TerrainOverride> terrain;
     Guild* group = nullptr;
 };
-
 
 struct Guild
 {
@@ -276,4 +278,10 @@ struct CombatInfo
     bool DB;
     int CRIT;
     int WTA;
+};
+
+struct avl_for_atk
+{
+    std::vector<int> coords;
+    Weapon weapon;
 };

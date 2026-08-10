@@ -5,26 +5,11 @@
 #include "game_data.h"
 #include "mechanics_ascii.h"
 #include "mechanics.h"
+#include <stdexcept>
+#include <cassert>
+#include "maps.h"
 
 
-
-
-class Env
-{
-    private:
-	Mapmaker map;
-	std::vector<int> entity_idxs;
-	std::vector<std::vector<int>> coords;
-    public:
-	Env(Mapmaker map, std::vector<int> entity_idxs, std::vector<std::vector<int>> coords;) : map(map), entity_idxs(entity_idxs) {};
-	void set_board()
-	{
-	    for (int i=0; i < entity_idxs.size(); i++)
-	    {
-		
-	    }
-	}
-};
 
 int main()
 {

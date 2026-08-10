@@ -106,6 +106,7 @@ void death(Entity& X)
     }
 
     X.group->remove(X);
+    X.alive = false;
 }
 
 std::vector<CombatInfo> interact(const Entity& A,const Entity& B)

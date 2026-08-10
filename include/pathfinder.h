@@ -8,12 +8,8 @@
 #include "game_data.h"
 #include <algorithm>
 #include <utility>
-
-extern void plot_points(const std::vector<std::vector<int>>& terrain_map, int min_x, int max_x, int min_y, int max_y, const std::vector<int>& start);
-
-extern void plot_state(const std::vector<std::vector<int>>& state, int min_x, int max_x, int min_y, int max_y, const std::vector<int>& start);
-
-extern void plot_travel_history(const std::vector<std::vector<int>>& route, int current_index, int width, int height);
+#include "maps.h"
+#include "entity_registry.h"
 
 extern std::vector<std::vector<int>> select_helper(std::vector<int> coord, std::vector<int> location);
 
@@ -28,6 +24,10 @@ private:
     std::vector<std::vector<int>> occupancy;
     std::vector<std::vector<int>> guilds;
     std::vector<std::vector<int>> generate_map(const std::vector<int>& dimensions);
+    std::vector<std::vector<int>> load_map(const maps::TerrainMap& recipe);
+    std::vector<int>& get_dimensions();
+    std::vector<std::vector<int>>& get_occ();
+    std::vector<std::vector<int>>& get_guilds();
     
     void pathtrace(
         std::vector<int> current_coord,
@@ -41,13 +41,17 @@ private:
         std::vector<std::vector<int>>& out);
 
 public:
-    Mapmaker(const std::vector<int>& dimensions, int units);
+    Mapmaker(const std::vector<int>& dimensions);
+    Mapmaker(maps::TerrainMap);
     std::vector<std::vector<int>> get_generate();
     std::vector<std::vector<int>> get_map();
     void place_unit(Entity& unit);
     void add_random_obstacles(int n, int m);
     void path_trace(Entity& unit);
+    std::vector<std::vector<int>> consider_occupancy(const Entity& unit);
+    std::vector<avl_for_atk> prompt_attack(Entity& unit);
     void move(Entity& unit, std::vector<int> coord);
+    void plot_with_units(Registry& registry);
     std::vector<std::vector<int>> attack_range(const Entity& unit, const Weapon& weapon);
     void attack_range(Entity& unit);
 };

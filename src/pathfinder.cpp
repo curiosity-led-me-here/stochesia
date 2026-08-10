@@ -8,60 +8,15 @@
 #include <algorithm>
 #include <utility>
 #include "pathfinder.h"
+#include "maps.h"
+#include "entity_registry.h"
+#include "general_pathtracing.h"
+#include "entity_registry.h"
+#include "map_ascii.h"
+#include "mechanics.h"
+#include "mechanics_ascii.h"
 
-void plot_points(const std::vector<std::vector<int>>& terrain_map, int min_x, int max_x, int min_y, int max_y, const std::vector<int>& start)
-{
-    for (int y = std::min(max_y, static_cast<int>(terrain_map.size()) - 1); y >= std::max(min_y, 0); --y)
-    {
-        for (int x = std::max(min_x, 0); x <= std::min(max_x, static_cast<int>(terrain_map[0].size()) - 1); ++x)
-        {
-            if (x == start[0] && y == start[1]) std::cout << "S ";
-            else if (!findbyid(base_topo, terrain_map[y][x]).PASSTHROUGH) std::cout << "# ";
-            else if (terrain_map[y][x] == 2) std::cout << "W ";
-            else std::cout << ". ";
-        }
-        std::cout << '\n';
-    }
-}
-
-void plot_state(const std::vector<std::vector<int>>& state, int min_x, int max_x, int min_y, int max_y, const std::vector<int>& start)
-{
-    for (int y = std::min(max_y, static_cast<int>(state.size()) - 1); y >= std::max(min_y, 0); --y)
-    {
-        for (int x = std::max(min_x, 0); x <= std::min(max_x, static_cast<int>(state[0].size()) - 1); ++x)
-        {
-            if (x == start[0] && y == start[1]) std::cout << "S ";
-            else if (state[y][x] == -1) std::cout << "- ";
-            else std::cout << state[y][x] << ' ';
-        }
-        std::cout << '\n';
-    }
-}
-
-void plot_travel_history(const std::vector<std::vector<int>>& route, int current_index, int width, int height)
-{
-    for (int y = height - 1; y >= 0; --y)
-    {
-        for (int x = 0; x < width; ++x)
-        {
-            char marker = '-';
-            for (int i = static_cast<int>(route.size()) - 1; i > current_index; --i)
-            {
-                const std::vector<int>& from = route[i];
-                const std::vector<int>& to = route[i - 1];
-                if (x != from[0] || y != from[1]) continue;
-                if (to[0] > from[0]) marker = '>';
-                if (to[0] < from[0]) marker = '<';
-                if (to[1] > from[1]) marker = '^';
-                if (to[1] < from[1]) marker = 'v';
-            }
-            if (!route.empty() && x == route[current_index][0] && y == route[current_index][1]) marker = 'o';
-            std::cout << marker << ' ';
-        }
-        std::cout << '\n';
-    }
-    std::cout << '\n';
-}
+Registry registry;
 
 std::vector<std::vector<int>> helper({{0, 1}, {0, -1}, {1, 0}, {-1, 0}});
 
@@ -70,6 +25,38 @@ std::vector<std::vector<int>> Mapmaker::generate_map(const std::vector<int>& dim
     return std::vector<std::vector<int>>(dimensions[0], std::vector<int>(dimensions[1], 0));
 }
 
+std::vector<std::vector<int>> Mapmaker::load_map(const maps::TerrainMap& recipe)
+{
+    if (recipe.empty() || recipe[0].empty())
+    {
+        throw std::invalid_argument("Map recipe is empty.");
+    }
+    map = recipe;
+    dimensions = {
+        static_cast<int>(map.size()),
+        static_cast<int>(map[0].size())
+    };
+    occupancy = generate_map(dimensions);
+    guilds = generate_map(dimensions);
+    return map;
+}
+
+std::vector<int>& Mapmaker::get_dimensions()
+{
+    return dimensions;
+}
+
+std::vector<std::vector<int>>& Mapmaker::get_occ()
+{
+    return occupancy;
+}
+
+std::vector<std::vector<int>>& Mapmaker::get_guilds()
+{
+    return guilds;
+}
+
+
 void Mapmaker::pathtrace(std::vector<int> current_coord, int budget, std::vector<std::vector<int>>& state, int guild_id)
 {
     for (std::vector<int> i : helper)
@@ -77,7 +64,7 @@ void Mapmaker::pathtrace(std::vector<int> current_coord, int budget, std::vector
         std::vector<int> next_coord = { current_coord[0] + i[0], current_coord[1] + i[1] };
         int x = next_coord[0];
         int y = next_coord[1];
-        if (x < 0 || y < 0 || x >= state[0].size() || y >= state.size() || !findbyid(base_topo, map[y][x]).PASSTHROUGH || guilds[y][x] != guild_id) continue;
+        if (x < 0 || y < 0 || x >= state[0].size() || y >= state.size() || !findbyid(base_topo, map[y][x]).PASSTHROUGH || guilds[y][x] != 0 && guilds[y][x] != guild_id) continue;
         int penalty = findbyid(base_topo, map[y][x]).TRV;
         int rem_budget = budget - penalty;
         if (rem_budget < 0) continue;
@@ -89,7 +76,7 @@ void Mapmaker::pathtrace(std::vector<int> current_coord, int budget, std::vector
 
 void Mapmaker::move(Entity& unit, std::vector<int>& coord, std::vector<std::vector<int>>& out)
 {
-    std::vector<std::vector<int>>& state = unit.path;
+    std::vector<std::vector<int>> state = unit.path;
     if (state[coord[1]][coord[0]] == -1) throw std::invalid_argument("Unreachable tile");
     for (std::vector<int> i : std::vector<std::vector<int>>({{0, 1}, {0, -1}, {1, 0}, {-1, 0}}))
     {
@@ -104,7 +91,8 @@ void Mapmaker::move(Entity& unit, std::vector<int>& coord, std::vector<std::vect
 }
 
 
-Mapmaker::Mapmaker(const std::vector<int>& dimensions, int units) : map(generate_map(dimensions)), dimensions(dimensions), occupancy(generate_map(dimensions)), guilds(generate_map(dimensions)) {}
+Mapmaker::Mapmaker(const std::vector<int>& dimensions) : map(generate_map(dimensions)), dimensions(dimensions), occupancy(generate_map(dimensions)), guilds(generate_map(dimensions)) {}
+Mapmaker::Mapmaker(maps::TerrainMap recipe) : map(load_map(recipe)), dimensions(get_dimensions()), occupancy(get_occ()), guilds(get_guilds()) {}
 std::vector<std::vector<int>> Mapmaker::get_generate() { return generate_map(dimensions); }
 std::vector<std::vector<int>> Mapmaker::get_map() { return map; }
 
@@ -158,19 +146,144 @@ void Mapmaker::path_trace(Entity& unit)
     pathtrace(unit.location, unit.stats.MOV, unit.path, unit.group->guild_id);
 }
 
+std::vector<std::vector<int>> Mapmaker::consider_occupancy(const Entity& unit)
+{
+    std::vector<std::vector<int>> landable = unit.path;
+    for (int y = 0; y < landable.size(); y++)
+    {
+        for (int x = 0; x < landable[0].size(); x++)
+        {
+            if (occupancy[y][x] != 0)
+            {
+                landable[y][x] = -1;
+            }
+        }
+    }
+    return landable;
+}
+
+std::vector<avl_for_atk> Mapmaker::prompt_attack(Entity& unit)
+{
+    std::vector<avl_for_atk> out_meta;
+    Guild guild = *unit.group;
+    int team = guild.guild_id;
+    std::vector<std::vector<int>> out= unit.path;
+    for (std::vector<int> row : out)
+    {
+	std::fill(row.begin(), row.end(), -1);
+    }
+    std::vector<std::vector<int>> out_min= out;
+
+    //inventory --> ID --> Weapon range
+
+    for (ItemStack i : unit.inventory.slot)
+    {
+	try
+	{
+	    Weapon weapon = get_weapon(Armory, i.ID);
+	    trace(out_min, out, unit.location, weapon.MINRG, weapon.MAXRG);
+	    for (int p=0; p < unit.path.size(); p++)
+	    {
+		for (int q=0; q < unit.path[0].size(); q++)
+		{
+		    if (guilds[p][q] != 0 && guilds[p][q] != team && out[p][q] != 0)
+		    {
+			out_meta.push_back({{q, p}, weapon});
+		    }
+		}
+	    }
+	}
+	catch (const std::invalid_argument& e) {continue;}
+    }
+}
+
+bool check_valid_coords(std::vector<int> coords, std::vector<avl_for_atk> prompts)
+{
+    bool valid = false;
+    for (avl_for_atk prompt : prompts)
+    {
+	if (prompt.coords[0] == coords[0] && prompt.coords[1] == coords[1] && prompt.weapon.ID == coords[2])
+	{
+	    valid = true;
+	}
+    }
+    return valid;
+}
+
+std::vector<int> retry(std::vector<avl_for_atk> prompts)
+{
+    int x,y,z;
+    char comma;    
+    std::cin >> x >> comma >> y >> comma >> z;
+    if (!check_valid_coords(std::vector<int>({x, y, z}), prompts))
+    {
+	std::cout << "Invalid Coords. Check the prompt list and choose one from it." << '\n';
+	retry(prompts);
+    }
+    return std::vector<int> {x, y, z};
+}
+
 void Mapmaker::move(Entity& unit, std::vector<int> delta_coord)
 {
+    std::vector<int> coord = {unit.location[0]+delta_coord[0], unit.location[1]+delta_coord[1]};
+    if (coord[0] < 0 || coord[1] < 0 || coord[0] >= map[0].size() || coord[1] >= map.size())
+    {
+	throw std::invalid_argument("Destination out of the map!");
+    }
+    auto landable = consider_occupancy(unit);
+    if (landable[coord[1]][coord[0]] == -1)
+    {
+	throw std::invalid_argument("Destination obstructed by another unit!");
+    }
     guilds[unit.location[1]][unit.location[0]] = 0;
     occupancy[unit.location[1]][unit.location[0]] = 0;
-    std::vector<int> coord = {unit.location[0]+delta_coord[0], unit.location[1]+delta_coord[1]};
     std::vector<std::vector<int>> out;
     out.push_back(coord);
     move(unit, coord, out);
     for (int i = static_cast<int>(out.size()) - 1; i >= 0; --i) unit.location = out[i];
-    plot_travel_history(out, 0, static_cast<int>(map[0].size()), static_cast<int>(map.size()));
-    path_trace(unit);
-    guilds[unit.location[1]][unit.location[0]] = unit.group->guild_id;
-    occupancy[unit.location[1]][unit.location[0]] = unit.entity_id;
+    if (prompt_attack(unit).empty())
+    {
+	path_trace(unit);
+	guilds[unit.location[1]][unit.location[0]] = unit.group->guild_id;
+	occupancy[unit.location[1]][unit.location[0]] = unit.entity_id;
+	unit.turn = false;
+    }
+    else
+    {
+	print_attack_prompts(prompt_attack(unit), occupancy, registry);
+	bool accept_battle;
+	std::cin >> std::boolalpha >> accept_battle;
+	if (accept_battle)
+	{
+	    std::vector<int> enemy_coords = retry(prompt_attack(unit));
+	    Entity& enemy = registry.get_unit(occupancy[enemy_coords[1]][enemy_coords[0]]);
+	    unit.inventory.EquippedSlot = enemy_coords[2];
+	    std::vector<CombatInfo> info = interact(unit, enemy);
+	    mechanics_ascii::interact_window(unit, enemy, info[0], info[1]);
+	    bool confirm;
+	    std::cin >> std::boolalpha >> confirm;
+	    if (confirm)
+	    {
+		battle(unit, enemy);
+		mechanics_ascii::battle_window(unit, enemy);
+	    }
+	    else
+	    {
+		path_trace(unit);
+		guilds[unit.location[1]][unit.location[0]] = unit.group->guild_id;
+		occupancy[unit.location[1]][unit.location[0]] = unit.entity_id;
+		unit.turn = false;
+	    }
+	}
+	else
+	{
+	    path_trace(unit);
+	    guilds[unit.location[1]][unit.location[0]] = unit.group->guild_id;
+	    occupancy[unit.location[1]][unit.location[0]] = unit.entity_id;
+	    unit.turn = false;
+	}
+    }
+    
 }
 
 
@@ -180,7 +293,7 @@ bool check_edge(std::vector<int> coord, std::vector<std::vector<int>> path)
     {
 	int new_x = coord[0]+k[0];
 	int new_y = coord[1]+k[1];
-	if (path[new_x][new_y] == -1)
+	if (path[new_y][new_x] == -1)
 	{
 	    return true;
 	}
@@ -226,11 +339,14 @@ std::vector<std::vector<int>> Mapmaker::attack_range(const Entity& unit, const W
 	std::fill(row.begin(), row.end(), 0);
     }
 
+    std::vector<std::vector<int>> origins = consider_occupancy(unit);
+    origins[unit.location[1]][unit.location[0]] = unit.path[unit.location[1]][unit.location[0]];
+
     for (int i=0; i < attack_path.size(); i++)
     {
 	for (int j=0; j < attack_path[0].size(); j++)
 	{
-	    if (unit.path[i][j] >= 0)
+	    if (origins[i][j] >= 0)
 	    {
 		attack_path[i][j] = 1;
 		if (check_edge({i,j}, unit.path))
@@ -289,10 +405,7 @@ void Mapmaker::attack_range(Entity& unit)
 	    std::vector<std::vector<int>> path = attack_range(unit, weapon);
 	    out.push_back(path);
 	}
-	catch (const std::invalid_argument& e)
-	{
-	    std::cout << e.what() << '\n';
-	}
+	catch (const std::invalid_argument& e) {}
     }
     unit.attack_range  = superimpose(out);
 }
