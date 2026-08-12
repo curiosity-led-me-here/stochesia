@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <random>
 #include "game_data.h"
+#include "pathfinder.h"
 
 extern int seed;
 extern std::vector<std::vector<int>> WeaponTriangle;
@@ -27,8 +28,6 @@ CombatInfo info(
     const Entity& B
 );
 
-void death(Entity& X);
-
 std::vector<CombatInfo> interact(
     const Entity& A,
     const Entity& B
@@ -47,12 +46,14 @@ void entity_attack(
     CombatInfo& A_perf,
     CombatInfo& B_perf,
     bool A_first,
-    bool db
+    bool db,
+    Mapmaker& map
 );
 
 void battle(
     Entity& A,
-    Entity& B
+    Entity& B,
+    Mapmaker& map
 );
 
 void Heal(

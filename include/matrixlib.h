@@ -1,4 +1,5 @@
 #pragma once
+#include <cstddef>
 #include <vector>
 #include <string>
 #include <iostream>
@@ -34,10 +35,10 @@ class Map
 	std::vector<int> get_strides(std::vector<int> dims)
 	{
 	    std::vector<int> out;
-	    for (int j=0; j < dims.size()-1; j++)
+	    for (std::size_t j=0; j + 1 < dims.size(); j++)
 	    {
 		int a = 1;
-		for (int i=j+1; i < dims.size(); i++)
+		for (std::size_t i=j+1; i < dims.size(); i++)
 		{
 		    a = a*dims[i];
 		}
@@ -61,7 +62,7 @@ class Map
 	// constructor overloading
 	Map(const std::vector<int>& values, const std::vector<int>& dims) : data(values), dimensions(dims), strides(get_strides(dims))
 	{
-	    if (strides[0]*dimensions[0] != data.size())
+	    if (static_cast<std::size_t>(strides[0]) * static_cast<std::size_t>(dimensions[0]) != data.size())
 	    {
 		throw std::invalid_argument("Dimensions do not match with flattened data vector!");
 	    }
@@ -72,7 +73,7 @@ class Map
 	{
 	    std::cout << "[";
 
-	    if (depth == dimensions.size()-1)
+	    if (depth == static_cast<int>(dimensions.size())-1)
 	    {
 		for (int j=0; j < dimensions[depth]; j++)
 		{
@@ -112,7 +113,7 @@ class Map
 		throw std::invalid_argument("Invalid indices!");
 	    }
 	    int coord = 0;
-	    for (int i=0; i < coords.size(); i++)
+	    for (std::size_t i=0; i < coords.size(); i++)
 	    {
 		if (coords[i] >= dimensions[i] || coords[i] < 0)
 		{
@@ -130,7 +131,7 @@ class Map
 		throw std::invalid_argument("Invalid indices!");
 	    }
 	    int coord = 0;
-	    for (int i=0; i < coords.size(); i++)
+	    for (std::size_t i=0; i < coords.size(); i++)
 	    {
 		if (coords[i] >= dimensions[i])
 		{

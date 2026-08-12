@@ -5,108 +5,252 @@
 #include "game_data.h"
 #include "mechanics_ascii.h"
 #include "mechanics.h"
-#include <stdexcept>
+#include "entity_registry.h"
+#include "integration.h"
+#include "entity_data.h"
 #include <cassert>
-#include "maps.h"
+#include <vector>
+#include <map_ascii.h>
+#include <sstream>
 
-
-
-int main()
+bool phase_done(Guild& team)
 {
-    Mapmaker map({30,30}, 2);
-    map.add_random_obstacles(30, 30);
-    Entity seth{};
-
-    seth.name = "Seth";
-    seth.entity_id = 1;
-    seth.location = {6, 6};
-
-    seth.type.UsableWeapons = {SWORD, LANCE};
-
-    seth.Lvl = 1;
-    seth.Exp = {0, 100};
-
-    seth.stats   = {30, 14, 0, 13, 12, 8, 11, 8, 8, 13};
-    seth.ogstats = seth.stats;
-
-    seth.inventory.slot[0] = {IRON_LANCE, 45};
-    seth.inventory.slot[1] = {IRON_SWORD, 46};
-    seth.inventory.slot[2] = {VULNERARY, 3};
-    seth.inventory.EquippedSlot = 1;
-    
-    Entity soldier{};
-
-    soldier.name = "Soldier";
-    soldier.entity_id = 2;
-    soldier.location = {6, 7};
-
-    soldier.type.UsableWeapons = {LANCE};
-
-    soldier.Lvl = 1;
-    soldier.Exp = {0, 100};
-
-    soldier.stats   = {20, 5, 0, 0, 0, 0, 3, 0, 4, 8};
-    soldier.ogstats = soldier.stats;
-
-    soldier.inventory.slot[0] = {IRON_LANCE, 45};
-    soldier.inventory.EquippedSlot = 0;
-
-
-    Guild A{};
-    A.name = "Seth's guild";
-    A.guild_id = 1;
-    A.add(seth);
-
-    Guild B{};
-    B.name = "Soldier's guild";
-    B.guild_id = 2;
-    B.add(soldier);
-    
-    map.place_unit(seth);
-    map.place_unit(soldier);
-
-    auto attempt_move = [&map](Entity& unit, std::vector<int> destination)
+    for (int i=0; i < team.members.size(); i++)
     {
-        try
-        {
-            map.move(unit, destination);
-        }
-        catch (const std::invalid_argument& error)
-        {
-            std::cout << unit.name << " cannot move there: "
-                      << error.what() << '\n';
-        }
-    };
+	Entity A = *team.members[i];
+	if (A.turn)
+	{
+	    return false;
+	}
+    }
+    return true;
+}
 
-    plot_points(map.get_map(), 0, 32, 0, 32, {0,0});
-    std::cout << '\n';
-    std::cout << '\n';
-    map.path_trace(seth);
-    plot_state(seth.path, 0, 32, 0, 32, seth.location);
-    std::cout << '\n';
-    std::cout << '\n';
-    //attempt_move(seth, {3, 4});
-    std::cout << '\n';
-    std::cout << '\n';
-    //map.path_trace(soldier);
-    //plot_state(soldier.path, 0, 32, 0, 32, soldier.location);
-    std::cout << '\n';
-    std::cout << '\n';
-    //attempt_move(soldier, {-2, 1});
-    std::cout << '\n';
-    std::cout << '\n';
-    //map.path_trace(seth);
-    //plot_state(seth.path, 0, 32, 0, 32, seth.location);
-    std::cout << '\n';
-    std::cout << '\n';
-    //attempt_move(seth, {2, 5});
+void reset_phase(Guild& team)
+{
+    for (int i=0; i < team.members.size(); i++)
+    {
+	Entity& A = *team.members[i];
+	A.turn = true;
+    }
+}
 
-    auto forecast = interact(seth, soldier);
-
-    //mechanics_ascii::interact_window(seth, soldier, forecast[0], forecast[1]);
-
-    battle(seth, soldier);
-    //mechanics_ascii::battle_window(seth, soldier);
-    
+int all_dead(Guild& team)
+{
+    for (int i=0; i < team.members.size(); i++)
+    {
+	Entity A = *team.members[i];
+	if (A.alive)
+	{
+	    return 1;
+	}
+    }
     return 0;
+}
+
+bool game_over(std::vector<Guild> guilds)
+{
+    int left = 0;
+    for (Guild team : guilds)
+    {
+	left += all_dead(team);
+    }
+    if (left <= 1)
+    {
+	return true;
+    }
+    else
+    {
+	return false;
+    }
+}
+
+Guild survivor(std::vector<Guild> guilds)
+{
+    for (Guild team : guilds)
+    {
+	if (all_dead(team) == 1)
+	{
+	    return team;
+	}
+    }
+    throw std::invalid_argument("No team survived!");
+}
+
+Command process_command(std::string name)
+{
+    std::cout << name << "'s phase > ";
+    std::string raw_str;
+    std::getline(std::cin >> std::ws, raw_str);
+
+    std::istringstream stream(raw_str);
+    std::vector<std::string> out;
+    std::string token;
+
+    while (stream >> token)
+    {
+        out.push_back(token);
+    }
+
+    if (out.size() == 2 && out[0] == "check")
+    {
+	try
+	{
+	    return {out[0], std::stoi(out[1]), {}};
+	}
+	catch (const std::invalid_argument& e)
+	{
+	    std::cout << "Command must be {move id dx dy} or {check id}." << '\n';
+	    return process_command(name);
+	}
+	catch (const std::out_of_range& e)
+	{
+	    std::cout << "Command must be {move id dx dy} or {check id}." << '\n';
+	    return process_command(name);
+	}
+    }
+
+    if (out.size() < 4 || out.size() > 4)
+    {
+	std::cout << "Command must be {move id dx dy} or {check id}." << '\n';
+        return process_command(name);
+    }
+
+    try
+    {
+        std::string name = out[0];
+        int id = std::stoi(out[1]);
+        int x = std::stoi(out[2]);
+        int y = std::stoi(out[3]);
+
+	if (name != "move")
+	{
+	    std::cout << "Command must be {move id dx dy} or {check id}." << '\n';
+	    return process_command(name);
+	}
+	
+        return {name, id, {x, y}};
+    }
+    catch (const std::invalid_argument& e)
+    {
+	std::cout << "Command must be {move id dx dy} or {check id}." << '\n';
+        return process_command(name);
+    }
+    catch (const std::out_of_range& e)
+    {
+	std::cout << "Command must be {move id dx dy} or {check id}." << '\n';
+        return process_command(name);
+    }
+}
+
+Environment::Environment(const maps::TerrainMap& recipe)
+    : map_recipe(maps::gameplay_only(recipe)), board(map_recipe.terrain), registry()
+{};
+
+Environment::Environment(const maps::MapRecipe& recipe)
+    : map_recipe(recipe), board(map_recipe.terrain), registry()
+{};
+
+const maps::MapRecipe& Environment::map_data() const
+{
+    return map_recipe;
+}
+
+Mapmaker& Environment::map()
+{
+    return board;
+}
+
+const Mapmaker& Environment::map() const
+{
+    return board;
+}
+
+Registry& Environment::units()
+{
+    return registry;
+}
+
+const Registry& Environment::units() const
+{
+    return registry;
+}
+
+Environment::ConfigureEnv::ConfigureEnv(Environment& env) : env(env) {};
+
+void Environment::ConfigureEnv::add_guild(std::string name, int id)
+{
+    assert(id != 0);
+    env.guilds.push_back(Guild{});
+    Guild& team = env.guilds.back();
+    team.name = name;
+    team.guild_id = id;
+}
+
+Entity& Environment::ConfigureEnv::add_entity(Entity unit, int id)
+{
+    assert(id != 0);
+    return env.registry.spawn(unit, id);
+}
+
+void Environment::ConfigureEnv::join_guild(Entity& unit, Guild& guild)
+{
+    guild.add(unit);
+}
+
+void Environment::ConfigureEnv::place_unit(Entity& unit, const std::vector<int> location)
+{
+    unit.location = location;
+    env.board.place_unit(unit);
+    env.board.path_trace(unit);
+}
+
+Environment::Game::Game(Environment& env) : env(env), config(ConfigureEnv(env)) {};
+
+void Environment::Game::start()
+{
+    assert(env.guilds.size() > 1);
+    int team_id = 0;
+    while (!game_over(env.guilds))
+    {
+	team_id = (team_id)%env.guilds.size();
+	reset_phase(env.guilds[team_id]);
+	while (!phase_done(env.guilds[team_id]))
+	{
+	    std::string raw_str;
+	    const Guild& current_guild = env.guilds[team_id];
+	    env.board.plot_with_units(env.registry);
+	    print_guild_status(current_guild);
+	    std::cout << '\n';
+	    std::cout << '\n';
+	    Command cmd;
+	    while (true)
+	    {
+		cmd = process_command(current_guild.name);
+		Entity& us = env.registry.get_unit(cmd.id);
+		if (us.group->guild_id == current_guild.guild_id && us.alive && us.turn)
+		{
+		    if (cmd.name == "check")
+		    {
+			env.board.path_trace(us);
+			env.board.attack_range(us);
+			print_unit_stats(us);
+			plot_state(us, 0, static_cast<int>(env.board.get_map()[0].size()) - 1, 0, static_cast<int>(env.board.get_map().size()) - 1);
+			continue;
+		    }
+		    print_unit_stats(us);
+		    plot_state(us, 0, static_cast<int>(env.board.get_map()[0].size()) - 1, 0, static_cast<int>(env.board.get_map().size()) - 1);
+		    break;
+		}
+		std::cout << current_guild.name << "'s phase. Select (1) alive units of (2) this guild only, (3) whose turn is still left."; 
+	    }
+	    Entity& us = env.registry.get_unit(cmd.id);
+	    if (cmd.name == "move")
+	    {
+		env.board.move(us, cmd.coords, env.registry);
+	    }
+	}
+	team_id++;
+    }
+    std::cout << "Game over! " << survivor(env.guilds).name << " WINS" << '\n';
 }

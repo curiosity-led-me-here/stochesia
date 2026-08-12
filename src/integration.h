@@ -10,122 +10,55 @@
 #include "entity_data.h"
 #include <cassert>
 #include <vector>
+#include <map_ascii.h>
+#include <sstream>
 
-bool phase_done(Guild& team)
-{
-    for (int i=0; i < team.members.size(); i++)
-    {
-	Entity A = *team.members[i];
-	if (A.turn)
-	{
-	    return false;
-	}
-    }
-    return true;
-}
+extern bool phase_done(Guild& team);
 
-int all_dead(Guild& team)
-{
-    for (int i=0; i < team.members.size(); i++)
-    {
-	Entity A = *team.members[i];
-	if (A.alive)
-	{
-	    return 1;
-	}
-    }
-    return 0;
-}
+extern int all_dead(Guild& team);
 
-bool game_over(std::vector<Guild> guilds)
-{
-    int left = 0;
-    for (Guild team : guilds)
-    {
-	left += all_dead(team);
-    }
-    if (left == 1)
-    {
-	return true;
-    }
-    else
-    {
-	return false;
-    }
-}
+extern bool game_over(std::vector<Guild> guilds);
 
-Guild survivor(std::vector<Guild> guilds)
-{
-    for (Guild team : guilds)
-    {
-	if (all_dead(team) == 1)
-	{
-	    return team;
-	}
-    }
-    throw std::invalid_argument("No team survived!");
-}
+extern Guild survivor(std::vector<Guild> guilds);
+
+extern Command process_command(std::string name);
 
 class Environment
 {
     private:
-	Mapmaker& board;
-	Registry& registry;
-	std::vector<Guild> guilds;
+	maps::MapRecipe map_recipe;
+	Mapmaker board;
+	Registry registry;
     public:
+	std::vector<Guild> guilds;
 	Environment(const maps::TerrainMap& recipe);
+	Environment(const maps::MapRecipe& recipe);
+
+	// These expose existing game state for a separate renderer. They do not
+	// duplicate state or alter movement, combat, Registry, or Mapmaker logic.
+	const maps::MapRecipe& map_data() const;
+	Mapmaker& map();
+	const Mapmaker& map() const;
+	Registry& units();
+	const Registry& units() const;
 	class ConfigureEnv
 	{
 	    private:
 		Environment& env;
 	    public:
-		ConfigureEnv(Environment& env) : env(env) {};
-		void add_guild(std::string name, int id)
-		{
-		    assert(id != 0);
-		    env.guilds.push_back(Guild{});
-		    Guild& team = env.guilds.back();
-		    team.name = name;
-		    team.guild_id = id;
-		}
-		
-		Entity& add_entity(Entity unit, int id)
-		{
-		    assert(id != 0);
-		    return env.registry.spawn(unit, id);
-		}
-
-		void place_unit(Entity& unit, const std::vector<int> location)
-		{
-		    unit.location = location;
-		    env.board.place_unit(unit);
-		}
+		ConfigureEnv(Environment& env);
+		void add_guild(std::string name, int id);
+		Entity& add_entity(Entity unit, int id);
+		void join_guild(Entity& unit, Guild& guild);
+		void place_unit(Entity& unit, const std::vector<int> location);
 	    };
 	    class Game
 	    {
 		private:
 		    Environment& env;
 		    ConfigureEnv config;
-		    bool game_over=false;
 		public:
-		    Game(Environment& env) : env(env), config(ConfigureEnv(env)) {};
-		    void start()
-		    {
-			assert(env.guilds.size() > 1);
-			int team_id = 0;
-			while (!game_over)
-			{
-			    team_id = (team_id+1)%env.guilds.size();
-			    std::cout << env.guilds[team_id+1].name << "'s PHASE" << '\n';
-			    while (!phase_done(env.guilds[team_id]))
-			    {
-				//
-			    }
-			}
-			std::cout << "Game over! " << survivor(env.guilds).name << " WINS" << '\n';
-		    }
-		    
+		    Game(Environment& env);
+		    void start();
 	    };
-	    
-    
 	};

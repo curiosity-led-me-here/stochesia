@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <random>
 #include "mechanics_ascii.h"
+#include "pathfinder.h"
 
 long seed = 1289428362;
 std::mt19937 generator(seed);
@@ -65,8 +66,8 @@ CombatInfo info(const Entity& A,const Entity& B)
     }
     else
     {
-	Weapon Aw = get_weapon(Armory, A.inventory.EquippedSlot);
-	Weapon Bw = get_weapon(Armory, B.inventory.EquippedSlot);
+	Weapon Aw = get_weapon(Armory, A.inventory.slot[A.inventory.EquippedSlot].ID);
+	Weapon Bw = get_weapon(Armory, B.inventory.slot[B.inventory.EquippedSlot].ID);
 	std::vector<int> WTA = WeaponTriangleAdv(Aw, Bw);
 	/*
 	if (WTA[0] > 0)
@@ -96,17 +97,6 @@ CombatInfo info(const Entity& A,const Entity& B)
 	CRIT = std::clamp(CRIT, 0, 100);
 	return {As.HP, MT, HIT, DB, CRIT, WTA[0]};
     }
-}
-
-void death(Entity& X)
-{
-    if (X.group == nullptr)
-    {
-        throw std::runtime_error("death(): entity has no guild");
-    }
-
-    X.group->remove(X);
-    X.alive = false;
 }
 
 std::vector<CombatInfo> interact(const Entity& A,const Entity& B)
@@ -177,7 +167,7 @@ void attack_sequence(Entity& A, Entity& B, CombatInfo& A_perf, CombatInfo& B_per
     }
 }
 
-void entity_attack(Entity& A, Entity& B, CombatInfo& A_perf, CombatInfo& B_perf, bool A_first, bool db) // Assume first entity attacks twice if db = True
+void entity_attack(Entity& A, Entity& B, CombatInfo& A_perf, CombatInfo& B_perf, bool A_first, bool db, Mapmaker& map) // Assume first entity attacks twice if db = True
 {
     if (db)
     {
@@ -193,19 +183,19 @@ void entity_attack(Entity& A, Entity& B, CombatInfo& A_perf, CombatInfo& B_perf,
 		    if (B.stats.HP <= 0)
 		    {
 			// B dies from A's second attack.
-			death(B);
+			map.death(B);
 		    }
 		}
 		else
 		{
 		    // A dies from B's retaliation.
-		    death(A);
+		    map.death(A);
 		}
 	    }
 	    else
 	    {
 		// B dies from A's first attack.
-		death(B);
+		map.death(B);
 	    }
 	}
 	else
@@ -220,19 +210,19 @@ void entity_attack(Entity& A, Entity& B, CombatInfo& A_perf, CombatInfo& B_perf,
 		    if (B.stats.HP <= 0)
 		    {
 			// B dies from A's second attack.
-			death(B);
+			map.death(B);
 		    }
 		}
 		else
 		{
 		    // B dies from A's first attack.
-		    death(B);
+		    map.death(B);
 		}
 	    }
 	    else
 	    {
 		// A dies in first turn from B's attack.
-		death(A);
+		map.death(A);
 	    }	    
 	}
     }
@@ -245,18 +235,18 @@ void entity_attack(Entity& A, Entity& B, CombatInfo& A_perf, CombatInfo& B_perf,
 	    if (A.stats.HP <= 0)
 	    {
 		// A's death from retaliation from B.
-		death(A);
+		map.death(A);
 	    }
 	}
 	else
 	{
 	    // B's Death on A's attack
-	    death(B);
+	    map.death(B);
 	}
     }
 }
 
-void battle(Entity& A, Entity& B)
+void battle(Entity& A, Entity& B, Mapmaker& map)
 {
     std::vector<CombatInfo> out = interact(A, B);
     CombatInfo A_perf = out[0]; CombatInfo B_perf = out[1];
@@ -266,15 +256,15 @@ void battle(Entity& A, Entity& B)
     }
     if (A_perf.DB)
     {
-	entity_attack(A, B, A_perf, B_perf, true, A_perf.DB);
+	entity_attack(A, B, A_perf, B_perf, true, A_perf.DB, map);
     }
     else if (B_perf.DB)
     {
-	entity_attack(A, B, A_perf, B_perf, false, B_perf.DB);
+	entity_attack(A, B, A_perf, B_perf, false, B_perf.DB, map);
     }
     else
     {
-	entity_attack(A, B, A_perf, B_perf, true, false);
+	entity_attack(A, B, A_perf, B_perf, true, false, map);
     }
     // if(doubles) --> if(hits) --> if(crits) --> (B.Hp - (A.MT*(1 || 3)*(1 || 2))) && (Aw.DUR - (1 || 2)) && (A.Hp - (B.MT*(1 || 3)*(1 || 2))) && (Bw.DUR - (1 || 2))
     

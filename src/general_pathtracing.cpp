@@ -6,8 +6,6 @@
 #include <stdexcept>
 #include "general_pathtracing.h"
 
-std::vector<std::vector<int>> helper({{0, 1}, {0, -1}, {1, 0}, {-1, 0}});
-
 void print(const std::vector<std::vector<int>>& matrix)
 {
     for (const auto& row : matrix)
@@ -35,7 +33,7 @@ void path(int MOV, const std::vector<int>& start, std::vector<std::vector<int>>&
         throw std::out_of_range("Start coordinate is outside the path grid.");
     }
 
-    for (std::vector<int> help : helper)
+    for (const std::vector<int>& help : helper)
     {
 	int budget = MOV;
 	std::vector<int> next_coord = {start[0] + help[0], start[1] + help[1]};
@@ -91,7 +89,7 @@ void normalize_path(const std::vector<int>& start, std::vector<std::vector<int>>
     out[start[1]][start[0]] = 0;
 }
 
-void trace(std::vector<std::vector<int>> out_min, std::vector<std::vector<int>> out_max, const std::vector<int>& start, int MIN, int MAX)
+void trace(std::vector<std::vector<int>>& out_min, std::vector<std::vector<int>>& out_max, const std::vector<int>& start, int MIN, int MAX)
 {
     if (MIN < 0 || MAX < 0 || MIN > MAX)
     {
@@ -123,16 +121,4 @@ void trace(std::vector<std::vector<int>> out_min, std::vector<std::vector<int>> 
 	    }
 	}
     }
-    print(out_max);
-}
-
-int main()
-{
-    std::vector<std::vector<int>> out_min(11, std::vector<int>(11, -1));
-    std::vector<std::vector<int>> out_max(11, std::vector<int>(11, -1));
-    std::vector<int> start = {5, 5};
-    int MIN=1;
-    int MAX=2;
-    trace(out_min, out_max, start, MIN-1, MAX);
-    return 0;
 }

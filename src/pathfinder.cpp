@@ -15,10 +15,7 @@
 #include "map_ascii.h"
 #include "mechanics.h"
 #include "mechanics_ascii.h"
-
-Registry registry;
-
-std::vector<std::vector<int>> helper({{0, 1}, {0, -1}, {1, 0}, {-1, 0}});
+#include "mechanics.h"
 
 std::vector<std::vector<int>> Mapmaker::generate_map(const std::vector<int>& dimensions)
 {
@@ -57,21 +54,41 @@ std::vector<std::vector<int>>& Mapmaker::get_guilds()
 }
 
 
-void Mapmaker::pathtrace(std::vector<int> current_coord, int budget, std::vector<std::vector<int>>& state, int guild_id)
+void Mapmaker::pathtrace(
+    std::vector<int> current_coord,
+    int budget,
+    std::vector<std::vector<int>>& state,
+    int guild_id,
+    terrain::MovementType movement)
 {
     for (std::vector<int> i : helper)
     {
         std::vector<int> next_coord = { current_coord[0] + i[0], current_coord[1] + i[1] };
         int x = next_coord[0];
         int y = next_coord[1];
-        if (x < 0 || y < 0 || x >= state[0].size() || y >= state.size() || !findbyid(base_topo, map[y][x]).PASSTHROUGH || guilds[y][x] != 0 && guilds[y][x] != guild_id) continue;
-        int penalty = findbyid(base_topo, map[y][x]).TRV;
+        if (x < 0 || y < 0 || x >= state[0].size() || y >= state.size() || !terrain::can_enter(map[y][x], movement) || guilds[y][x] != 0 && guilds[y][x] != guild_id) continue;
+        int penalty = terrain::movement_cost(map[y][x], movement);
         int rem_budget = budget - penalty;
         if (rem_budget < 0) continue;
         if (state[y][x] < rem_budget) state[y][x] = rem_budget;
         else continue;
-        pathtrace(next_coord, rem_budget, state, guild_id);
+        pathtrace(next_coord, rem_budget, state, guild_id, movement);
     }
+}
+
+void Mapmaker::death(Entity& X)
+{
+    if (X.group == nullptr)
+    {
+        throw std::runtime_error("death(): entity has no guild");
+    }
+
+    X.group->remove(X);
+    X.alive = false;
+    int x = X.location[0];
+    int y = X.location[1];
+    occupancy[y][x] = 0;
+    guilds[y][x] = 0;
 }
 
 void Mapmaker::move(Entity& unit, std::vector<int>& coord, std::vector<std::vector<int>>& out)
@@ -83,7 +100,7 @@ void Mapmaker::move(Entity& unit, std::vector<int>& coord, std::vector<std::vect
         std::vector<int> next_coord = {coord[0] + i[0], coord[1] + i[1]};
         int old_x = coord[0], old_y = coord[1], new_x = next_coord[0], new_y = next_coord[1];
         if (new_x >= map[0].size() || new_y >= map.size() || new_x < 0 || new_y < 0) continue;
-        if (state[new_y][new_x] != state[old_y][old_x] + findbyid(base_topo, map[old_y][old_x]).TRV) continue;
+        if (state[new_y][new_x] != state[old_y][old_x] + terrain::movement_cost(map[old_y][old_x], unit.movement)) continue;
         out.push_back(next_coord);
         move(unit, next_coord, out);
         return;
@@ -91,8 +108,25 @@ void Mapmaker::move(Entity& unit, std::vector<int>& coord, std::vector<std::vect
 }
 
 
-Mapmaker::Mapmaker(const std::vector<int>& dimensions) : map(generate_map(dimensions)), dimensions(dimensions), occupancy(generate_map(dimensions)), guilds(generate_map(dimensions)) {}
-Mapmaker::Mapmaker(maps::TerrainMap recipe) : map(load_map(recipe)), dimensions(get_dimensions()), occupancy(get_occ()), guilds(get_guilds()) {}
+Mapmaker::Mapmaker(const std::vector<int>& dimensions)
+    : map(generate_map(dimensions)), dimensions(dimensions), occupancy(generate_map(dimensions)), guilds(generate_map(dimensions))
+{
+    for (std::vector<int>& row : map)
+    {
+        std::fill(row.begin(), row.end(), TERRAIN_PLAINS);
+    }
+}
+Mapmaker::Mapmaker(maps::TerrainMap recipe) : map(std::move(recipe))
+{
+    if (map.empty() || map[0].empty()) { throw std::invalid_argument("Map recipe is empty"); }
+    dimensions = {static_cast<int>(map.size()), static_cast<int>(map[0].size())};
+    occupancy = generate_map(dimensions);
+    guilds = generate_map(dimensions); }
+
+Mapmaker::Mapmaker(const maps::MapRecipe& recipe)
+    : Mapmaker(recipe.terrain)
+{}
+
 std::vector<std::vector<int>> Mapmaker::get_generate() { return generate_map(dimensions); }
 std::vector<std::vector<int>> Mapmaker::get_map() { return map; }
 
@@ -118,8 +152,7 @@ void Mapmaker::place_unit(Entity& unit)
 
 void Mapmaker::add_random_obstacles(int n, int m)
 {
-    std::vector<int> obstacle_ids;
-    for (const Terrain& terrain : base_topo) if (!terrain.PASSTHROUGH) obstacle_ids.push_back(terrain.ID);
+    std::vector<int> obstacle_ids = terrain::default_obstacle_ids();
     std::random_device rd;
     std::mt19937 rng(rd());
     std::uniform_int_distribution<int> x_dist(0, static_cast<int>(map[0].size()) - 1);
@@ -129,13 +162,13 @@ void Mapmaker::add_random_obstacles(int n, int m)
     while (placed < n)
     {
         int x = x_dist(rng), y = y_dist(rng);
-        if (map[y][x] == 0) { map[y][x] = obstacle_ids[obstacle_dist(rng)]; ++placed; }
+        if (map[y][x] == TERRAIN_PLAINS) { map[y][x] = obstacle_ids[obstacle_dist(rng)]; ++placed; }
     }
     placed = 0;
     while (placed < m)
     {
         int x = x_dist(rng), y = y_dist(rng);
-        if (map[y][x] == 0) { map[y][x] = 2; ++placed; }
+        if (map[y][x] == TERRAIN_PLAINS) { map[y][x] = TERRAIN_FOREST; ++placed; }
     }
 }
 
@@ -143,7 +176,7 @@ void Mapmaker::path_trace(Entity& unit)
 {
     for (std::vector<int>& row : unit.path) std::fill(row.begin(), row.end(), -1);
     unit.path[unit.location[1]][unit.location[0]] = unit.stats.MOV;
-    pathtrace(unit.location, unit.stats.MOV, unit.path, unit.group->guild_id);
+    pathtrace(unit.location, unit.stats.MOV, unit.path, unit.group->guild_id, unit.movement);
 }
 
 std::vector<std::vector<int>> Mapmaker::consider_occupancy(const Entity& unit)
@@ -162,25 +195,32 @@ std::vector<std::vector<int>> Mapmaker::consider_occupancy(const Entity& unit)
     return landable;
 }
 
+int count_inventory_slots(const Entity& unit)
+{
+    int out = 0;
+    for (ItemStack i : unit.inventory.slot)
+    {
+	out++;
+    }
+    return out;
+}
+
 std::vector<avl_for_atk> Mapmaker::prompt_attack(Entity& unit)
 {
     std::vector<avl_for_atk> out_meta;
     Guild guild = *unit.group;
     int team = guild.guild_id;
-    std::vector<std::vector<int>> out= unit.path;
-    for (std::vector<int> row : out)
+    for (int i=0; i < count_inventory_slots(unit); i++)
     {
-	std::fill(row.begin(), row.end(), -1);
-    }
-    std::vector<std::vector<int>> out_min= out;
-
-    //inventory --> ID --> Weapon range
-
-    for (ItemStack i : unit.inventory.slot)
-    {
+	std::vector<std::vector<int>> out= unit.path;
+	for (std::vector<int>& row : out)
+	{
+	    std::fill(row.begin(), row.end(), -1);
+	}
+	std::vector<std::vector<int>> out_min= out;
 	try
 	{
-	    Weapon weapon = get_weapon(Armory, i.ID);
+	    Weapon weapon = get_weapon(Armory, unit.inventory.slot[i].ID);
 	    trace(out_min, out, unit.location, weapon.MINRG, weapon.MAXRG);
 	    for (int p=0; p < unit.path.size(); p++)
 	    {
@@ -188,12 +228,20 @@ std::vector<avl_for_atk> Mapmaker::prompt_attack(Entity& unit)
 		{
 		    if (guilds[p][q] != 0 && guilds[p][q] != team && out[p][q] != 0)
 		    {
-			out_meta.push_back({{q, p}, weapon});
+			out_meta.push_back({{q, p}, weapon, i});
 		    }
 		}
 	    }
 	}
 	catch (const std::invalid_argument& e) {continue;}
+    }
+    if (out_meta.empty())
+    {
+	return {};
+    }
+    else
+    {
+	return out_meta;
     }
 }
 
@@ -202,7 +250,7 @@ bool check_valid_coords(std::vector<int> coords, std::vector<avl_for_atk> prompt
     bool valid = false;
     for (avl_for_atk prompt : prompts)
     {
-	if (prompt.coords[0] == coords[0] && prompt.coords[1] == coords[1] && prompt.weapon.ID == coords[2])
+	if (prompt.coords[0] == coords[0] && prompt.coords[1] == coords[1] && prompt.inventory_id == coords[2])
 	{
 	    valid = true;
 	}
@@ -210,20 +258,20 @@ bool check_valid_coords(std::vector<int> coords, std::vector<avl_for_atk> prompt
     return valid;
 }
 
-std::vector<int> retry(std::vector<avl_for_atk> prompts)
+std::vector<int> retry(const std::vector<avl_for_atk> prompts)
 {
-    int x,y,z;
-    char comma;    
-    std::cin >> x >> comma >> y >> comma >> z;
-    if (!check_valid_coords(std::vector<int>({x, y, z}), prompts))
+    while (true)
     {
-	std::cout << "Invalid Coords. Check the prompt list and choose one from it." << '\n';
-	retry(prompts);
+        std::cout << "\n attack_cmd <x, y, slot_id> > ";
+        int x, y, z;
+        char comma;
+        std::cin >> x >> comma >> y >> comma >> z;
+        if (check_valid_coords({x, y, z}, prompts)) { return {x, y, z}; }
+        std::cout << "Invalid Coords. Check the prompt list and choose one from it.\n";
     }
-    return std::vector<int> {x, y, z};
 }
 
-void Mapmaker::move(Entity& unit, std::vector<int> delta_coord)
+std::vector<std::vector<int>> Mapmaker::move(Entity& unit, std::vector<int> delta_coord, Registry& registry)
 {
     std::vector<int> coord = {unit.location[0]+delta_coord[0], unit.location[1]+delta_coord[1]};
     if (coord[0] < 0 || coord[1] < 0 || coord[0] >= map[0].size() || coord[1] >= map.size())
@@ -240,7 +288,13 @@ void Mapmaker::move(Entity& unit, std::vector<int> delta_coord)
     std::vector<std::vector<int>> out;
     out.push_back(coord);
     move(unit, coord, out);
-    for (int i = static_cast<int>(out.size()) - 1; i >= 0; --i) unit.location = out[i];
+    std::vector<std::vector<int>> output;
+    for (int i = static_cast<int>(out.size()) - 1; i >= 0; --i)
+    {
+	output.push_back(out[i]);
+	unit.location = out[i];
+    }
+    plot_movement_frame(registry, unit, 250);
     if (prompt_attack(unit).empty())
     {
 	path_trace(unit);
@@ -264,8 +318,15 @@ void Mapmaker::move(Entity& unit, std::vector<int> delta_coord)
 	    std::cin >> std::boolalpha >> confirm;
 	    if (confirm)
 	    {
-		battle(unit, enemy);
+		battle(unit, enemy, *this);
 		mechanics_ascii::battle_window(unit, enemy);
+		if (unit.alive)
+		{
+		    path_trace(unit);
+		    guilds[unit.location[1]][unit.location[0]] = unit.group->guild_id;
+		    occupancy[unit.location[1]][unit.location[0]] = unit.entity_id;
+		}
+		unit.turn = false;
 	    }
 	    else
 	    {
@@ -283,20 +344,34 @@ void Mapmaker::move(Entity& unit, std::vector<int> delta_coord)
 	    unit.turn = false;
 	}
     }
+    return output;
     
 }
 
 
 bool check_edge(std::vector<int> coord, std::vector<std::vector<int>> path)
 {
+    if (path.empty() || path[0].empty())
+    {
+        return false;
+    }
+
     for (std::vector<int> k : helper)
     {
-	int new_x = coord[0]+k[0];
-	int new_y = coord[1]+k[1];
-	if (path[new_y][new_x] == -1)
-	{
-	    return true;
-	}
+        int new_x = coord[0] + k[0];
+        int new_y = coord[1] + k[1];
+
+        if (new_x < 0 || new_y < 0 ||
+            new_y >= path.size() ||
+            new_x >= path[new_y].size())
+        {
+            continue;
+        }
+
+        if (path[new_y][new_x] == -1)
+        {
+            return true;
+        }
     }
     return false;
 }
@@ -342,25 +417,25 @@ std::vector<std::vector<int>> Mapmaker::attack_range(const Entity& unit, const W
     std::vector<std::vector<int>> origins = consider_occupancy(unit);
     origins[unit.location[1]][unit.location[0]] = unit.path[unit.location[1]][unit.location[0]];
 
-    for (int i=0; i < attack_path.size(); i++)
+    for (int y=0; y < attack_path.size(); y++)
     {
-	for (int j=0; j < attack_path[0].size(); j++)
+	for (int x=0; x < attack_path[0].size(); x++)
 	{
-	    if (origins[i][j] >= 0)
+	    if (origins[y][x] >= 0)
 	    {
-		attack_path[i][j] = 1;
-		if (check_edge({i,j}, unit.path))
+		attack_path[y][x] = 1;
+		if (check_edge({x,y}, unit.path))
 		{
-		    std::vector<std::vector<int>> helper = select_helper({i,j}, unit.location);
+		    std::vector<std::vector<int>> helper = select_helper({x,y}, unit.location);
 		    for (int n=weapon.MINRG; n < weapon.MAXRG+1; n++)
 		    {
 			for (std::vector<int> k : helper)
 			{
-			    int new_x = i+(k[0]*n);
-			    int new_y = j+(k[1]*n);
-			    if (new_x < attack_path.size() && new_y < attack_path[0].size() && new_x >= 0 && new_y >= 0)
+			    int new_x = x+(k[0]*n);
+			    int new_y = y+(k[1]*n);
+			    if (new_x < attack_path[0].size() && new_y < attack_path.size() && new_x >= 0 && new_y >= 0)
 			    {
-				attack_path[new_x][new_y] = 1;
+				attack_path[new_y][new_x] = 1;
 			    }
 			}
 		    }

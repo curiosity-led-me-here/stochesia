@@ -18,8 +18,8 @@ void normalize_path(
 );
 
 void trace(
-    std::vector<std::vector<int>> out_min,
-    std::vector<std::vector<int>> out_max,
+    std::vector<std::vector<int>>& out_min,
+    std::vector<std::vector<int>>& out_max,
     const std::vector<int>& start,
     int MIN,
     int MAX

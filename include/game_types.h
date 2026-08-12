@@ -4,10 +4,10 @@
 #include <algorithm>
 #include <cassert>
 #include <unordered_map>
+#include "terrain_data.h"
 
-// IDs 65–116 select an exact visual group in fe_map_builder. They are for the
-// renderer only: do not index base_topo with them. The gameplay terrain beneath
-// a visual cell remains a TerrainCategory value from the enum above.
+// IDs 65–116 select an exact visual group in fe_map_builder. They are renderer
+// only; gameplay terrain uses the native FE8 TerrainId vocabulary.
 enum VisualTerrainID
 {
     VISUAL_ARENA = 65,
@@ -151,23 +151,6 @@ struct Growth
     double CON;
 };
 
-struct Terrain
-{
-    int ID;
-    int TRV;
-    int HEAL;
-    int AVO;
-    int DEF;
-    bool PASSTHROUGH;
-    std::string info;
-};
-
-struct TerrainOverride
-{
-    int ID;
-    int TRV;
-};
-
 struct LevelExp
 {
     int current;
@@ -245,7 +228,7 @@ struct Entity
     Inventory inventory;
     EntityWeaponExp WExp;
     Growth growth;
-    std::vector<TerrainOverride> terrain;
+    terrain::MovementType movement = terrain::MovementType::CommonT1;
     Guild* group = nullptr;
 };
 
@@ -284,4 +267,12 @@ struct avl_for_atk
 {
     std::vector<int> coords;
     Weapon weapon;
+    int inventory_id;
+};
+
+struct Command
+{
+    std::string name;
+    int id;
+    std::vector<int> coords;
 };

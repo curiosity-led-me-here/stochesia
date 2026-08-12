@@ -35,6 +35,8 @@ std::string unit_icon(const Entity& unit);
 
 void print_unit_stats(const Entity& unit);
 
+void print_guild_status(const Guild& guild);
+
 void print_attack_prompts(
     const std::vector<avl_for_atk>& prompts,
     const std::vector<std::vector<int>>& occupancy,

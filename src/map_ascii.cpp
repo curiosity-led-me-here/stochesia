@@ -1,7 +1,10 @@
 #include "map_ascii.h"
 
 #include <algorithm>
+#include <chrono>
+#include <iomanip>
 #include <iostream>
+#include <thread>
 
 #include "entity_registry.h"
 #include "game_data.h"
@@ -14,8 +17,9 @@ void plot_points(const std::vector<std::vector<int>>& terrain_map, int min_x, in
         for (int x = std::max(min_x, 0); x <= std::min(max_x, static_cast<int>(terrain_map[0].size()) - 1); ++x)
         {
             if (x == start[0] && y == start[1]) std::cout << "S ";
-            else if (!findbyid(base_topo, terrain_map[y][x]).PASSTHROUGH) std::cout << "# ";
-            else if (terrain_map[y][x] == 2) std::cout << "W ";
+            else if (terrain_map[y][x] == TERRAIN_FOREST) std::cout << "W ";
+            else if (terrain_map[y][x] == TERRAIN_MOUNTAIN) std::cout << "^ ";
+            else if (terrain::blocks_common_foot(terrain_map[y][x])) std::cout << "# ";
             else std::cout << ". ";
         }
         std::cout << '\n';
@@ -108,14 +112,53 @@ void Mapmaker::plot_with_units(Registry& registry)
 
             int terrain_id = map[y][x];
 
-            if (!findbyid(base_topo, terrain_id).PASSTHROUGH) std::cout << "#  ";
-            else if (terrain_id == 2) std::cout << "W  ";
-            else if (terrain_id == 1) std::cout << "=  ";
-            else if (terrain_id == 5) std::cout << "~  ";
+            if (terrain_id == TERRAIN_FOREST) std::cout << "W  ";
+            else if (terrain_id == TERRAIN_ROAD) std::cout << "=  ";
+            else if (terrain_id == TERRAIN_RIVER) std::cout << "~  ";
+            else if (terrain_id == TERRAIN_MOUNTAIN) std::cout << "^  ";
+            else if (terrain::blocks_common_foot(terrain_id)) std::cout << "#  ";
             else std::cout << ".  ";
         }
         std::cout << '\n';
     }
+}
+
+void Mapmaker::plot_movement_frame(Registry& registry, const Entity& moving_unit, int delay_ms)
+{
+    std::cout << "\x1B[2J\x1B[H";
+
+    for (int y = map.size() - 1; y >= 0; y--)
+    {
+        for (int x = 0; x < map[0].size(); x++)
+        {
+            if (moving_unit.location.size() >= 2 &&
+                x == moving_unit.location[0] &&
+                y == moving_unit.location[1])
+            {
+                std::cout << unit_icon(moving_unit) << " ";
+                continue;
+            }
+
+            int entity_id = occupancy[y][x];
+            if (entity_id != 0)
+            {
+                std::cout << unit_icon(registry.get_unit(entity_id)) << " ";
+                continue;
+            }
+
+            int terrain_id = map[y][x];
+            if (terrain_id == TERRAIN_FOREST) std::cout << "W  ";
+            else if (terrain_id == TERRAIN_ROAD) std::cout << "=  ";
+            else if (terrain_id == TERRAIN_RIVER) std::cout << "~  ";
+            else if (terrain_id == TERRAIN_MOUNTAIN) std::cout << "^  ";
+            else if (terrain::blocks_common_foot(terrain_id)) std::cout << "#  ";
+            else std::cout << ".  ";
+        }
+        std::cout << '\n';
+    }
+
+    std::cout << std::flush;
+    std::this_thread::sleep_for(std::chrono::milliseconds(delay_ms));
 }
 
 void print_unit_stats(const Entity& unit)
@@ -135,6 +178,38 @@ void print_unit_stats(const Entity& unit)
               << "  RES " << unit.stats.RES << "  MOV " << unit.stats.MOV
               << "  CON " << unit.stats.CON << '\n';
     std::cout << "+----------------------------------------+\n";
+}
+
+void print_guild_status(const Guild& guild)
+{
+    std::cout << "+------------------------------------------------------------+\n";
+    std::cout << "| " << guild.name << "  [Guild ID: " << guild.guild_id << "]\n";
+    std::cout << "+------+------------------+----------+-------+-------+---------+\n";
+    std::cout << "| ID   | Name             | HP       | Turn  | Alive | Pos     |\n";
+    std::cout << "+------+------------------+----------+-------+-------+---------+\n";
+
+    for (const Entity* unit : guild.members)
+    {
+        if (unit == nullptr) continue;
+
+        std::string hp = std::to_string(unit->stats.HP) + "/" +
+                         std::to_string(unit->ogstats.HP);
+        std::string position = "-";
+        if (unit->location.size() >= 2)
+        {
+            position = "(" + std::to_string(unit->location[0]) + "," +
+                       std::to_string(unit->location[1]) + ")";
+        }
+
+        std::cout << "| " << std::left << std::setw(4) << unit->entity_id
+                  << " | " << std::setw(16) << unit->name
+                  << " | " << std::setw(8) << hp
+                  << " | " << std::setw(5) << (unit->turn ? "READY" : "DONE")
+                  << " | " << std::setw(5) << (unit->alive ? "YES" : "NO")
+                  << " | " << std::setw(7) << position << " |\n";
+    }
+
+    std::cout << "+------+------------------+----------+-------+-------+---------+\n";
 }
 
 void print_attack_prompts(
@@ -192,20 +267,20 @@ void print_attack_prompts(
                   << "  MOV: " << enemy.stats.MOV << '\n';
 
         std::cout << "Eligible weapons:\n";
-        std::vector<int> shown_weapon_ids;
+        std::vector<int> shown_inventory_slots;
 
         for (const avl_for_atk& option : prompts)
         {
             if (option.coords != prompt.coords) continue;
 
-            int weapon_id = option.weapon.ID;
-            if (std::find(shown_weapon_ids.begin(), shown_weapon_ids.end(), weapon_id) != shown_weapon_ids.end())
+            int inventory_slot = option.inventory_id;
+            if (std::find(shown_inventory_slots.begin(), shown_inventory_slots.end(), inventory_slot) != shown_inventory_slots.end())
             {
                 continue;
             }
-            shown_weapon_ids.push_back(weapon_id);
+            shown_inventory_slots.push_back(inventory_slot);
 
-            std::cout << "  [ID " << option.weapon.ID << "] "
+            std::cout << "  [Slot " << option.inventory_id << "] "
                       << option.weapon.NAME
                       << "  MT " << option.weapon.MT
                       << "  HIT " << option.weapon.HIT
