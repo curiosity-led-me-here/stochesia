@@ -109,8 +109,9 @@ std::vector<CombatInfo> interact(const Entity& A,const Entity& B)
     return out;
 }
 
-void attack_sequence(Entity& A, Entity& B, CombatInfo& A_perf, CombatInfo& B_perf)
+int attack_sequence(Entity& A, Entity& B, CombatInfo& A_perf, CombatInfo& B_perf)
 {
+    int out;
     if (random_binary(A_perf.HIT / 100.0, seed))
     {
 	if (random_binary(A_perf.CRIT / 100.0, seed))
@@ -133,6 +134,7 @@ void attack_sequence(Entity& A, Entity& B, CombatInfo& A_perf, CombatInfo& B_per
 		std::cout << "No damage!" << "\n";
 	    }
 	    A.inventory.slot[A.inventory.EquippedSlot].usesRemaining --;
+	    out = 2;
 	    // exp calculation pending.
 	}
 	else
@@ -156,6 +158,7 @@ void attack_sequence(Entity& A, Entity& B, CombatInfo& A_perf, CombatInfo& B_per
 		std::cout << "No damage!" << "\n";
 	    }
 	    A.inventory.slot[A.inventory.EquippedSlot].usesRemaining --;
+	    out = 1;
 	}
     }
     else
@@ -164,90 +167,113 @@ void attack_sequence(Entity& A, Entity& B, CombatInfo& A_perf, CombatInfo& B_per
 	std::cout << A.name << "'s turn.....";
 	std::cout << "Attack miss!" << "\n";
 	A.inventory.slot[A.inventory.EquippedSlot].usesRemaining --;
+	out = -1;
     }
+    return out;
 }
 
-void entity_attack(Entity& A, Entity& B, CombatInfo& A_perf, CombatInfo& B_perf, bool A_first, bool db, Mapmaker& map) // Assume first entity attacks twice if db = True
+std::vector<sequence> entity_attack(Entity& A, Entity& B, CombatInfo& A_perf, CombatInfo& B_perf, bool A_first, bool db, Mapmaker& map) // Assume first entity attacks twice if db = True
 {
+    std::vector<sequence> out;
+    int outcome;
     if (db)
     {
 	if (A_first)
 	{
-	    attack_sequence(A, B, A_perf, B_perf);
+	    outcome = attack_sequence(A, B, A_perf, B_perf);
+	    out.push_back({A, outcome, B});
 	    if (B.stats.HP > 0)
 	    {
-		attack_sequence(B, A, B_perf, A_perf);
+		outcome = attack_sequence(B, A, B_perf, A_perf);
+		out.push_back({B, outcome, A});
 		if (A.stats.HP > 0)
 		{
-		    attack_sequence(A, B, A_perf, B_perf);
+		    outcome = attack_sequence(A, B, A_perf, B_perf);
+		    out.push_back({A, outcome, B});
 		    if (B.stats.HP <= 0)
 		    {
 			// B dies from A's second attack.
 			map.death(B);
+			out.push_back({B, 0, A});
 		    }
 		}
 		else
 		{
 		    // A dies from B's retaliation.
 		    map.death(A);
+		    out.push_back({A, 0, B});
 		}
 	    }
 	    else
 	    {
 		// B dies from A's first attack.
 		map.death(B);
+		out.push_back({B, 0, A});
 	    }
 	}
 	else
 	{
-	    attack_sequence(B, A, B_perf, A_perf);
+	    outcome = attack_sequence(B, A, B_perf, A_perf);
+	    out.push_back({B, outcome, A});
 	    if (A.stats.HP > 0)
 	    {
-		attack_sequence(A, B, A_perf, B_perf);
+		outcome = attack_sequence(A, B, A_perf, B_perf);
+		out.push_back({A, outcome, B});
 		if (B.stats.HP > 0)
 		{
-		    attack_sequence(A, B, A_perf, B_perf);
+		    outcome = attack_sequence(A, B, A_perf, B_perf);
+		    out.push_back({A, outcome, B});
 		    if (B.stats.HP <= 0)
 		    {
 			// B dies from A's second attack.
 			map.death(B);
+			out.push_back({B, 0, A});
 		    }
 		}
 		else
 		{
 		    // B dies from A's first attack.
 		    map.death(B);
+		    out.push_back({B, 0, A});
 		}
 	    }
 	    else
 	    {
 		// A dies in first turn from B's attack.
 		map.death(A);
+		out.push_back({A, 0, B});
 	    }	    
 	}
     }
     else
     {
-	attack_sequence(A, B, A_perf, B_perf);
+	outcome = attack_sequence(A, B, A_perf, B_perf);
+	out.push_back({A, outcome, B});
 	if (B.stats.HP > 0)
 	{
-	    attack_sequence(B, A, B_perf, A_perf);
+	    outcome = attack_sequence(B, A, B_perf, A_perf);
+	    out.push_back({B, outcome, A});
 	    if (A.stats.HP <= 0)
 	    {
 		// A's death from retaliation from B.
 		map.death(A);
+		out.push_back({A, 0, B});
+		
 	    }
 	}
 	else
 	{
 	    // B's Death on A's attack
 	    map.death(B);
+	    out.push_back({B, 0, A});
 	}
     }
+    return out;
 }
 
-void battle(Entity& A, Entity& B, Mapmaker& map)
+std::vector<sequence> battle(Entity& A, Entity& B, Mapmaker& map)
 {
+    std::vector<sequence> outcomes;
     std::vector<CombatInfo> out = interact(A, B);
     CombatInfo A_perf = out[0]; CombatInfo B_perf = out[1];
     if (A_perf.DB  &&  B_perf.DB)
@@ -256,18 +282,18 @@ void battle(Entity& A, Entity& B, Mapmaker& map)
     }
     if (A_perf.DB)
     {
-	entity_attack(A, B, A_perf, B_perf, true, A_perf.DB, map);
+	outcomes = entity_attack(A, B, A_perf, B_perf, true, A_perf.DB, map);
     }
     else if (B_perf.DB)
     {
-	entity_attack(A, B, A_perf, B_perf, false, B_perf.DB, map);
+	outcomes = entity_attack(A, B, A_perf, B_perf, false, B_perf.DB, map);
     }
     else
     {
-	entity_attack(A, B, A_perf, B_perf, true, false, map);
+	outcomes = entity_attack(A, B, A_perf, B_perf, true, false, map);
     }
     // if(doubles) --> if(hits) --> if(crits) --> (B.Hp - (A.MT*(1 || 3)*(1 || 2))) && (Aw.DUR - (1 || 2)) && (A.Hp - (B.MT*(1 || 3)*(1 || 2))) && (Bw.DUR - (1 || 2))
-    
+    return outcomes;
 }
 
 /*

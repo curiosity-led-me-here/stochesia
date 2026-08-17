@@ -127,6 +127,11 @@ Mapmaker::Mapmaker(const maps::MapRecipe& recipe)
     : Mapmaker(recipe.terrain)
 {}
 
+int Mapmaker::entity_at(std::vector<int> coordinates)
+{
+    return occupancy[coordinates[1]][coordinates[0]];
+}
+
 std::vector<std::vector<int>> Mapmaker::get_generate() { return generate_map(dimensions); }
 std::vector<std::vector<int>> Mapmaker::get_map() { return map; }
 
@@ -245,6 +250,71 @@ std::vector<avl_for_atk> Mapmaker::prompt_attack(Entity& unit)
     }
 }
 
+void Mapmaker::update_attack_range(Entity& unit)
+{
+    Guild guild = *unit.group;
+    int team = guild.guild_id;
+    std::vector<std::vector<int>> accumulator = unit.path;
+    for (std::vector<int>& row : accumulator)
+    {
+	std::fill(row.begin(), row.end(), 1);
+    }
+    for (int i=0; i < count_inventory_slots(unit); i++)
+    {
+	std::vector<std::vector<int>> out= unit.path;
+	for (std::vector<int>& row : out)
+	{
+	    std::fill(row.begin(), row.end(), -1);
+	}
+	std::vector<std::vector<int>> out_min= out;
+	try
+	{
+	    Weapon weapon = get_weapon(Armory, unit.inventory.slot[i].ID);
+	    trace(out_min, out, unit.location, weapon.MINRG, weapon.MAXRG);
+	    for (int i=0; i < out.size(); i++)
+	    {
+		for (int j=0; j < out[0].size(); j++)
+		{
+		    accumulator[i][j] = accumulator[i][j] && out[i][j];
+		}
+	    }
+	}
+	catch (const std::invalid_argument& e) {continue;}
+    }
+    unit.attack_range = accumulator;
+}
+
+std::vector<std::vector<int>> Mapmaker::render_move(Entity& unit, std::vector<int> delta_coord, Registry& registry)
+{
+    std::vector<int> coord = {unit.location[0]+delta_coord[0], unit.location[1]+delta_coord[1]};
+    if (coord[0] < 0 || coord[1] < 0 || coord[0] >= map[0].size() || coord[1] >= map.size())
+    {
+	throw std::invalid_argument("Destination out of the map!");
+    }
+    auto landable = consider_occupancy(unit);
+    if (landable[coord[1]][coord[0]] == -1)
+    {
+	throw std::invalid_argument("Destination obstructed by another unit!");
+    }
+    guilds[unit.location[1]][unit.location[0]] = 0;
+    occupancy[unit.location[1]][unit.location[0]] = 0;
+    std::vector<std::vector<int>> out;
+    out.push_back(coord);
+    move(unit, coord, out);
+    std::vector<std::vector<int>> output;
+    for (int i = static_cast<int>(out.size()) - 1; i >= 0; --i)
+    {
+	output.push_back(out[i]);
+	unit.location = out[i];
+	unit.turn = false;
+    }
+    path_trace(unit);
+    guilds[unit.location[1]][unit.location[0]] = unit.group->guild_id;
+    occupancy[unit.location[1]][unit.location[0]] = unit.entity_id;
+    return output;
+}
+
+
 bool check_valid_coords(std::vector<int> coords, std::vector<avl_for_atk> prompts)
 {
     bool valid = false;
@@ -294,7 +364,6 @@ std::vector<std::vector<int>> Mapmaker::move(Entity& unit, std::vector<int> delt
 	output.push_back(out[i]);
 	unit.location = out[i];
     }
-    plot_movement_frame(registry, unit, 250);
     if (prompt_attack(unit).empty())
     {
 	path_trace(unit);
@@ -477,10 +546,17 @@ void Mapmaker::attack_range(Entity& unit)
 	try
 	{
 	    Weapon weapon = get_weapon(Armory, i.ID);
-	    std::vector<std::vector<int>> path = attack_range(unit, weapon);
-	    out.push_back(path);
-	}
+	    for (WeaponCategory i : unit.type.UsableWeapons)
+	    {
+		if (i == weapon.CAT)
+		{
+		    std::vector<std::vector<int>> path = attack_range(unit, weapon);
+		    out.push_back(path);
+		}
+	    }
+	}   
 	catch (const std::invalid_argument& e) {}
     }
-    unit.attack_range  = superimpose(out);
+    if (out.empty()) { unit.attack_range = unit.path; }
+    else { unit.attack_range  = superimpose(out); }
 }

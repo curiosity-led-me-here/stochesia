@@ -1,5 +1,5 @@
 CompileFlags:
   Add:
     - -std=c++17
-    - -I/Users/ashu/Strategic-Procedural-Generation/include
-    - -I/Users/ashu/Strategic-Procedural-Generation/map_tile_library/include
+    - -I/Users/ashu/Stochesia/include
+    - -I/Users/ashu/Stochesia/map_tile_library/include

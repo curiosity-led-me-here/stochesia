@@ -33,14 +33,14 @@ std::vector<CombatInfo> interact(
     const Entity& B
 );
 
-void attack_sequence(
+int attack_sequence(
     Entity& A,
     Entity& B,
     CombatInfo& A_perf,
     CombatInfo& B_perf
 );
 
-void entity_attack(
+std::vector<sequence> entity_attack(
     Entity& A,
     Entity& B,
     CombatInfo& A_perf,
@@ -50,7 +50,7 @@ void entity_attack(
     Mapmaker& map
 );
 
-void battle(
+std::vector<sequence> battle(
     Entity& A,
     Entity& B,
     Mapmaker& map

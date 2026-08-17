@@ -276,3 +276,25 @@ struct Command
     int id;
     std::vector<int> coords;
 };
+
+struct sequence
+{
+    Entity& unit;
+    int turn;
+    Entity& opp;
+
+    // battle() resolves its mechanics immediately, but map combat is played
+    // round by round afterward. Preserve the HP snapshot made directly after
+    // this round so the renderer can lower a bar at its visible hit frame.
+    int unit_hp_after;
+    int opp_hp_after;
+
+    sequence(Entity& attacker, int outcome, Entity& opponent)
+        : unit(attacker),
+          turn(outcome),
+          opp(opponent),
+          unit_hp_after(attacker.stats.HP),
+          opp_hp_after(opponent.stats.HP)
+    {
+    }
+};

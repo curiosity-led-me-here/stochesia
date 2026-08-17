@@ -144,12 +144,41 @@ Command process_command(std::string name)
 }
 
 Environment::Environment(const maps::TerrainMap& recipe)
-    : map_recipe(maps::gameplay_only(recipe)), board(map_recipe.terrain), registry()
+    : map_recipe(maps::gameplay_only(recipe)), board(map_recipe.terrain), registry(), cursor({static_cast<int>(board.get_map()[0].size()) / 2, static_cast<int>(board.get_map().size()) / 2})
 {};
 
 Environment::Environment(const maps::MapRecipe& recipe)
-    : map_recipe(recipe), board(map_recipe.terrain), registry()
+    : map_recipe(recipe), board(map_recipe.terrain), registry(), cursor({static_cast<int>(board.get_map()[0].size()) / 2, static_cast<int>(board.get_map().size()) / 2})
 {};
+
+void Environment::move_up()
+{
+    std::vector<int> new_coords = {cursor[0], cursor[1]-1};
+    if (new_coords[0] < static_cast<int>(board.get_map()[0].size()) && new_coords[1] < static_cast<int>(board.get_map().size()) && new_coords[0] >= 0 && new_coords[1] >= 0) { cursor = new_coords; }
+}
+
+void Environment::move_down()
+{
+    std::vector<int> new_coords = {cursor[0], cursor[1]+1};
+    if (new_coords[0] < static_cast<int>(board.get_map()[0].size()) && new_coords[1] < static_cast<int>(board.get_map().size()) && new_coords[0] >= 0 && new_coords[1] >= 0) { cursor = new_coords; }
+}
+
+void Environment::move_right()
+{
+    std::vector<int> new_coords = {cursor[0]+1, cursor[1]};
+    if (new_coords[0] < static_cast<int>(board.get_map()[0].size()) && new_coords[1] < static_cast<int>(board.get_map().size()) && new_coords[0] >= 0 && new_coords[1] >= 0) { cursor = new_coords; }
+}
+
+void Environment::move_left()
+{
+    std::vector<int> new_coords = {cursor[0]-1, cursor[1]};
+    if (new_coords[0] < static_cast<int>(board.get_map()[0].size()) && new_coords[1] < static_cast<int>(board.get_map().size()) && new_coords[0] >= 0 && new_coords[1] >= 0) { cursor = new_coords; }
+}
+
+int Environment::detect_unit()
+{
+    return board.entity_at({cursor[1], cursor[0]});
+}
 
 const maps::MapRecipe& Environment::map_data() const
 {
@@ -187,22 +216,21 @@ void Environment::ConfigureEnv::add_guild(std::string name, int id)
     team.guild_id = id;
 }
 
-Entity& Environment::ConfigureEnv::add_entity(Entity unit, int id)
+Entity& Environment::ConfigureEnv::configure_entity(Entity unit, int id, Guild& guild, const std::vector<int> location)
 {
+    Entity& out_unit = env.registry.spawn(unit, id);
     assert(id != 0);
-    return env.registry.spawn(unit, id);
+    guild.add(out_unit);
+    out_unit.location = location;
+    env.board.place_unit(out_unit);
+    env.board.path_trace(out_unit);
+    return out_unit;
 }
 
-void Environment::ConfigureEnv::join_guild(Entity& unit, Guild& guild)
+void Environment::ConfigureEnv::configure_render(Entity& unit, fe_tiles::AnimationRenderer& render, fe_tiles::UnitVisual visual)
 {
-    guild.add(unit);
-}
-
-void Environment::ConfigureEnv::place_unit(Entity& unit, const std::vector<int> location)
-{
-    unit.location = location;
-    env.board.place_unit(unit);
-    env.board.path_trace(unit);
+    auto art = render.entity(unit, visual); 
+    env.local_registry.emplace(unit.entity_id, art);
 }
 
 Environment::Game::Game(Environment& env) : env(env), config(ConfigureEnv(env)) {};

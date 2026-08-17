@@ -15,7 +15,7 @@
 namespace
 {
 const std::string kTileLibraryRoot =
-    "/Users/ashu/Strategic-Procedural-Generation/map_tile_library";
+    "/Users/ashu/Stochesia/map_tile_library";
 const std::string kFe8MapRoot =
     kTileLibraryRoot + "/reference_gameplay_maps/";
 const std::string kEditorMapRoot =

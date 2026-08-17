@@ -1,0 +1,73 @@
+theme_id	theme_source	theme_folder
+1	Fire Emblem 8/Chapters/01	theme_001_chapters_01
+2	Fire Emblem 8/Chapters/02	theme_002_chapters_02
+3	Fire Emblem 8/Chapters/03	theme_003_chapters_03
+4	Fire Emblem 8/Chapters/04	theme_004_chapters_04
+5	Fire Emblem 8/Chapters/05	theme_005_chapters_05
+6	Fire Emblem 8/Chapters/05x	theme_006_chapters_05x
+7	Fire Emblem 8/Chapters/06	theme_007_chapters_06
+8	Fire Emblem 8/Chapters/07	theme_008_chapters_07
+9	Fire Emblem 8/Chapters/08	theme_009_chapters_08
+10	Fire Emblem 8/Chapters/09Eirika	theme_010_chapters_09eirika
+11	Fire Emblem 8/Chapters/09Ephraim	theme_011_chapters_09ephraim
+12	Fire Emblem 8/Chapters/10Eirika	theme_012_chapters_10eirika
+13	Fire Emblem 8/Chapters/10Ephraim	theme_013_chapters_10ephraim
+14	Fire Emblem 8/Chapters/11Eirika	theme_014_chapters_11eirika
+15	Fire Emblem 8/Chapters/11Ephraim	theme_015_chapters_11ephraim
+16	Fire Emblem 8/Chapters/12Eirika	theme_016_chapters_12eirika
+17	Fire Emblem 8/Chapters/12Ephraim	theme_017_chapters_12ephraim
+18	Fire Emblem 8/Chapters/13Eirika	theme_018_chapters_13eirika
+19	Fire Emblem 8/Chapters/13Ephraim	theme_019_chapters_13ephraim
+20	Fire Emblem 8/Chapters/14Eirika	theme_020_chapters_14eirika
+21	Fire Emblem 8/Chapters/14Ephraim	theme_021_chapters_14ephraim
+22	Fire Emblem 8/Chapters/15	theme_022_chapters_15
+23	Fire Emblem 8/Chapters/16	theme_023_chapters_16
+24	Fire Emblem 8/Chapters/17	theme_024_chapters_17
+25	Fire Emblem 8/Chapters/18	theme_025_chapters_18
+26	Fire Emblem 8/Chapters/19	theme_026_chapters_19
+27	Fire Emblem 8/Chapters/20	theme_027_chapters_20
+28	Fire Emblem 8/Chapters/Final1	theme_028_chapters_final1
+29	Fire Emblem 8/Chapters/Final2	theme_029_chapters_final2
+30	Fire Emblem 8/Chapters/Prologue	theme_030_chapters_prologue
+31	Fire Emblem 8/Cutscenes/Caer Pelyn	theme_031_cutscenes_caer_pelyn
+32	Fire Emblem 8/Cutscenes/Chapter02	theme_032_cutscenes_chapter02
+33	Fire Emblem 8/Cutscenes/Chapter08	theme_033_cutscenes_chapter08
+34	Fire Emblem 8/Cutscenes/Grado Chamber	theme_034_cutscenes_grado_chamber
+35	Fire Emblem 8/Cutscenes/Grado Keep	theme_035_cutscenes_grado_keep
+36	Fire Emblem 8/Cutscenes/Grado Outskirts	theme_036_cutscenes_grado_outskirts
+37	Fire Emblem 8/Cutscenes/Grado Prison	theme_037_cutscenes_grado_prison
+38	Fire Emblem 8/Cutscenes/Jehanna Hall	theme_038_cutscenes_jehanna_hall
+39	Fire Emblem 8/Cutscenes/Port Kiris	theme_039_cutscenes_port_kiris
+40	Fire Emblem 8/Cutscenes/Rausten Chamber	theme_040_cutscenes_rausten_chamber
+41	Fire Emblem 8/Cutscenes/Renais Castle	theme_041_cutscenes_renais_castle
+42	Fire Emblem 8/Cutscenes/Renais Chamber	theme_042_cutscenes_renais_chamber
+43	Fire Emblem 8/Cutscenes/Renvall	theme_043_cutscenes_renvall
+44	Fire Emblem 8/Cutscenes/Serafew	theme_044_cutscenes_serafew
+45	Fire Emblem 8/Cutscenes/Za'albul Marsh	theme_045_cutscenes_za_albul_marsh
+46	Fire Emblem 8/Tower of Valni/1	theme_046_tower_of_valni_1
+47	Fire Emblem 8/Tower of Valni/2	theme_047_tower_of_valni_2
+48	Fire Emblem 8/Tower of Valni/3	theme_048_tower_of_valni_3
+49	Fire Emblem 8/Tower of Valni/4	theme_049_tower_of_valni_4
+50	Fire Emblem 8/Tower of Valni/5	theme_050_tower_of_valni_5
+51	Fire Emblem 8/Tower of Valni/6	theme_051_tower_of_valni_6
+52	Fire Emblem 8/Tower of Valni/7	theme_052_tower_of_valni_7
+53	Fire Emblem 8/Tower of Valni/8	theme_053_tower_of_valni_8
+54	Fire Emblem 8/Lagdou Ruins/01	theme_054_lagdou_ruins_01
+55	Fire Emblem 8/Lagdou Ruins/02	theme_055_lagdou_ruins_02
+56	Fire Emblem 8/Lagdou Ruins/03	theme_056_lagdou_ruins_03
+57	Fire Emblem 8/Lagdou Ruins/04	theme_057_lagdou_ruins_04
+58	Fire Emblem 8/Lagdou Ruins/05	theme_058_lagdou_ruins_05
+59	Fire Emblem 8/Lagdou Ruins/06	theme_059_lagdou_ruins_06
+60	Fire Emblem 8/Lagdou Ruins/07	theme_060_lagdou_ruins_07
+61	Fire Emblem 8/Lagdou Ruins/08	theme_061_lagdou_ruins_08
+62	Fire Emblem 8/Lagdou Ruins/09	theme_062_lagdou_ruins_09
+63	Fire Emblem 8/Lagdou Ruins/10	theme_063_lagdou_ruins_10
+64	Fire Emblem 8/Skirmishes/Adlas Plains	theme_064_skirmishes_adlas_plains
+65	Fire Emblem 8/Skirmishes/Bethroen	theme_065_skirmishes_bethroen
+66	Fire Emblem 8/Skirmishes/Hamill Canyon	theme_066_skirmishes_hamill_canyon
+67	Fire Emblem 8/Skirmishes/Melkaen Coast	theme_067_skirmishes_melkaen_coast
+68	Fire Emblem 8/Skirmishes/Narube River	theme_068_skirmishes_narube_river
+69	Fire Emblem 8/Skirmishes/Neleras Peak	theme_069_skirmishes_neleras_peak
+70	Fire Emblem 8/Skirmishes/Teraz Plateau	theme_070_skirmishes_teraz_plateau
+71	Fire Emblem 8/Skirmishes/Za'albul Marsh	theme_071_skirmishes_za_albul_marsh
+72	Fire Emblem 8/Skirmishes/Za'ha Woods	theme_072_skirmishes_za_ha_woods

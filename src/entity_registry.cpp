@@ -25,3 +25,16 @@ Entity& Registry::get_unit(int id)
     }
     throw std::invalid_argument("Entity doesnt exist!");
 }
+
+std::vector<Entity*> Registry::live_units()
+{
+    std::vector<Entity*> out;
+    for (std::unique_ptr<Entity>& unit : registry)
+    {
+	if (unit->alive)
+	{
+	    out.push_back(unit.get());
+	}
+    }
+    return out;
+}

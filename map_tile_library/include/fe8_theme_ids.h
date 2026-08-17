@@ -1,0 +1,80 @@
+#pragma once
+
+namespace fe_tiles
+{
+using ThemeId = int;
+
+// Generated from data/themes.tsv. Theme means one FE8 source map.
+constexpr ThemeId THEME_CHAPTERS_01 = 1;
+constexpr ThemeId THEME_CHAPTERS_02 = 2;
+constexpr ThemeId THEME_CHAPTERS_03 = 3;
+constexpr ThemeId THEME_CHAPTERS_04 = 4;
+constexpr ThemeId THEME_CHAPTERS_05 = 5;
+constexpr ThemeId THEME_CHAPTERS_05X = 6;
+constexpr ThemeId THEME_CHAPTERS_06 = 7;
+constexpr ThemeId THEME_CHAPTERS_07 = 8;
+constexpr ThemeId THEME_CHAPTERS_08 = 9;
+constexpr ThemeId THEME_CHAPTERS_09EIRIKA = 10;
+constexpr ThemeId THEME_CHAPTERS_09EPHRAIM = 11;
+constexpr ThemeId THEME_CHAPTERS_10EIRIKA = 12;
+constexpr ThemeId THEME_CHAPTERS_10EPHRAIM = 13;
+constexpr ThemeId THEME_CHAPTERS_11EIRIKA = 14;
+constexpr ThemeId THEME_CHAPTERS_11EPHRAIM = 15;
+constexpr ThemeId THEME_CHAPTERS_12EIRIKA = 16;
+constexpr ThemeId THEME_CHAPTERS_12EPHRAIM = 17;
+constexpr ThemeId THEME_CHAPTERS_13EIRIKA = 18;
+constexpr ThemeId THEME_CHAPTERS_13EPHRAIM = 19;
+constexpr ThemeId THEME_CHAPTERS_14EIRIKA = 20;
+constexpr ThemeId THEME_CHAPTERS_14EPHRAIM = 21;
+constexpr ThemeId THEME_CHAPTERS_15 = 22;
+constexpr ThemeId THEME_CHAPTERS_16 = 23;
+constexpr ThemeId THEME_CHAPTERS_17 = 24;
+constexpr ThemeId THEME_CHAPTERS_18 = 25;
+constexpr ThemeId THEME_CHAPTERS_19 = 26;
+constexpr ThemeId THEME_CHAPTERS_20 = 27;
+constexpr ThemeId THEME_CHAPTERS_FINAL1 = 28;
+constexpr ThemeId THEME_CHAPTERS_FINAL2 = 29;
+constexpr ThemeId THEME_CHAPTERS_PROLOGUE = 30;
+constexpr ThemeId THEME_CUTSCENES_CAER_PELYN = 31;
+constexpr ThemeId THEME_CUTSCENES_CHAPTER02 = 32;
+constexpr ThemeId THEME_CUTSCENES_CHAPTER08 = 33;
+constexpr ThemeId THEME_CUTSCENES_GRADO_CHAMBER = 34;
+constexpr ThemeId THEME_CUTSCENES_GRADO_KEEP = 35;
+constexpr ThemeId THEME_CUTSCENES_GRADO_OUTSKIRTS = 36;
+constexpr ThemeId THEME_CUTSCENES_GRADO_PRISON = 37;
+constexpr ThemeId THEME_CUTSCENES_JEHANNA_HALL = 38;
+constexpr ThemeId THEME_CUTSCENES_PORT_KIRIS = 39;
+constexpr ThemeId THEME_CUTSCENES_RAUSTEN_CHAMBER = 40;
+constexpr ThemeId THEME_CUTSCENES_RENAIS_CASTLE = 41;
+constexpr ThemeId THEME_CUTSCENES_RENAIS_CHAMBER = 42;
+constexpr ThemeId THEME_CUTSCENES_RENVALL = 43;
+constexpr ThemeId THEME_CUTSCENES_SERAFEW = 44;
+constexpr ThemeId THEME_CUTSCENES_ZA_ALBUL_MARSH = 45;
+constexpr ThemeId THEME_TOWER_OF_VALNI_1 = 46;
+constexpr ThemeId THEME_TOWER_OF_VALNI_2 = 47;
+constexpr ThemeId THEME_TOWER_OF_VALNI_3 = 48;
+constexpr ThemeId THEME_TOWER_OF_VALNI_4 = 49;
+constexpr ThemeId THEME_TOWER_OF_VALNI_5 = 50;
+constexpr ThemeId THEME_TOWER_OF_VALNI_6 = 51;
+constexpr ThemeId THEME_TOWER_OF_VALNI_7 = 52;
+constexpr ThemeId THEME_TOWER_OF_VALNI_8 = 53;
+constexpr ThemeId THEME_LAGDOU_RUINS_01 = 54;
+constexpr ThemeId THEME_LAGDOU_RUINS_02 = 55;
+constexpr ThemeId THEME_LAGDOU_RUINS_03 = 56;
+constexpr ThemeId THEME_LAGDOU_RUINS_04 = 57;
+constexpr ThemeId THEME_LAGDOU_RUINS_05 = 58;
+constexpr ThemeId THEME_LAGDOU_RUINS_06 = 59;
+constexpr ThemeId THEME_LAGDOU_RUINS_07 = 60;
+constexpr ThemeId THEME_LAGDOU_RUINS_08 = 61;
+constexpr ThemeId THEME_LAGDOU_RUINS_09 = 62;
+constexpr ThemeId THEME_LAGDOU_RUINS_10 = 63;
+constexpr ThemeId THEME_SKIRMISHES_ADLAS_PLAINS = 64;
+constexpr ThemeId THEME_SKIRMISHES_BETHROEN = 65;
+constexpr ThemeId THEME_SKIRMISHES_HAMILL_CANYON = 66;
+constexpr ThemeId THEME_SKIRMISHES_MELKAEN_COAST = 67;
+constexpr ThemeId THEME_SKIRMISHES_NARUBE_RIVER = 68;
+constexpr ThemeId THEME_SKIRMISHES_NELERAS_PEAK = 69;
+constexpr ThemeId THEME_SKIRMISHES_TERAZ_PLATEAU = 70;
+constexpr ThemeId THEME_SKIRMISHES_ZA_ALBUL_MARSH = 71;
+constexpr ThemeId THEME_SKIRMISHES_ZA_HA_WOODS = 72;
+}

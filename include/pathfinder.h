@@ -49,6 +49,7 @@ public:
     Mapmaker(const std::vector<int>& dimensions);
     Mapmaker(maps::TerrainMap);
     Mapmaker(const maps::MapRecipe& recipe);
+    int entity_at(std::vector<int> coordinates);
     std::vector<std::vector<int>> get_generate();
     std::vector<std::vector<int>> get_map();
     void place_unit(Entity& unit);
@@ -56,7 +57,9 @@ public:
     void path_trace(Entity& unit);
     void death(Entity& unit);
     std::vector<std::vector<int>> consider_occupancy(const Entity& unit);
+    std::vector<std::vector<int>> render_move(Entity& unit, std::vector<int> delta_coord, Registry& registry);
     std::vector<avl_for_atk> prompt_attack(Entity& unit);
+    void update_attack_range(Entity& unit);
     std::vector<std::vector<int>> move(Entity& unit, std::vector<int> coord, Registry& registry);
     void plot_with_units(Registry& registry);
     void plot_movement_frame(Registry& registry, const Entity& moving_unit, int delay_ms = 140);

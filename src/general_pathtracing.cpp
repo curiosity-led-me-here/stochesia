@@ -107,7 +107,7 @@ void trace(std::vector<std::vector<int>>& out_min, std::vector<std::vector<int>>
 	}
     }
 
-    path(MIN, start, out_min);
+    path(MIN-1, start, out_min);
     normalize_path(start, out_min);
     path(MAX, start, out_max);
     normalize_path(start, out_max);

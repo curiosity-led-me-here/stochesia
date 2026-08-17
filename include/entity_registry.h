@@ -12,4 +12,6 @@ class Registry
 	Entity& spawn(Entity unit, int id);
 
 	Entity& get_unit(int id);
+
+	std::vector<Entity*> live_units();
 };
