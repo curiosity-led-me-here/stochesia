@@ -56,7 +56,8 @@ class Environment
 	    public:
 		ConfigureEnv(Environment& env);
 		void add_guild(std::string name, int id);
-		Entity& configure_entity(Entity unit, int id, Guild& guild, const std::vector<int> location);
+		Entity& configure_entity(Entity unit, int id, Guild& guild);
+		void configure_entity_location(Entity& out_unit, const std::vector<int> location);
 		void configure_render(Entity& unit, fe_tiles::AnimationRenderer& render, fe_tiles::UnitVisual);
 	    };
 	    class Game

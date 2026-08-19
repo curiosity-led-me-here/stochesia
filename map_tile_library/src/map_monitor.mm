@@ -519,6 +519,24 @@ namespace fe_tiles
 {
 struct MapMonitor::Impl
 {
+    struct PhaseIntro
+    {
+        std::string guild_name;
+        GuildColor color = GuildColor::player();
+        int tick = 0;
+    };
+
+    struct PhaseDialogue
+    {
+        std::string guild_name;
+        GuildColor color = GuildColor::player();
+    };
+
+    struct GameOver
+    {
+        std::uint64_t tick = 0;
+    };
+
     struct BattleForecast
     {
         std::string attacker_name;
@@ -547,7 +565,11 @@ struct MapMonitor::Impl
     std::function<void(char)> key_callback;
     std::function<void()> frame_callback;
     std::optional<std::pair<int, int>> cursor;
+    std::vector<std::vector<std::pair<int, int>>> route_arrows;
     std::optional<BattleForecast> battle_forecast;
+    std::optional<PhaseIntro> phase_intro;
+    std::optional<PhaseDialogue> phase_dialogue;
+    std::optional<GameOver> game_over;
     double battle_tick_accumulator = 0.0;
     std::uint64_t idle_tick = 0;
     Palette player_palette{};
@@ -963,6 +985,82 @@ struct MapMonitor::Impl
 };
 }
 
+static NSColor* route_arrow_color(std::size_t route_index)
+{
+    switch (route_index % 4)
+    {
+        case 0: return [NSColor colorWithCalibratedRed:1.0 green:0.89 blue:0.24 alpha:0.98];
+        case 1: return [NSColor colorWithCalibratedRed:0.20 green:0.90 blue:1.0 alpha:0.98];
+        case 2: return [NSColor colorWithCalibratedRed:1.0 green:0.36 blue:0.74 alpha:0.98];
+        default: return [NSColor colorWithCalibratedRed:0.54 green:1.0 blue:0.32 alpha:0.98];
+    }
+}
+
+static void draw_route_arrow(NSRect cell, int dx, int dy, NSColor* color)
+{
+    if (std::abs(dx) + std::abs(dy) != 1)
+    {
+        return;
+    }
+
+    const CGFloat pixel = std::max<CGFloat>(1.0, std::floor(NSWidth(cell) / 16.0));
+    const CGFloat cx = NSMidX(cell);
+    const CGFloat cy = NSMidY(cell);
+    const CGFloat vx = static_cast<CGFloat>(dx);
+    const CGFloat vy = static_cast<CGFloat>(dy);
+    const CGFloat px = -vy;
+    const CGFloat py = vx;
+
+    [NSGraphicsContext saveGraphicsState];
+    CGContextSetShouldAntialias([[NSGraphicsContext currentContext] CGContext], false);
+
+    NSBezierPath* shaft = [NSBezierPath bezierPath];
+    shaft.lineCapStyle = NSLineCapStyleButt;
+    shaft.lineWidth = 4.0 * pixel;
+    [shaft moveToPoint:NSMakePoint(cx - vx * 5.0 * pixel, cy - vy * 5.0 * pixel)];
+    [shaft lineToPoint:NSMakePoint(cx + vx * 3.0 * pixel, cy + vy * 3.0 * pixel)];
+    [[NSColor colorWithCalibratedWhite:0.04 alpha:0.90] setStroke];
+    [shaft stroke];
+
+    NSBezierPath* head = [NSBezierPath bezierPath];
+    [head moveToPoint:NSMakePoint(cx + vx * 7.0 * pixel, cy + vy * 7.0 * pixel)];
+    [head lineToPoint:NSMakePoint(cx + vx * 1.0 * pixel + px * 5.0 * pixel,
+                                  cy + vy * 1.0 * pixel + py * 5.0 * pixel)];
+    [head lineToPoint:NSMakePoint(cx + vx * 1.0 * pixel - px * 5.0 * pixel,
+                                  cy + vy * 1.0 * pixel - py * 5.0 * pixel)];
+    [head closePath];
+    [[NSColor colorWithCalibratedWhite:0.04 alpha:0.90] setFill];
+    [head fill];
+
+    shaft.lineWidth = 2.0 * pixel;
+    [color setStroke];
+    [shaft stroke];
+
+    NSBezierPath* inner_head = [NSBezierPath bezierPath];
+    [inner_head moveToPoint:NSMakePoint(cx + vx * 6.0 * pixel, cy + vy * 6.0 * pixel)];
+    [inner_head lineToPoint:NSMakePoint(cx + vx * 1.0 * pixel + px * 3.0 * pixel,
+                                        cy + vy * 1.0 * pixel + py * 3.0 * pixel)];
+    [inner_head lineToPoint:NSMakePoint(cx + vx * 1.0 * pixel - px * 3.0 * pixel,
+                                        cy + vy * 1.0 * pixel - py * 3.0 * pixel)];
+    [inner_head closePath];
+    [color setFill];
+    [inner_head fill];
+
+    [NSGraphicsContext restoreGraphicsState];
+}
+
+static void draw_route_destination(NSRect cell, NSColor* color)
+{
+    const CGFloat pixel = std::max<CGFloat>(1.0, std::floor(NSWidth(cell) / 16.0));
+    const CGFloat side = 6.0 * pixel;
+    const NSRect box = NSMakeRect(NSMidX(cell) - side, NSMidY(cell) - side,
+                                  side * 2.0, side * 2.0);
+    [[NSColor colorWithCalibratedWhite:0.04 alpha:0.90] setFill];
+    NSRectFill(box);
+    [color setFill];
+    NSRectFill(NSInsetRect(box, 2.0 * pixel, 2.0 * pixel));
+}
+
 @interface FE8MapMonitorView : NSView
 {
     void* _state;
@@ -1249,6 +1347,33 @@ struct MapMonitor::Impl
         }
     }
 
+    // Route arrows are independent of blue/red action paint. They are useful
+    // for visualising any already-computed generalized path without letting
+    // the monitor infer, commit, or otherwise own that path.
+    for (std::size_t route_index = 0; route_index < state->route_arrows.size(); ++route_index)
+    {
+        const std::vector<std::pair<int, int>>& route = state->route_arrows[route_index];
+        NSColor* color = route_arrow_color(route_index);
+        for (std::size_t index = 0; index < route.size(); ++index)
+        {
+            const auto [x, y] = route[index];
+            const NSRect cell = NSMakeRect(
+                NSMinX(_board) + x * _cell_pixels,
+                NSMinY(_board) + y * _cell_pixels,
+                _cell_pixels, _cell_pixels
+            );
+
+            if (index + 1 == route.size())
+            {
+                draw_route_destination(cell, color);
+                continue;
+            }
+
+            const auto [next_x, next_y] = route[index + 1];
+            draw_route_arrow(cell, next_x - x, next_y - y, color);
+        }
+    }
+
     for (const fe_tiles::UnitPose& pose : state->renderer->unit_poses())
     {
         const bool stationary = std::floor(pose.x) == pose.x && std::floor(pose.y) == pose.y;
@@ -1373,25 +1498,10 @@ struct MapMonitor::Impl
     }
     for (const fe_tiles::DeathEffect& effect : state->renderer->death_effects())
     {
-        constexpr CGFloat death_fade_frames = 60.0;
-        // FE8 MU_StartDeathFade begins with StartMuHitFlash, which fades an
-        // all-white palette toward the normal palette. Preserve that white
-        // flash, then use the renderer's longer transparent tail below.
-        const CGFloat life_progress = std::clamp(
-            static_cast<CGFloat>(effect.tick) / death_fade_frames, 0.0, 1.0
-        );
-        const CGFloat flash_progress = std::clamp(
-            static_cast<CGFloat>(effect.tick) / 20.0, 0.0, 1.0
-        );
-        // Keep the tail intentionally readable on a desktop monitor: this
-        // is a literal opacity fade from the frozen unit into the terrain.
-        const CGFloat life = 1.0 - life_progress;
-        const CGFloat white_flash = 1.0 - flash_progress * flash_progress *
-            (3.0 - 2.0 * flash_progress);
+        // DeathEffect exists for the lethal-impact frame only. The 17-frame
+        // white glow is already drawn from HitEffect above, matching FE8's
+        // StartMuHitFlash without a second pause after the hit.
         [NSGraphicsContext saveGraphicsState];
-        CGContextSetAlpha([[NSGraphicsContext currentContext] CGContext], life);
-        [self drawUnit:effect.pose white:NO];
-        CGContextSetAlpha([[NSGraphicsContext currentContext] CGContext], life * white_flash);
         [self drawUnit:effect.pose white:YES];
         [NSGraphicsContext restoreGraphicsState];
     }
@@ -1430,6 +1540,173 @@ struct MapMonitor::Impl
         [NSGraphicsContext restoreGraphicsState];
     }
 
+    if (state->phase_intro.has_value())
+    {
+        // FE8's phase intro is driven by three parallel proc scripts:
+        // squares: 34 frames in + 36 frames out; title: wait 6, 16 in,
+        // hold 30, 16 out; blend-box: 32 in + 33 out. `tick` below keeps
+        // the title's 68-frame lifetime, which is the last script to finish.
+        const fe_tiles::MapMonitor::Impl::PhaseIntro& phase = *state->phase_intro;
+        const int tick = phase.tick;
+        const CGFloat board_width = NSWidth(_board);
+        const CGFloat board_height = NSHeight(_board);
+        const std::uint32_t rgb = phase.color.rgb;
+        const CGFloat red = static_cast<CGFloat>((rgb >> 16) & 0xFF) / 255.0;
+        const CGFloat green = static_cast<CGFloat>((rgb >> 8) & 0xFF) / 255.0;
+        const CGFloat blue_component = static_cast<CGFloat>(rgb & 0xFF) / 255.0;
+        const auto clamp01 = [](CGFloat value)
+        {
+            return std::clamp(value, 0.0, 1.0);
+        };
+        const auto ease_out_cubic = [](CGFloat value)
+        {
+            const CGFloat inverse = 1.0 - std::clamp(value, 0.0, 1.0);
+            return 1.0 - inverse * inverse * inverse;
+        };
+        const auto ease_in_cubic = [](CGFloat value)
+        {
+            value = std::clamp(value, 0.0, 1.0);
+            return value * value * value;
+        };
+
+        [NSGraphicsContext saveGraphicsState];
+        CGContextRef phase_context = [[NSGraphicsContext currentContext] CGContext];
+        CGContextClipToRect(phase_context, NSRectToCGRect(_board));
+        CGContextSetShouldAntialias(phase_context, false);
+
+        // `PhaseIntroSquares_InLoop` operates on a 15x10 GBA-screen grid.
+        // Keep that exact virtual grid regardless of the real map dimensions,
+        // so an oversized Chapter 18 board does not make the sweep sluggish.
+        constexpr int screen_columns = 15;
+        constexpr int screen_rows = 10;
+        const CGFloat square_width = board_width / screen_columns;
+        const CGFloat square_height = board_height / screen_rows;
+        const bool squares_exiting = tick >= 34;
+        const int square_tick = squares_exiting ? tick - 34 : tick + 4;
+        for (int row = 0; row < screen_rows; ++row)
+        {
+            for (int column = 0; column < screen_columns; ++column)
+            {
+                // The two formulas follow PhaseIntroSquares_InLoop and
+                // PhaseIntroSquares_OutLoop respectively. The source changes
+                // one 16px tile graphic per diagonal step; alpha is the
+                // desktop equivalent of those 0..16 source tile variants.
+                int source_value = 0;
+                if (!squares_exiting)
+                {
+                    source_value = (column - square_tick) + (0x15 - row);
+                    source_value = std::clamp(source_value, 0, 0x10);
+                    source_value = (0x10 - source_value) & 0xFE;
+                }
+                else
+                {
+                    source_value = (1 - square_tick) + (10 + column) + (10 - row);
+                    source_value = std::clamp(source_value, 0, 0x10) & 0xFE;
+                    source_value = 0x10 - source_value;
+                }
+                const CGFloat amount = clamp01(static_cast<CGFloat>(source_value) / 16.0);
+                if (amount <= 0.0)
+                {
+                    continue;
+                }
+                [[NSColor colorWithCalibratedRed:red * 0.42
+                                            green:green * 0.42
+                                             blue:blue_component * 0.42
+                                            alpha:0.72 * amount] setFill];
+                NSRectFill(NSMakeRect(NSMinX(_board) + column * square_width,
+                                      NSMinY(_board) + row * square_height,
+                                      std::ceil(square_width) + 1.0,
+                                      std::ceil(square_height) + 1.0));
+            }
+        }
+
+        // PhaseIntroBlendBox expands a centred 96px-tall source window,
+        // blending the map behind it. Its timer begins at four and reaches
+        // the full box at source frame 32, then contracts over 33 frames.
+        CGFloat box_progress = 1.0;
+        if (tick < 28)
+        {
+            box_progress = ease_out_cubic(static_cast<CGFloat>(tick + 4) / 32.0);
+        }
+        else if (tick < 61)
+        {
+            box_progress = ease_in_cubic(static_cast<CGFloat>(61 - tick) / 33.0);
+        }
+        const CGFloat band_height = std::max<CGFloat>(
+            _cell_pixels * 1.8, board_height * 0.30
+        ) * box_progress;
+        const CGFloat band_y = NSMidY(_board) - band_height * 0.5;
+        const NSRect band = NSMakeRect(NSMinX(_board), band_y, board_width, band_height);
+        [[NSColor colorWithCalibratedWhite:0.015 alpha:0.62 * box_progress] setFill];
+        NSRectFill(band);
+        [[NSColor colorWithCalibratedRed:red * 0.55
+                                    green:green * 0.55
+                                     blue:blue_component * 0.55
+                                    alpha:0.50 * box_progress] setFill];
+        NSRectFill(NSInsetRect(band, 0.0, std::max<CGFloat>(1.0, _cell_pixels / 16.0)));
+
+        // `PhaseIntroText_InLoop`: wait six, RCUBIC -0x1C -> -8 for 16
+        // frames. `OutLoop`: CUBIC -0x1C -> -0x38 for another 16. Its real
+        // GBA title graphic is static, but the display string must be dynamic
+        // for Stochesia guilds, hence the bundled literal FE8 bitmap font.
+        if (tick >= 6 && tick < 68)
+        {
+            CGFloat title_progress = 1.0;
+            CGFloat title_x = NSMidX(_board);
+            if (tick < 22)
+            {
+                title_progress = ease_out_cubic(static_cast<CGFloat>(tick - 6) / 16.0);
+                title_x = NSMinX(_board) - board_width * (1.0 - title_progress);
+            }
+            else if (tick >= 52)
+            {
+                title_progress = 1.0 - ease_in_cubic(static_cast<CGFloat>(tick - 52) / 16.0);
+                title_x = NSMidX(_board) - board_width * (1.0 - title_progress);
+            }
+
+            std::string label = phase.guild_name + "'S PHASE";
+            for (char& character : label)
+            {
+                character = static_cast<char>(std::toupper(static_cast<unsigned char>(character)));
+            }
+            NSString* text = [NSString stringWithUTF8String:label.c_str()];
+            const CGFloat title_scale = std::clamp(_cell_pixels / 16.0, 1.0, 2.0);
+            CGFloat source_width = 0.0;
+            for (NSUInteger index = 0; index < text.length; ++index)
+            {
+                const unichar character = [text characterAtIndex:index];
+                source_width += state->forecast_glyph_widths[
+                    character < state->forecast_glyph_widths.size() ? character : '?'
+                ];
+            }
+            const CGFloat title_width = source_width * title_scale;
+            const CGFloat title_height = 16.0 * title_scale;
+            const NSRect title_box = NSMakeRect(
+                title_x - title_width * 0.5 - 8.0 * title_scale,
+                NSMidY(_board) - title_height * 0.5 - 5.0 * title_scale,
+                title_width + 16.0 * title_scale,
+                title_height + 10.0 * title_scale
+            );
+            [[NSColor colorWithCalibratedWhite:0.02 alpha:0.94] setFill];
+            NSRectFill(title_box);
+            [[NSColor colorWithCalibratedRed:red * 0.72 + 0.10
+                                        green:green * 0.72 + 0.10
+                                         blue:blue_component * 0.72 + 0.10
+                                        alpha:0.95] setFill];
+            NSRectFill(NSInsetRect(title_box, 2.0 * title_scale, 2.0 * title_scale));
+            [[NSColor colorWithCalibratedWhite:0.04 alpha:0.90] setFill];
+            NSRectFill(NSInsetRect(title_box, 4.0 * title_scale, 4.0 * title_scale));
+            draw_fe8_outlined_text(
+                state->forecast_font_white, state->forecast_font_ink,
+                state->forecast_glyph_widths, text,
+                NSMakePoint(title_x - title_width * 0.5,
+                            NSMidY(_board) - title_height * 0.5),
+                title_scale
+            );
+        }
+        [NSGraphicsContext restoreGraphicsState];
+    }
+
     [[NSColor colorWithWhite:1.0 alpha:0.2] setStroke];
     [[NSBezierPath bezierPathWithRect:_board] stroke];
 
@@ -1438,15 +1715,31 @@ struct MapMonitor::Impl
         const fe_tiles::MapMonitor::Impl::BattleForecast& forecast = *state->battle_forecast;
         const CGFloat side_x = NSMaxX(_board) + kMargin;
         const CGFloat panel_width = kSidebarWidth - kMargin;
+        // A persistent phase dialogue occupies the top of the sidebar. Put
+        // the combat forecast immediately below it rather than letting the
+        // two panels overlap. Constrain its scale by remaining height too.
+        const CGFloat phase_dialogue_height = state->phase_dialogue.has_value()
+            ? std::min<CGFloat>(158.0, self.bounds.size.height - 2.0 * kMargin)
+            : 0.0;
+        const CGFloat forecast_y = state->phase_dialogue.has_value()
+            ? kMargin + 16.0 + phase_dialogue_height + 12.0
+            : 26.0;
+        const CGFloat remaining_height = std::max<CGFloat>(
+            1.0, self.bounds.size.height - forecast_y - kMargin
+        );
         // FE8's standard battle forecast is exactly 120x176 source pixels.
         // All geometry below deliberately remains expressed in that original
         // coordinate system, so the monitor is a scaled GBA panel rather
         // than a modern sidebar card that merely contains the same numbers.
-        const CGFloat scale = std::min<CGFloat>(1.80, (panel_width - 8.0) / 120.0);
+        const CGFloat scale = std::min({
+            1.80,
+            (panel_width - 8.0) / 120.0,
+            remaining_height / 176.0
+        });
         const CGFloat panel_w = 120.0 * scale;
         const CGFloat panel_h = 176.0 * scale;
         const CGFloat px = side_x + (panel_width - panel_w) * 0.5;
-        const CGFloat py = 26.0;
+        const CGFloat py = forecast_y;
         const auto rect = [=](CGFloat x, CGFloat y, CGFloat w, CGFloat h)
         {
             return NSMakeRect(px + x * scale, py + y * scale, w * scale, h * scale);
@@ -1616,6 +1909,223 @@ struct MapMonitor::Impl
         draw_multiplier(forecast.defender_combat.DB, 18.0);
         draw_multiplier(forecast.attacker_combat.DB, 78.0);
     }
+
+    // The map receives FE8's animated phase card above. Mirror its title in
+    // the monitor sidebar as well, so the active phase remains explicit even
+    // on a large or visually busy custom map. While active, it deliberately
+    // takes precedence over a stale battle forecast.
+    if (state->phase_dialogue.has_value())
+    {
+        const fe_tiles::MapMonitor::Impl::PhaseDialogue& phase = *state->phase_dialogue;
+        CGFloat title_alpha = 1.0;
+        // Match the map title during its entry/exit, then keep this sidebar
+        // panel fully visible after the transient map animation is gone.
+        if (state->phase_intro.has_value())
+        {
+            const int tick = state->phase_intro->tick;
+            if (tick < 6)
+            {
+                title_alpha = 0.0;
+            }
+            else if (tick < 22)
+            {
+                const CGFloat progress = static_cast<CGFloat>(tick - 6) / 16.0;
+                const CGFloat inverse = 1.0 - std::clamp(progress, 0.0, 1.0);
+                title_alpha = 1.0 - inverse * inverse * inverse;
+            }
+            else if (tick >= 52)
+            {
+                const CGFloat progress = std::clamp(
+                    static_cast<CGFloat>(tick - 52) / 16.0, 0.0, 1.0
+                );
+                title_alpha = 1.0 - progress * progress * progress;
+            }
+        }
+
+        if (title_alpha > 0.0)
+        {
+            std::string guild_label = phase.guild_name;
+            for (char& character : guild_label)
+            {
+                character = static_cast<char>(std::toupper(static_cast<unsigned char>(character)));
+            }
+            NSString* guild_text = [NSString stringWithUTF8String:guild_label.c_str()];
+            NSString* phase_text = @"PHASE";
+            const CGFloat side_x = NSMaxX(_board) + kMargin;
+            const CGFloat panel_width = std::max<CGFloat>(
+                1.0, self.bounds.size.width - side_x - kMargin
+            );
+            const CGFloat panel_height = std::min<CGFloat>(158.0, self.bounds.size.height - 2.0 * kMargin);
+            const NSRect panel = NSMakeRect(side_x, kMargin + 16.0, panel_width, panel_height);
+            const std::uint32_t rgb = phase.color.rgb;
+            const CGFloat red = static_cast<CGFloat>((rgb >> 16) & 0xFF) / 255.0;
+            const CGFloat green = static_cast<CGFloat>((rgb >> 8) & 0xFF) / 255.0;
+            const CGFloat blue_component = static_cast<CGFloat>(rgb & 0xFF) / 255.0;
+            const auto text_source_width = [&](NSString* text)
+            {
+                CGFloat width = 0.0;
+                for (NSUInteger index = 0; index < text.length; ++index)
+                {
+                    const unichar character = [text characterAtIndex:index];
+                    width += state->forecast_glyph_widths[
+                        character < state->forecast_glyph_widths.size() ? character : '?'
+                    ];
+                }
+                return width;
+            };
+            const CGFloat guild_source_width = text_source_width(guild_text);
+            const CGFloat guild_scale = std::clamp(
+                (panel_width - 34.0) / std::max<CGFloat>(1.0, guild_source_width), 0.70, 1.35
+            );
+            const CGFloat phase_scale = std::min<CGFloat>(1.55, guild_scale + 0.20);
+            const CGFloat guild_width = guild_source_width * guild_scale;
+            const CGFloat phase_width = text_source_width(phase_text) * phase_scale;
+
+            [NSGraphicsContext saveGraphicsState];
+            CGContextSetAlpha([[NSGraphicsContext currentContext] CGContext], title_alpha);
+            [[NSColor colorWithCalibratedWhite:0.025 alpha:0.98] setFill];
+            NSRectFill(panel);
+            [[NSColor colorWithCalibratedRed:red * 0.68 + 0.10
+                                        green:green * 0.68 + 0.10
+                                         blue:blue_component * 0.68 + 0.10
+                                        alpha:1.0] setFill];
+            NSRectFill(NSInsetRect(panel, 3.0, 3.0));
+            [[NSColor colorWithCalibratedWhite:0.055 alpha:1.0] setFill];
+            NSRectFill(NSInsetRect(panel, 7.0, 7.0));
+            [[NSColor colorWithCalibratedWhite:1.0 alpha:0.25] setFill];
+            NSRectFill(NSMakeRect(NSMinX(panel) + 9.0, NSMinY(panel) + 10.0,
+                                  NSWidth(panel) - 18.0, 1.0));
+            draw_fe8_outlined_text(
+                state->forecast_font_white, state->forecast_font_ink,
+                state->forecast_glyph_widths, guild_text,
+                NSMakePoint(NSMidX(panel) - guild_width * 0.5,
+                            NSMinY(panel) + 35.0), guild_scale
+            );
+        draw_fe8_outlined_text(
+            state->forecast_font_white, state->forecast_font_ink,
+            state->forecast_glyph_widths, phase_text,
+                NSMakePoint(NSMidX(panel) - phase_width * 0.5,
+                            NSMinY(panel) + 78.0), phase_scale
+            );
+            [NSGraphicsContext restoreGraphicsState];
+        }
+    }
+
+    if (state->game_over.has_value())
+    {
+        // This is deliberately not a normal phase card. Keep the gameplay
+        // scene visible beneath a heavy, hostile screen treatment so the
+        // player can still read where the final confrontation happened.
+        const std::uint64_t tick = state->game_over->tick;
+        const CGFloat pulse = 0.5 + 0.5 * std::sin(
+            static_cast<double>(tick) * (2.0 * M_PI / 42.0)
+        );
+        const CGFloat impact = std::clamp(static_cast<CGFloat>(tick) / 22.0, 0.0, 1.0);
+        const CGFloat slam = 1.0 - std::pow(1.0 - impact, 3.0);
+        // Expand from the tactical board into the entire monitor content
+        // area. This removes the sidebar for GAME OVER rather than treating
+        // it as another small sidebar card.
+        const NSRect full_area = self.bounds;
+        const NSRect game_area = NSMakeRect(
+            NSMinX(_board) + (NSMinX(full_area) - NSMinX(_board)) * slam,
+            NSMinY(_board) + (NSMinY(full_area) - NSMinY(_board)) * slam,
+            NSWidth(_board) + (NSWidth(full_area) - NSWidth(_board)) * slam,
+            NSHeight(_board) + (NSHeight(full_area) - NSHeight(_board)) * slam
+        );
+
+        [NSGraphicsContext saveGraphicsState];
+        CGContextRef game_over_context = [[NSGraphicsContext currentContext] CGContext];
+        CGContextClipToRect(game_over_context, NSRectToCGRect(game_area));
+        CGContextSetShouldAntialias(game_over_context, false);
+
+        [[NSColor colorWithCalibratedRed:0.035 green:0.0 blue:0.015 alpha:0.74] setFill];
+        NSRectFill(game_area);
+
+        // Jagged red diagonal impact streaks: they scroll continuously after
+        // the initial slam instead of leaving a dead static overlay.
+        const CGFloat streak_spacing = std::max<CGFloat>(16.0, _cell_pixels * 0.72);
+        const CGFloat streak_offset = std::fmod(static_cast<CGFloat>(tick) * 2.0, streak_spacing);
+        for (CGFloat diagonal = -NSHeight(game_area) + streak_offset;
+             diagonal < NSWidth(game_area) + NSHeight(game_area);
+             diagonal += streak_spacing)
+        {
+            const CGFloat strength = 0.11 + 0.16 * pulse;
+            [[NSColor colorWithCalibratedRed:0.84 green:0.035 blue:0.06 alpha:strength] setFill];
+            NSBezierPath* stripe = [NSBezierPath bezierPath];
+            [stripe moveToPoint:NSMakePoint(NSMinX(game_area) + diagonal, NSMinY(game_area))];
+            [stripe lineToPoint:NSMakePoint(NSMinX(game_area) + diagonal + _cell_pixels * 0.22,
+                                            NSMinY(game_area))];
+            [stripe lineToPoint:NSMakePoint(NSMinX(game_area) + diagonal + NSHeight(game_area) + _cell_pixels * 0.22,
+                                            NSMaxY(game_area))];
+            [stripe lineToPoint:NSMakePoint(NSMinX(game_area) + diagonal + NSHeight(game_area),
+                                            NSMaxY(game_area))];
+            [stripe closePath];
+            [stripe fill];
+        }
+
+        const CGFloat title_box_width = std::min<CGFloat>(NSWidth(game_area) * 0.82, 760.0);
+        const CGFloat title_box_height = std::min<CGFloat>(
+            NSHeight(game_area) * 0.62, std::max<CGFloat>(_cell_pixels * 4.6, 204.0)
+        );
+        const CGFloat title_y = NSMidY(game_area) - title_box_height * 0.5;
+        const NSRect title_box = NSMakeRect(
+            NSMidX(game_area) - title_box_width * 0.5,
+            title_y,
+            title_box_width,
+            title_box_height
+        );
+        // Keep the entire title visible even on its first presentation frame.
+        // The oversized impact comes from a brief controlled shake and pulse,
+        // not by sliding half the graphic beyond the left board edge.
+        const CGFloat shake = tick < 28 ? ((tick & 1U) == 0U ? 4.0 : -4.0) * (1.0 - slam) : 0.0;
+        const NSRect landed_box = NSOffsetRect(title_box, shake, 0.0);
+
+        [[NSColor colorWithCalibratedWhite:0.0 alpha:0.98] setFill];
+        NSRectFill(landed_box);
+        [[NSColor colorWithCalibratedRed:0.78 green:0.045 blue:0.065 alpha:1.0] setFill];
+        NSRectFill(NSInsetRect(landed_box, 4.0, 4.0));
+        [[NSColor colorWithCalibratedRed:0.19 green:0.005 blue:0.012 alpha:1.0] setFill];
+        NSRectFill(NSInsetRect(landed_box, 9.0, 9.0));
+        [[NSColor colorWithCalibratedRed:1.0 green:0.25 + 0.12 * pulse blue:0.28 alpha:0.95] setFill];
+        NSRectFill(NSMakeRect(NSMinX(landed_box) + 12.0, NSMinY(landed_box) + 12.0,
+                              NSWidth(landed_box) - 24.0, 2.0));
+
+        const auto bitmap_width = [&](NSString* text)
+        {
+            CGFloat width = 0.0;
+            for (NSUInteger index = 0; index < text.length; ++index)
+            {
+                const unichar character = [text characterAtIndex:index];
+                width += state->forecast_glyph_widths[
+                    character < state->forecast_glyph_widths.size() ? character : '?'
+                ];
+            }
+            return width;
+        };
+        const CGFloat game_scale = std::clamp(
+            (NSWidth(landed_box) - 48.0) / std::max<CGFloat>(1.0, bitmap_width(@"GAME")),
+            1.8, 4.60
+        );
+        const CGFloat over_scale = std::clamp(
+            (NSWidth(landed_box) - 48.0) / std::max<CGFloat>(1.0, bitmap_width(@"OVER")),
+            1.8, 4.60
+        );
+        const CGFloat game_width = bitmap_width(@"GAME") * game_scale;
+        const CGFloat over_width = bitmap_width(@"OVER") * over_scale;
+        draw_fe8_outlined_text(
+            state->forecast_font_white, state->forecast_font_ink,
+            state->forecast_glyph_widths, @"GAME",
+            NSMakePoint(NSMidX(landed_box) - game_width * 0.5,
+                        NSMinY(landed_box) + 24.0), game_scale
+        );
+        draw_fe8_outlined_text(
+            state->forecast_font_white, state->forecast_font_ink,
+            state->forecast_glyph_widths, @"OVER",
+            NSMakePoint(NSMidX(landed_box) - over_width * 0.5,
+                        NSMinY(landed_box) + 31.0 + 18.0 * game_scale), over_scale
+        );
+        [NSGraphicsContext restoreGraphicsState];
+    }
 }
 @end
 
@@ -1642,13 +2152,15 @@ void create_monitor_window(fe_tiles::MapMonitor::Impl* state)
     [state->window makeFirstResponder:state->view];
     [NSApp activateIgnoringOtherApps:YES];
 
-    if (state->options.tick_renderer_at_60hz)
+    // The monitor owns a 60 Hz display clock even if its caller elects to
+    // tick AnimationRenderer elsewhere: phase intros are monitor-owned UI.
+    __weak NSView* weak_view = state->view;
+    fe_tiles::AnimationRenderer* renderer = state->renderer;
+    state->timer = [NSTimer scheduledTimerWithTimeInterval:(1.0 / 60.0)
+                                                    repeats:YES
+                                                      block:^(NSTimer* timer)
     {
-        __weak NSView* weak_view = state->view;
-        fe_tiles::AnimationRenderer* renderer = state->renderer;
-        state->timer = [NSTimer scheduledTimerWithTimeInterval:(1.0 / 60.0)
-                                                        repeats:YES
-                                                          block:^(NSTimer* timer)
+        if (state->options.tick_renderer_at_60hz)
         {
             ++state->idle_tick;
             bool advance_combat = true;
@@ -1670,9 +2182,21 @@ void create_monitor_window(fe_tiles::MapMonitor::Impl* state)
             {
                 state->frame_callback();
             }
-            [weak_view setNeedsDisplay:YES];
-        }];
-    }
+        }
+        if (state->phase_intro.has_value())
+        {
+            ++state->phase_intro->tick;
+            if (state->phase_intro->tick >= 68)
+            {
+                state->phase_intro.reset();
+            }
+        }
+        if (state->game_over.has_value())
+        {
+            ++state->game_over->tick;
+        }
+        [weak_view setNeedsDisplay:YES];
+    }];
 }
 
 @interface FE8MapMonitorDelegate : NSObject <NSApplicationDelegate>
@@ -1794,6 +2318,79 @@ void MapMonitor::clear_cursor()
     request_redraw();
 }
 
+void MapMonitor::show_route_arrows(const std::vector<std::vector<int>>& route)
+{
+    std::vector<std::pair<int, int>> checked;
+    checked.reserve(route.size());
+
+    for (const std::vector<int>& coordinate : route)
+    {
+        if (coordinate.size() != 2)
+        {
+            throw std::invalid_argument("Route coordinates must have the form {x, y}.");
+        }
+
+        const int x = coordinate[0];
+        const int y = coordinate[1];
+        if (x < 0 || y < 0 || x >= impl_->recipe.columns() || y >= impl_->recipe.rows())
+        {
+            throw std::out_of_range("Route coordinate is outside the monitor map.");
+        }
+        checked.emplace_back(x, y);
+    }
+
+    impl_->route_arrows = {std::move(checked)};
+    request_redraw();
+}
+
+void MapMonitor::show_route_arrows(
+    const std::vector<std::vector<std::vector<int>>>& routes)
+{
+    std::vector<std::vector<std::pair<int, int>>> checked_routes;
+    checked_routes.reserve(routes.size());
+
+    for (const std::vector<std::vector<int>>& route : routes)
+    {
+        std::vector<std::pair<int, int>> checked;
+        checked.reserve(route.size());
+
+        for (const std::vector<int>& coordinate : route)
+        {
+            if (coordinate.size() != 2)
+            {
+                throw std::invalid_argument("Route coordinates must have the form {x, y}.");
+            }
+
+            const int x = coordinate[0];
+            const int y = coordinate[1];
+            if (x < 0 || y < 0 || x >= impl_->recipe.columns() || y >= impl_->recipe.rows())
+            {
+                throw std::out_of_range("Route coordinate is outside the monitor map.");
+            }
+            checked.emplace_back(x, y);
+        }
+
+        if (!checked.empty())
+        {
+            checked_routes.push_back(std::move(checked));
+        }
+    }
+
+    impl_->route_arrows = std::move(checked_routes);
+    request_redraw();
+}
+
+void MapMonitor::clear_route_arrows()
+{
+    impl_->route_arrows.clear();
+    request_redraw();
+}
+
+bool MapMonitor::route_arrows_visible() const
+{
+    return !impl_->route_arrows.empty();
+}
+
 void MapMonitor::on_key(std::function<void(char)> callback)
 {
     impl_->key_callback = std::move(callback);
@@ -1844,5 +2441,48 @@ void MapMonitor::clear_battle_forecast()
 bool MapMonitor::battle_forecast_visible() const
 {
     return impl_->battle_forecast.has_value();
+}
+
+void MapMonitor::show_phase_intro(const std::string& guild_name, GuildColor color)
+{
+    if (guild_name.empty())
+    {
+        throw std::invalid_argument("Phase intro needs a non-empty guild name.");
+    }
+    impl_->phase_intro = Impl::PhaseIntro{guild_name, color, 0};
+    impl_->phase_dialogue = Impl::PhaseDialogue{guild_name, color};
+    request_redraw();
+}
+
+void MapMonitor::clear_phase_intro()
+{
+    impl_->phase_intro.reset();
+    impl_->phase_dialogue.reset();
+    request_redraw();
+}
+
+bool MapMonitor::phase_intro_visible() const
+{
+    return impl_->phase_intro.has_value();
+}
+
+void MapMonitor::show_game_over()
+{
+    impl_->battle_forecast.reset();
+    impl_->phase_intro.reset();
+    impl_->phase_dialogue.reset();
+    impl_->game_over = Impl::GameOver{};
+    request_redraw();
+}
+
+void MapMonitor::clear_game_over()
+{
+    impl_->game_over.reset();
+    request_redraw();
+}
+
+bool MapMonitor::game_over_visible() const
+{
+    return impl_->game_over.has_value();
 }
 }

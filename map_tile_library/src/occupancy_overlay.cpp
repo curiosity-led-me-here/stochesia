@@ -13,9 +13,10 @@ constexpr int kFastWalkSpeedQ4 = 32; // FE8 default: 2 original pixels / tick.
 constexpr int kStrikeImpactTick = 6;
 constexpr int kMissPopupLifetime = 20;
 constexpr int kFastLungeLifetime = 20;
-// Deliberately longer than FE8's 0x20-frame hardware fade: a desktop monitor
-// needs a visibly readable dissolve rather than a near-instant palette drop.
-constexpr int kDeathFadeLifetime = 60;
+// The lethal map hit already owns FE8's visible 17-frame white palette flash.
+// Keep the frozen death pose for its birth frame only, so it hides the unit
+// immediately without adding a second, lingering post-hit fade.
+constexpr int kDeathFadeLifetime = 1;
 
 enum class Facing
 {

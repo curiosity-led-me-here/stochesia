@@ -59,6 +59,8 @@ struct TerrainData
     int heal_percent;
     int avoid_bonus;
     int defense_bonus;
+    // The tile is blocked now, but a gameplay action can make it traversable.
+    bool passable_with_action;
 };
 
 const TerrainData& get(int terrain_id);
@@ -66,6 +68,7 @@ int movement_cost(int terrain_id, MovementType movement);
 bool can_enter(int terrain_id, MovementType movement);
 bool is_known(int terrain_id);
 bool blocks_common_foot(int terrain_id);
+bool is_passable_with_action(int terrain_id);
 std::vector<int> default_obstacle_ids();
 std::string_view movement_type_name(MovementType movement);
 

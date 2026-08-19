@@ -189,6 +189,12 @@ void AnimationRenderer::set_guild_color(const Guild& guild, std::uint32_t rgb_co
     set_guild_color(guild, GuildColor::custom(rgb_code));
 }
 
+GuildColor AnimationRenderer::guild_color(int guild_id) const
+{
+    const auto found = guild_colours_.find(guild_id);
+    return found != guild_colours_.end() ? found->second : GuildColor::player();
+}
+
 void AnimationRenderer::sync_units(const std::vector<Entity*>& live_entities)
 {
     std::unordered_set<int> still_present;

@@ -1,5 +1,4 @@
 #include "terrain_data.h"
-
 #include <array>
 #include <cstddef>
 
@@ -40,6 +39,18 @@ constexpr std::array<int, TERRAIN_COUNT> kDefense = {
     0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1,
 };
+
+// These tiles are impassable in their initial state, but FE8 actions can
+// lower, unlock, or destroy them to open a route.
+constexpr std::array<bool, TERRAIN_COUNT> kPassableWithAction = []
+{
+    std::array<bool, TERRAIN_COUNT> passable{};
+    passable[TERRAIN_BRIDGE_14] = true;
+    passable[TERRAIN_WALL_DAMAGED] = true;
+    passable[TERRAIN_DOOR] = true;
+    passable[TERRAIN_SNAG] = true;
+    return passable;
+}();
 
 // Rows are FE8's normal-weather movement-cost tables. -1 means impassable.
 constexpr std::array<std::array<int, TERRAIN_COUNT>, 16> kMovementCosts = {{
@@ -82,13 +93,20 @@ const std::array<terrain::TerrainData, TERRAIN_COUNT> kTerrainData = []
     std::array<terrain::TerrainData, TERRAIN_COUNT> data{};
     for (int id = 0; id < TERRAIN_COUNT; ++id)
     {
-        data[id] = {static_cast<TerrainId>(id), kNames[id], kHeal[id], kAvoid[id], kDefense[id]};
+        data[id] = {
+            static_cast<TerrainId>(id),
+            kNames[id],
+            kHeal[id],
+            kAvoid[id],
+            kDefense[id],
+            kPassableWithAction[id],
+        };
     }
     return data;
 }();
 
 const terrain::TerrainData kUnknownTerrain = {
-    TERRAIN_NONE, "Unknown terrain", 0, 0, 0
+    TERRAIN_NONE, "Unknown terrain", 0, 0, 0, false
 };
 
 constexpr std::array<std::string_view, 16> kMovementNames = {
@@ -144,6 +162,11 @@ bool is_known(int terrain_id)
 bool blocks_common_foot(int terrain_id)
 {
     return !can_enter(terrain_id, MovementType::CommonT1);
+}
+
+bool is_passable_with_action(int terrain_id)
+{
+    return get(terrain_id).passable_with_action;
 }
 
 std::vector<int> default_obstacle_ids()

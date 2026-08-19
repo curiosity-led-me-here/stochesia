@@ -1,0 +1,32 @@
+clang++ -std=c++17 -fobjc-arc -Iinclude -Imap_tile_library/include src/click.cpp src/integration.cpp src/pathfinder.cpp src/general_pathtracing.cpp src/mechanics.cpp src/game_data.cpp src/entity_registry.cpp src/map_ascii.cpp src/maps.cpp src/terrain_data.cpp src/mechanics_ascii.cpp src/entity_data.cpp map_tile_library/src/fe8_unit_visuals.cpp map_tile_library/src/fe8_unit_data.cpp map_tile_library/src/occupancy_overlay.cpp map_tile_library/src/logic_render_control.cpp map_tile_library/src/entity_animation.cpp map_tile_library/src/map_monitor.mm map_tile_library/src/map_tile_library.mm -framework Cocoa -framework CoreFoundation -framework CoreGraphics -framework ImageIO -o main && ./main
+
+
+
+clang++ -std=c++17 -fobjc-arc -Iinclude -Imap_tile_library/include \
+src/main.cpp \
+src/click.cpp \
+src/integration.cpp \
+src/pathfinder.cpp \
+src/general_pathtracing.cpp \
+src/mechanics.cpp \
+src/game_data.cpp \
+src/entity_registry.cpp \
+src/map_ascii.cpp \
+src/maps.cpp \
+src/terrain_data.cpp \
+src/mechanics_ascii.cpp \
+src/entity_data.cpp \
+src/placement_algo.cpp \
+src/piece_config.cpp \
+map_tile_library/src/fe8_unit_visuals.cpp \
+map_tile_library/src/fe8_unit_data.cpp \
+map_tile_library/src/occupancy_overlay.cpp \
+map_tile_library/src/logic_render_control.cpp \
+map_tile_library/src/entity_animation.cpp \
+map_tile_library/src/map_monitor.mm \
+map_tile_library/src/map_tile_library.mm \
+-framework Cocoa \
+-framework CoreFoundation \
+-framework CoreGraphics \
+-framework ImageIO \
+-o stochesia && ./stochesia

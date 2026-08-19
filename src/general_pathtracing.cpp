@@ -1,10 +1,16 @@
 #include <vector>
 #include <iostream>
-#include <thread>
-#include <chrono>
-#include <string>
 #include <stdexcept>
 #include "general_pathtracing.h"
+#include "terrain_data.h"
+#include "game_types.h"
+#include "cmath"
+#include "integration.h"
+#include "maps.h"
+#include <cstdlib>
+#include "map_monitor.h"
+#include <algorithm>
+#include <deque>
 
 void print(const std::vector<std::vector<int>>& matrix)
 {
@@ -122,3 +128,89 @@ void trace(std::vector<std::vector<int>>& out_min, std::vector<std::vector<int>>
 	}
     }
 }
+
+void pathtrace(
+    std::vector<int> current_coord,
+    int budget,
+    std::vector<std::vector<int>>& state,
+    const std::vector<std::vector<int>>& map,
+    terrain::MovementType movement)
+{
+    for (std::vector<int> i : helper)
+    {
+        std::vector<int> next_coord = { current_coord[0] + i[0], current_coord[1] + i[1] };
+        int x = next_coord[0];
+        int y = next_coord[1];
+        if (x < 0 || y < 0 || x >= state[0].size() || y >= state.size() || !terrain::can_enter(map[y][x], movement)) continue;
+        int penalty = terrain::movement_cost(map[y][x], movement);
+        int rem_budget = budget - penalty;
+        if (rem_budget < 0) continue;
+        if (state[y][x] < rem_budget) state[y][x] = rem_budget;
+        else continue;
+        pathtrace(next_coord, rem_budget, state, map, movement);
+    }
+}
+
+std::vector<std::vector<int>> pathtrace(const std::vector<std::vector<int>>& map, std::vector<int> current_coord, Entity& unit)
+{
+    terrain::MovementType movement = unit.movement;
+    std::vector<std::vector<int>> state = map;
+    int budget = unit.stats.MOV;
+    int x = current_coord[1];
+    int y = current_coord[0];
+    for (std::vector<int>& row : state) std::fill(row.begin(), row.end(), -1);
+    state[x][y] = unit.stats.MOV;
+    pathtrace(current_coord, budget, state, map, unit.movement);
+    return state;
+}
+
+void locate_target(const std::vector<std::vector<int>>& traced, std::vector<int> current_coord, std::vector<std::vector<int>>& out)
+{
+    for (std::vector<int> i : helper)
+    {
+	int next_x = current_coord[0] + i[0];
+	int next_y = current_coord[1] + i[1];
+	if (next_x < 0 || next_y < 0 ||
+	    next_y >= static_cast<int>(traced.size()) ||
+	    next_x >= static_cast<int>(traced[0].size()))
+	{
+	    continue;
+	}
+	
+	if (traced[current_coord[1]][current_coord[0]] < traced[next_y][next_x])
+	{
+	    out.push_back({next_x, next_y});
+	    locate_target(traced, {next_x,next_y}, out);
+	}
+    }
+}
+
+std::vector<std::vector<int>> get_max_move(const std::vector<std::vector<int>>& map, std::vector<int> current_coord, Entity& unit)
+{
+    std::vector<std::vector<int>> out;
+    std::vector<std::vector<int>> state = pathtrace(map, current_coord, unit);
+    for (int i=0; i < state.size(); i++)
+    {
+	for (int j=0; j < state[0].size(); j++)
+	{
+	    if (state[i][j] == 0)
+	    {
+		out.push_back({j, i});
+	    }
+	}
+    }
+    return out;
+}
+
+double get_cartesian_distance(std::vector<int> target, std::vector<int> inp)
+{
+    int x = inp[0];
+    int y = inp[1];
+    int targ_x = target[0];
+    int targ_y = target[1];
+    int x_comp = targ_x - x;
+    int y_comp = targ_y - y;
+
+    return sqrt((x_comp * x_comp) + (y_comp * y_comp));
+}
+

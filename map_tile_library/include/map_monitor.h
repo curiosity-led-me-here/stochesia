@@ -4,6 +4,7 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <utility>
 
 #include "entity_animation.h"
 #include "maps.h"
@@ -66,6 +67,21 @@ public:
     void set_cursor(const std::vector<int>& coordinate);
     void clear_cursor();
 
+    // Draws one ordered, presentation-only route on the map. Each coordinate
+    // is {x, y}; an arrow on route[n] points toward route[n + 1]. The final
+    // coordinate is drawn as a destination marker. This never changes an
+    // Entity, occupancy, or Mapmaker state.
+    void show_route_arrows(const std::vector<std::vector<int>>& route);
+
+    // Draws several independent ordered routes at once. Each route gets its
+    // own arrow colour; routes are never connected to one another.
+    // routes[route_number][step_number] is an {x, y} coordinate.
+    void show_route_arrows(
+        const std::vector<std::vector<std::vector<int>>>& routes
+    );
+    void clear_route_arrows();
+    bool route_arrows_visible() const;
+
     // Registers ordinary C++ game input. The callback receives the pressed
     // ASCII character (for example 'c', 'm', or ' '). It executes on Cocoa's
     // main thread while the monitor is open, so it may safely call your
@@ -96,6 +112,27 @@ public:
     // the monitor is intentionally blank.
     void clear_battle_forecast();
     bool battle_forecast_visible() const;
+
+    // Plays FE8's 68-frame phase-change presentation over the map: diagonal
+    // squares sweep in, the title enters after six frames, holds, then exits.
+    // The original ROM contains only PLAYER/ENEMY/OTHER title art, so this
+    // version uses the bundled FE8 bitmap font to render your dynamic guild
+    // name as "<guild>'S PHASE" in that same sequence. This is presentation
+    // only; it does not begin a turn or modify Guild/Entity state. The map
+    // sweep ends after 68 frames, while the sidebar phase dialogue remains
+    // until the next call or clear_phase_intro().
+    void show_phase_intro(const std::string& guild_name,
+                          GuildColor color = GuildColor::player());
+    void clear_phase_intro();
+    bool phase_intro_visible() const;
+
+    // Persistent end-state presentation. It is intentionally louder than a
+    // normal phase intro: dark map wash, crimson diagonal flashes, and an
+    // oversized pulsing FE bitmap GAME OVER title. It never changes game
+    // state; call this instead of close() when the player should see the end.
+    void show_game_over();
+    void clear_game_over();
+    bool game_over_visible() const;
 
     // Implementation detail, public only so Objective-C++ NSView bridge code
     // can hold an opaque pointer. Its members remain private to .mm code.

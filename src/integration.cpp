@@ -216,15 +216,24 @@ void Environment::ConfigureEnv::add_guild(std::string name, int id)
     team.guild_id = id;
 }
 
-Entity& Environment::ConfigureEnv::configure_entity(Entity unit, int id, Guild& guild, const std::vector<int> location)
+Entity& Environment::ConfigureEnv::configure_entity(Entity unit, int id, Guild& guild)
 {
     Entity& out_unit = env.registry.spawn(unit, id);
     assert(id != 0);
     guild.add(out_unit);
-    out_unit.location = location;
-    env.board.place_unit(out_unit);
-    env.board.path_trace(out_unit);
     return out_unit;
+}
+
+void Environment::ConfigureEnv::configure_entity_location(Entity& out_unit, const std::vector<int> location)
+{
+    out_unit.location = location;
+    if (terrain::can_enter(env.map().get_map()[location[1]][location[0]], out_unit.movement))
+    {
+	env.board.place_unit(out_unit);
+	env.board.path_trace(out_unit);
+        return;
+    }
+    throw std::invalid_argument("Entity could not be placed on a non-placeable tile!");
 }
 
 void Environment::ConfigureEnv::configure_render(Entity& unit, fe_tiles::AnimationRenderer& render, fe_tiles::UnitVisual visual)

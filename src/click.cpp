@@ -1,4 +1,5 @@
 #include "game_data.h"
+#include "click.h"
 #include "integration.h"
 #include "entity_data.h"
 #include "entity_animation.h"
@@ -11,7 +12,8 @@ enum class ClickState
     Idle,
     UnitSelected,
     ChooseTarget,
-    Animation,    
+    Animation,
+    GameOver,
 };
 
 struct ClickController
@@ -27,7 +29,6 @@ struct ClickController
     static constexpr int inter_strike_pause_frames = 0x14;
     int inter_strike_pause = 0;
     int active_guild=0;
-    int previous_guild=-1;
     std::vector<sequence> sq;
     Environment& env;
     fe_tiles::AnimationRenderer& render;
@@ -147,10 +148,6 @@ struct ClickController
 	    {
 		return team.guild_id;
 	    }
-	    else
-	    {
-		return -1;
-	    }
 	}
 	return -2;
     }
@@ -159,23 +156,16 @@ struct ClickController
     {
 	if (check_end_phase())
 	{
-	    if (previous_guild == -1)
+	    Guild& target = env.guilds[active_guild];
+	    for (Entity* member : target.members)
 	    {
-		previous_guild = active_guild;
-		active_guild = ((active_guild + 1) % env.guilds.size());
+		auto art = env.local_registry.at(member->entity_id);
+		art.turn_greyscale(false);
+		refresh();
 	    }
-	    else
-	    {
-		Guild& target = env.guilds[previous_guild];
-		for (Entity* member : target.members)
-		{
-		    auto art = env.local_registry.at(member->entity_id);
-		    art.turn_greyscale(false);
-		    refresh();
-		}
-		previous_guild = active_guild;
-		active_guild = ((active_guild + 1) % env.guilds.size());
-	    }
+	    active_guild = ((active_guild + 1) % env.guilds.size());
+	    monitor.show_phase_intro(env.guilds[active_guild].name, render.guild_color(env.guilds[active_guild].guild_id));
+	    
 	}
     }
 
@@ -298,6 +288,12 @@ struct ClickController
 		end_turn(selected_id);
 	    }
 	    monitor.request_redraw();
+	    if (game_over())
+	    {
+		std::cout << "\nGame over\n";
+		state = ClickState::GameOver;
+	    }
+	    return;
 	}
     }
     
@@ -315,7 +311,7 @@ struct ClickController
 	switch (state)
 	{
 	    case ClickState::Idle:
-		{
+		{   
 		    if (hover_id == 0)
 		    {
 			return;
@@ -428,6 +424,10 @@ struct ClickController
 		{
 		    return;
 		}
+	    case ClickState::GameOver:
+		{
+		    return;
+		}
 	    
 	    }
 	    
@@ -435,45 +435,10 @@ struct ClickController
 };
 
 
-int main()
+void run_click_game(Environment& env, fe_tiles::AnimationRenderer& render, maps::MapRecipe& recipe)
 {
-    
-    maps::MapRecipe recipe = maps::chapter_5();
-    Environment env(recipe);
-    Environment::ConfigureEnv config(env);
-
-    config.add_guild("Blue", 1);
-    config.add_guild("Red", 2);
-    Entity& Seth = config.configure_entity(entities::seth(), 1, env.guilds[0], {2, 2});
-    Entity& Joshua = config.configure_entity(entities::joshua(), 2, env.guilds[1], {3, 3});
-    Entity& Billy = config.configure_entity(entities::garcia(), 3, env.guilds[1], {4, 3});
-    Seth.inventory.slot[0] = {IRON_LANCE, 45};
-    Joshua.inventory.slot[0] = {IRON_SWORD, 45};
-    Billy.inventory.slot[0] = {IRON_AXE, 45};
-    Seth.inventory.EquippedSlot = 0;
-    Joshua.inventory.EquippedSlot = 0;
-    Billy.inventory.EquippedSlot = 0;
-
-    fe_tiles::AnimationRenderer render;
-    render.load_map(env.map());
-    render.set_guild_color(
-    env.guilds[0],
-    fe_tiles::GuildColor::player()
-    );
-    render.set_guild_color(
-    env.guilds[1],
-    fe_tiles::GuildColor::enemy()
-    );
-    render.set_guild_color(
-    env.guilds[1],
-    fe_tiles::GuildColor::enemy()
-    );
-
-    config.configure_render(Seth, render, fe_tiles::UnitVisual::WyvernLordF);
-    config.configure_render(Joshua, render, fe_tiles::UnitVisual::SwordmasterF);
-    config.configure_render(Billy, render, fe_tiles::UnitVisual::Berserker);
-    render.sync_units(env.units().live_units());
     fe_tiles::MapMonitor monitor(recipe, render);
+    monitor.show_phase_intro(env.guilds[0].name, render.guild_color(env.guilds[0].guild_id));
     monitor.set_battle_animation_speed(0.69);
     monitor.set_cursor(env.cursor);
     ClickController click(env, render, monitor);
@@ -510,20 +475,9 @@ int main()
 	}
     });
     
-    monitor.on_frame([&click]
+    monitor.on_frame([&click, &monitor]
     {
 	click.animation_end();
     });
-    
     monitor.run();
-    if (click.game_over())
-    {
-	monitor.close();
-	if (click.who_won() < 0)
-	{
-	    std::cout << "No one won! Tied.";
-	}
-	std::cout << click.get_guild_by_id(click.who_won()).name << " Won!";
-    }
-    return 0;
 }

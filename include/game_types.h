@@ -298,3 +298,9 @@ struct sequence
     {
     }
 };
+
+struct paths
+{
+    std::vector<std::vector<int>> pathset;
+    int tries;
+};

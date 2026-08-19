@@ -123,6 +123,11 @@ public:
     void set_guild_color(const Guild& guild, GuildColor color);
     void set_guild_color(const Guild& guild, std::uint32_t rgb_code);
 
+    // Returns the colour registered for this Guild ID. If the renderer has
+    // not been given one, it returns the same player-blue fallback used when
+    // binding an Entity with no explicit guild palette.
+    GuildColor guild_color(int guild_id) const;
+
     // Rebuilds the render-only occupancy layer from living units. Call after
     // your own game logic commits a movement, death, spawn, or removal.
     void sync_units(const std::vector<Entity*>& live_entities);
