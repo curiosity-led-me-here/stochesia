@@ -7,6 +7,11 @@ Its adapts Fire Emblem's 2D style renderer and animations.
 
 I found a disassembled FE repo online which contained most of the assets I temporarily require. Used AI to copy paste relevant parts of the repo and cleanly refactor them out as animation functions, map building, etc. No part of the main game engine was tainted by AI slop except for a few monotonous or mechanical functions.
 
+Link: 
+1) https://github.com/laqieer/fireemblem8j.git
+2) https://github.com/FireEmblemUniverse/fireemblem8u.git
+3) https://github.com/FEBuilderGBA/FEBuilderGBA.git
+
 ## Future ideas
 
 I plan on adding more and more interesting dynamics into the battlefield such as:
