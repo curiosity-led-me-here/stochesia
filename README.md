@@ -3,6 +3,8 @@
 Heavily inspired by Fire Emblem series, this variant attempts to scale the concept into an open world war simulator where every guild fights to be victorious.
 Its adapts Fire Emblem's 2D style renderer and animations.
 
+![Sample setup](img/sample.png)
+
 ## Assets
 
 I found a disassembled FE repo online which contained most of the assets I temporarily require. Used AI to copy paste relevant parts of the repo and cleanly refactor them out as animation functions, map building, etc. No part of the main game engine was tainted by AI slop except for a few monotonous or mechanical functions.
