@@ -28,5 +28,5 @@ I plan on adding more and more interesting dynamics into the battlefield such as
 8) Side Quests that give structural advantage to the one pursuing it.
 9) Pressure levers like zone, reinforcements, etc to avoid position holding.
 
-## Still under development and non-playable.
+## Still under development and unplayable.
 
