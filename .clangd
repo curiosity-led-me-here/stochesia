@@ -1,5 +1,0 @@
-CompileFlags:
-  Add:
-    - -std=c++17
-    - -I/Users/ashu/Stochesia/include
-    - -I/Users/ashu/Stochesia/map_tile_library/include
