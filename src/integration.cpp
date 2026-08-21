@@ -227,6 +227,7 @@ Entity& Environment::ConfigureEnv::configure_entity(Entity unit, int id, Guild& 
 void Environment::ConfigureEnv::configure_entity_location(Entity& out_unit, const std::vector<int> location)
 {
     out_unit.location = location;
+    out_unit.terrain_id = env.map().get_map()[location[1]][location[0]];
     if (terrain::can_enter(env.map().get_map()[location[1]][location[0]], out_unit.movement))
     {
 	env.board.place_unit(out_unit);
@@ -284,7 +285,7 @@ void Environment::Game::start()
 	    Entity& us = env.registry.get_unit(cmd.id);
 	    if (cmd.name == "move")
 	    {
-		env.board.move(us, cmd.coords, env.registry);
+		env.board.move(us, cmd.coords);
 	    }
 	}
 	team_id++;

@@ -54,3 +54,13 @@ void get_next_rank(WeaponLevelExp& x)
     }
 }
 
+bool is_weapon(ItemID item)
+{
+    return std::any_of(
+        Armory.begin(), Armory.end(),
+        [item](const Weapon& weapon)
+        {
+            return weapon.ID == item;
+        }
+    );
+}

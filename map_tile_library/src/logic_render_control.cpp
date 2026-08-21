@@ -264,19 +264,14 @@ std::optional<UnitPose> LogicRenderControl::pose_for_entity(const Entity& entity
 }
 
 void LogicRenderControl::begin_attack(const Entity& attacker,
-                                      const Entity& defender,
-                                      bool attacker_defeated,
-                                      bool defender_defeated)
+                                      const Entity& defender)
 {
-    begin_strike(attacker, defender, StrikeOutcome::Hit,
-                 attacker_defeated, defender_defeated);
+    begin_strike(attacker, defender, StrikeOutcome::Hit);
 }
 
 void LogicRenderControl::begin_strike(const Entity& attacker,
                                       const Entity& defender,
-                                      StrikeOutcome outcome,
-                                      bool attacker_defeated,
-                                      bool defender_defeated)
+                                      StrikeOutcome outcome)
 {
     if (sprites_.is_animating() || combat_.is_presenting())
     {
@@ -292,8 +287,6 @@ void LogicRenderControl::begin_strike(const Entity& attacker,
     result.attacker_id = attacker.entity_id;
     result.defender_id = defender.entity_id;
     result.strike_outcome = outcome;
-    result.attacker_defeated = attacker_defeated;
-    result.defender_defeated = defender_defeated;
     combat_.begin(result, attacker_pose, defender_pose);
     held_attacker_pose_ = *attacker_pose;
     held_defender_pose_ = *defender_pose;

@@ -13,6 +13,7 @@
 #include "general_pathtracing.h"
 #include <iostream>
 #include <cmath>
+#include "piece_config.h"
 
 
 void resize_canvas(int width, int height);
@@ -97,6 +98,8 @@ run_piece_placement_algorithm(
     int depth
 );
 
-void setup_board(fe_tiles::AnimationRenderer& render, Environment& env, Environment::ConfigureEnv& config);
+using PieceSetConfig = void (*) (fe_tiles::AnimationRenderer& render, Environment& env, Environment::ConfigureEnv& config);
+
+void setup_board(PieceSetConfig set, fe_tiles::AnimationRenderer& render, Environment& env, Environment::ConfigureEnv& config);
 
 void setup_guild(Environment& env, Environment::ConfigureEnv& config, fe_tiles::AnimationRenderer& render, std::vector<std::string> names, std::vector<fe_tiles::GuildColor> colors);

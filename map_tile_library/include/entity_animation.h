@@ -58,21 +58,20 @@ public:
     // FE8 map-combat lunge. Direction is inferred from this entity to target:
     // left/right/up/down sprites are selected for cardinal and diagonal
     // targets; the lunge itself travels diagonally when both axes differ.
-    void dash(Entity& target,
-              bool attacker_defeated = false,
-              bool target_defeated = false);
+    void dash(Entity& target);
     // Same FE8 lunge, but stages the target's already-resolved HP change for
     // the hit frame instead of displaying it at battle start.
-    void dash(Entity& target, int target_hp_after,
-              bool attacker_defeated = false,
-              bool target_defeated = false);
-    void critical(Entity& target, int target_hp_after,
-                  bool attacker_defeated = false,
-                  bool target_defeated = false);
+    void dash(Entity& target, int target_hp_after);
+    void critical(Entity& target, int target_hp_after);
     void miss(Entity& target);
+    // A non-attacking combat turn. The unit faces its opponent and holds
+    // position for one map-battle beat.
+    void wait(Entity& target);
 
-    // Standalone FE8 map-unit white fade. The caller still owns alive state,
-    // Registry removal, Guild removal, and Mapmaker occupancy.
+    // Standalone FE8 map-unit white fade. Call it only after the final
+    // normal/critical animation and its post-round pause. The caller still
+    // owns alive state, Registry removal, Guild removal, and Mapmaker
+    // occupancy.
     void death();
 
     Entity& entity() const;

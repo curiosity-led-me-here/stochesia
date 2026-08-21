@@ -30,7 +30,8 @@ CombatInfo info(
 
 std::vector<CombatInfo> interact(
     const Entity& A,
-    const Entity& B
+    const Entity& B,
+    Mapmaker& map
 );
 
 int attack_sequence(

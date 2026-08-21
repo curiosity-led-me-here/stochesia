@@ -55,55 +55,96 @@ int get_ATK_SPD(const Stats& As, const Weapon& Aw)
     return ATK_SPD;
 }
 
-CombatInfo info(const Entity& A,const Entity& B)
+bool usability(const Weapon& Aw, const Entity& A, const Entity& B, Mapmaker& map) // Weapon rank <-> Entity rank
+{
+    bool out = false;
+    for (WeaponCategory cat : A.type.UsableWeapons)
+    {
+	if (cat == Aw.CAT)
+	{
+	    std::vector<std::vector<int>> attack_path = map.standing_attack_range(A, Aw);
+	    if(attack_path[B.location[1]][B.location[0]] == 1)
+	    {
+		out = true;
+		return out;
+	    }
+	}
+    }
+    return out;
+}
+
+
+CombatInfo info(const Entity& A,const Entity& B, Mapmaker& map)
 {
     Stats As = A.stats;
     Stats Bs = B.stats;
-    
-    if (A.inventory.EquippedSlot < 0)
+    bool b_can_counter = B.inventory.EquippedSlot >= 0 && B.inventory.EquippedSlot < 5 &&
+    B.inventory.slot[B.inventory.EquippedSlot].usesRemaining > 0 && is_weapon(B.inventory.slot[B.inventory.EquippedSlot].ID);
+
+    if (b_can_counter)
     {
-	return {As.HP, 0, 0, false, 0};
+	Weapon Bw = get_weapon(Armory, B.inventory.slot[B.inventory.EquippedSlot].ID);
+	if (!usability(Bw, B, A, map))
+	{
+	    b_can_counter = false;
+	}
     }
+    
+    if (A.inventory.EquippedSlot < 0 || A.inventory.EquippedSlot >= 5 || !is_weapon(A.inventory.slot[A.inventory.EquippedSlot].ID))
+    {
+	return {As.HP, 0, 0, false, 0, 0, b_can_counter};
+    }
+    
+    Weapon Aw = get_weapon(Armory, A.inventory.slot[A.inventory.EquippedSlot].ID);
+
+    if (!usability(Aw, A, B, map))
+    {
+	return {As.HP, 0, 0, false, 0, 0, b_can_counter};
+    }
+    
+    std::vector<int> WTA;
+    Weapon Bw;
+
+    if (B.inventory.EquippedSlot < 0 || B.inventory.EquippedSlot >= 5 || !is_weapon(B.inventory.slot[B.inventory.EquippedSlot].ID))
+    {
+	Bw.DUR = 0; Bw.MT = 0; Bw.HIT = 0; Bw.WT = 0; Bw.CRIT = 0; Bw.MINRG = 0; Bw.MAXRG = 0;
+	WTA = {0, 0};
+    }
+
     else
     {
-	Weapon Aw = get_weapon(Armory, A.inventory.slot[A.inventory.EquippedSlot].ID);
-	Weapon Bw = get_weapon(Armory, B.inventory.slot[B.inventory.EquippedSlot].ID);
-	std::vector<int> WTA = WeaponTriangleAdv(Aw, Bw);
-	/*
-	if (WTA[0] > 0)
-	{
-	    std::cout << "Weapon triangle advantage to " << A.name;
-	}
-	else if (WTA[0] < 0)
-	{
-	    std::cout << "Weapon triangle advantage to " << B.name;
-	}
-	*/
-	int AVD = (As.SPD * 2) + As.LUC; // Bonus to add later
-	int HIT = (As.SKL * 2) + (0.5 * As.LUC) - AVD + Aw.HIT + WTA[1]; // Bonus to add later
-	// Double mechanic to add
-	int EFF_W_MT = (Aw.MT + WTA[0])*1; // effectiveness (*2) pending
-	int MT = As.STR + EFF_W_MT - Bs.DEF; // Bonus pending
-	int CRIT_EVADE_B = Bs.LUC + 0; // Bonus pending
-	int CRIT = Aw.CRIT + (0.5 * As.SKL) - CRIT_EVADE_B + 0; // Bonus pending
-	int ATK_SPD_A = get_ATK_SPD(As, Aw);
-	int ATK_SPD_B = get_ATK_SPD(Bs, Bw);
-	bool DB = false;
-	if ((ATK_SPD_A - ATK_SPD_B) > 3)
-	{
-	    DB = true;
-	}
-	HIT = std::clamp(HIT, 0, 100);
-	CRIT = std::clamp(CRIT, 0, 100);
-	return {As.HP, MT, HIT, DB, CRIT, WTA[0]};
+	Bw = get_weapon(Armory, B.inventory.slot[B.inventory.EquippedSlot].ID);
+	WTA = WeaponTriangleAdv(Aw, Bw);
     }
+
+    const bool magical =
+    Aw.CAT == ANIMA || Aw.CAT == LIGHT || Aw.CAT == DARK;
+
+    const int STR = magical ? As.MAG : As.STR;
+    const int DEF = magical ? Bs.RES : Bs.DEF;
+    
+    // CALCULAIONS:
+    
+    int AVD = (Bs.SPD * 2) + Bs.LUC + terrain::get(B.terrain_id).avoid_bonus; // Bonus to add later
+    int HIT = (As.SKL * 2) + (0.5 * As.LUC) - AVD + Aw.HIT + WTA[1]; // Bonus to add later
+    int EFF_W_MT = (Aw.MT + WTA[0])*1; // effectiveness (*2) pending
+    int MT = STR + EFF_W_MT - (DEF + terrain::get(B.terrain_id).defense_bonus); // Bonus pending
+    int CRIT_EVADE_B = Bs.LUC + 0; // Bonus pending
+    int CRIT = Aw.CRIT + (0.5 * As.SKL) - CRIT_EVADE_B + 0; // Bonus pending
+    int ATK_SPD_A = get_ATK_SPD(As, Aw);
+    int ATK_SPD_B = get_ATK_SPD(Bs, Bw);
+    bool DB = (ATK_SPD_A - ATK_SPD_B) > 3 ? true : false;
+    MT = (MT < 0)? 0 : MT;
+    HIT = std::clamp(HIT, 0, 100);
+    CRIT = std::clamp(CRIT, 0, 100);
+    return {As.HP, MT, HIT, DB, CRIT, WTA[0], b_can_counter};
 }
 
-std::vector<CombatInfo> interact(const Entity& A,const Entity& B)
+std::vector<CombatInfo> interact(const Entity& A,const Entity& B, Mapmaker& map)
 {
     std::vector<CombatInfo> out;
-    CombatInfo info_A = info(A, B);
-    CombatInfo info_B = info(B, A);
+    CombatInfo info_A = info(A, B, map);
+    CombatInfo info_B = info(B, A, map);
     out.push_back(info_A);
     out.push_back(info_B);
     return out;
@@ -112,188 +153,143 @@ std::vector<CombatInfo> interact(const Entity& A,const Entity& B)
 int attack_sequence(Entity& A, Entity& B, CombatInfo& A_perf, CombatInfo& B_perf)
 {
     int out;
-    if (random_binary(A_perf.HIT / 100.0, seed))
+    if (A.inventory.EquippedSlot >= 0 && A.inventory.EquippedSlot < 5)
     {
-	if (random_binary(A_perf.CRIT / 100.0, seed))
+	if (random_binary(A_perf.HIT / 100.0, seed))
 	{
-	    std::cout << A.name << "'s turn.....";
-	    std::cout << "Critical hit! ";
-	    // (1) B Hp reduced (2) A weapon dur -1
-	    int temp = B.stats.HP;
-	    B.stats.HP -= (A_perf.MT*3);
-	    if (B.stats.HP < 0)
+	    if (random_binary(A_perf.CRIT / 100.0, seed))
 	    {
-		B.stats.HP = 0;
-	    }
-	    if (B.stats.HP != temp)
-	    {
-		std::cout << "HP reduced from " << temp << " to " << B.stats.HP << "\n";
+		std::cout << A.name << "'s turn.....";
+		std::cout << "Critical hit! ";
+		// (1) B Hp reduced (2) A weapon dur -1
+		int temp = B.stats.HP;
+		B.stats.HP -= (A_perf.MT*3);
+		if (B.stats.HP < 0)
+		{
+		    B.stats.HP = 0;
+		}
+		if (B.stats.HP != temp)
+		{
+		    std::cout << "HP reduced from " << temp << " to " << B.stats.HP << "\n";
+		}
+		else
+		{
+		    std::cout << "No damage!" << "\n";
+		}
+		A.inventory.slot[A.inventory.EquippedSlot].usesRemaining --;
+		if (A.inventory.slot[A.inventory.EquippedSlot].usesRemaining <= 0)
+		{
+		    A.inventory.EquippedSlot = -1;
+		    std::cout << "Item broke!" << "\n";
+		}
+		out = 2;
+		// exp calculation pending.
 	    }
 	    else
 	    {
-		std::cout << "No damage!" << "\n";
+		// normal hit
+		std::cout << A.name << "'s turn.....";
+		std::cout << "Attack hit! ";
+		// (1) B Hp reduced (2) A weapon dur -1
+		int temp = B.stats.HP;
+		B.stats.HP -= (A_perf.MT);
+		if (B.stats.HP < 0)
+		{
+		    B.stats.HP = 0;
+		}
+		if (B.stats.HP != temp)
+		{
+		    std::cout << "HP reduced from " << temp << " to " << B.stats.HP << "\n";
+		}
+		else
+		{
+		    std::cout << "No damage!" << "\n";
+		}
+		A.inventory.slot[A.inventory.EquippedSlot].usesRemaining --;
+		if (A.inventory.slot[A.inventory.EquippedSlot].usesRemaining <= 0)
+		{
+		    A.inventory.EquippedSlot = -1;
+		    std::cout << "Item broke!" << "\n";
+		}
+		out = 1;
 	    }
-	    A.inventory.slot[A.inventory.EquippedSlot].usesRemaining --;
-	    out = 2;
-	    // exp calculation pending.
 	}
 	else
 	{
-	    // normal hit
+	    // miss
 	    std::cout << A.name << "'s turn.....";
-	    std::cout << "Attack hit! ";
-	    // (1) B Hp reduced (2) A weapon dur -1
-	    int temp = B.stats.HP;
-	    B.stats.HP -= (A_perf.MT);
-	    if (B.stats.HP < 0)
-	    {
-		B.stats.HP = 0;
-	    }
-	    if (B.stats.HP != temp)
-	    {
-		std::cout << "HP reduced from " << temp << " to " << B.stats.HP << "\n";
-	    }
-	    else
-	    {
-		std::cout << "No damage!" << "\n";
-	    }
+	    std::cout << "Attack miss!" << "\n";
 	    A.inventory.slot[A.inventory.EquippedSlot].usesRemaining --;
-	    out = 1;
+	    if (A.inventory.slot[A.inventory.EquippedSlot].usesRemaining <= 0)
+	    {
+		A.inventory.slot[A.inventory.EquippedSlot].ID = NO_ITEM;
+		A.inventory.slot[A.inventory.EquippedSlot].usesRemaining = 0;
+		A.inventory.EquippedSlot = -1;
+		std::cout << "Item broke! Nothing selected" << "\n";
+	    }
+	    out = -1;
 	}
     }
     else
     {
-	// miss
-	std::cout << A.name << "'s turn.....";
-	std::cout << "Attack miss!" << "\n";
-	A.inventory.slot[A.inventory.EquippedSlot].usesRemaining --;
-	out = -1;
+	out = -2;
     }
     return out;
+    // 1 - Normal hit | 2 - crit | -1 - Miss | -2 - Nothing (unarmed) 
 }
 
-std::vector<sequence> entity_attack(Entity& A, Entity& B, CombatInfo& A_perf, CombatInfo& B_perf, bool A_first, bool db, Mapmaker& map) // Assume first entity attacks twice if db = True
+Entity* follow_up_attack(Entity& A, Entity& B, CombatInfo& A_perf,  CombatInfo& B_perf)
 {
-    std::vector<sequence> out;
-    int outcome;
-    if (db)
+    if (A_perf.DB && B_perf.counter)
     {
-	if (A_first)
-	{
-	    outcome = attack_sequence(A, B, A_perf, B_perf);
-	    out.push_back({A, outcome, B});
-	    if (B.stats.HP > 0)
-	    {
-		outcome = attack_sequence(B, A, B_perf, A_perf);
-		out.push_back({B, outcome, A});
-		if (A.stats.HP > 0)
-		{
-		    outcome = attack_sequence(A, B, A_perf, B_perf);
-		    out.push_back({A, outcome, B});
-		    if (B.stats.HP <= 0)
-		    {
-			// B dies from A's second attack.
-			map.death(B);
-			out.push_back({B, 0, A});
-		    }
-		}
-		else
-		{
-		    // A dies from B's retaliation.
-		    map.death(A);
-		    out.push_back({A, 0, B});
-		}
-	    }
-	    else
-	    {
-		// B dies from A's first attack.
-		map.death(B);
-		out.push_back({B, 0, A});
-	    }
-	}
-	else
-	{
-	    outcome = attack_sequence(B, A, B_perf, A_perf);
-	    out.push_back({B, outcome, A});
-	    if (A.stats.HP > 0)
-	    {
-		outcome = attack_sequence(A, B, A_perf, B_perf);
-		out.push_back({A, outcome, B});
-		if (B.stats.HP > 0)
-		{
-		    outcome = attack_sequence(A, B, A_perf, B_perf);
-		    out.push_back({A, outcome, B});
-		    if (B.stats.HP <= 0)
-		    {
-			// B dies from A's second attack.
-			map.death(B);
-			out.push_back({B, 0, A});
-		    }
-		}
-		else
-		{
-		    // B dies from A's first attack.
-		    map.death(B);
-		    out.push_back({B, 0, A});
-		}
-	    }
-	    else
-	    {
-		// A dies in first turn from B's attack.
-		map.death(A);
-		out.push_back({A, 0, B});
-	    }	    
-	}
+	return &A;
     }
-    else
+    else if (B_perf.DB && A_perf.counter)
     {
-	outcome = attack_sequence(A, B, A_perf, B_perf);
-	out.push_back({A, outcome, B});
-	if (B.stats.HP > 0)
-	{
-	    outcome = attack_sequence(B, A, B_perf, A_perf);
-	    out.push_back({B, outcome, A});
-	    if (A.stats.HP <= 0)
-	    {
-		// A's death from retaliation from B.
-		map.death(A);
-		out.push_back({A, 0, B});
-		
-	    }
-	}
-	else
-	{
-	    // B's Death on A's attack
-	    map.death(B);
-	    out.push_back({B, 0, A});
-	}
+	return &B;
     }
-    return out;
+    throw std::invalid_argument("Wrong filteration! follow_up_attack(Entity& A, Entity& B, CombatInfo& A_perf,  CombatInfo& B_perf) yet no one doubles!");
 }
 
-std::vector<sequence> battle(Entity& A, Entity& B, Mapmaker& map)
+std::vector<sequence> battle(Entity& actor, Entity& defender, Mapmaker& map)
 {
     std::vector<sequence> outcomes;
-    std::vector<CombatInfo> out = interact(A, B);
+    std::vector<CombatInfo> out = interact(actor, defender, map);
     CombatInfo A_perf = out[0]; CombatInfo B_perf = out[1];
-    if (A_perf.DB  &&  B_perf.DB)
+    if (!B_perf.counter)
     {
-	throw std::invalid_argument("Both units cannot double! Some flaw in the logic code.");
+	return {};
     }
-    if (A_perf.DB)
+    outcomes.push_back({actor, attack_sequence(actor, defender, A_perf, B_perf), defender});
+    if (defender.stats.HP <= 0)
     {
-	outcomes = entity_attack(A, B, A_perf, B_perf, true, A_perf.DB, map);
+	map.death(defender);
+	outcomes.push_back({defender, 0, actor});
     }
-    else if (B_perf.DB)
+    if (actor.alive && defender.alive && A_perf.counter)
     {
-	outcomes = entity_attack(A, B, A_perf, B_perf, false, B_perf.DB, map);
+	outcomes.push_back({defender, attack_sequence(defender, actor, B_perf, A_perf), actor});
+	if (actor.stats.HP <= 0)
+	{
+	    map.death(actor);
+	    outcomes.push_back({actor, 0, defender});
+	}
     }
-    else
+    if ((actor.alive && defender.alive) && (A_perf.DB || B_perf.DB))
     {
-	outcomes = entity_attack(A, B, A_perf, B_perf, true, false, map);
+	Entity* follow_up = follow_up_attack(actor, defender, A_perf, B_perf);
+	Entity& new_defender = (follow_up == &actor ? defender : actor);
+	int outcome = attack_sequence(*follow_up, new_defender, (follow_up == &actor ? A_perf : B_perf), (follow_up == &actor ? B_perf : A_perf));
+	outcomes.push_back({*follow_up, outcome, (follow_up == &actor ? defender : actor)});
+	if (new_defender.stats.HP <= 0)
+	{
+	    map.death(new_defender);
+	    outcomes.push_back({new_defender, 0, *follow_up});
+	}
     }
-    // if(doubles) --> if(hits) --> if(crits) --> (B.Hp - (A.MT*(1 || 3)*(1 || 2))) && (Aw.DUR - (1 || 2)) && (A.Hp - (B.MT*(1 || 3)*(1 || 2))) && (Bw.DUR - (1 || 2))
+    
     return outcomes;
+    // if(doubles) --> if(hits) --> if(crits) --> (B.Hp - (A.MT*(1 || 3)*(1 || 2))) && (Aw.DUR - (1 || 2)) && (A.Hp - (B.MT*(1 || 3)*(1 || 2))) && (Bw.DUR - (1 || 2))
 }
 
 /*

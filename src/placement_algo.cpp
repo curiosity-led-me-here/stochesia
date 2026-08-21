@@ -410,9 +410,9 @@ std::vector<std::vector<std::vector<int>>> run_piece_placement_algorithm(Environ
     return top;
 }
 
-void setup_board(fe_tiles::AnimationRenderer& render, Environment& env, Environment::ConfigureEnv& config)
+void setup_board(PieceSetConfig set, fe_tiles::AnimationRenderer& render, Environment& env, Environment::ConfigureEnv& config)
 {
-    Piece_set1(render, env, config);
+    set(render, env, config);
     int unit_count = env.guilds[0].members.size();
     std::vector<std::vector<std::vector<int>>> output_coord = run_piece_placement_algorithm(env, unit_count, 5);
     for (int team=0; team < env.guilds.size(); team++)

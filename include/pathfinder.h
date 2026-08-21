@@ -57,12 +57,13 @@ public:
     void path_trace(Entity& unit);
     void death(Entity& unit);
     std::vector<std::vector<int>> consider_occupancy(const Entity& unit);
-    std::vector<std::vector<int>> render_move(Entity& unit, std::vector<int> delta_coord, Registry& registry);
+    std::vector<std::vector<int>> render_move(Entity& unit, std::vector<int> delta_coord);
     std::vector<avl_for_atk> prompt_attack(Entity& unit);
     void update_attack_range(Entity& unit);
-    std::vector<std::vector<int>> move(Entity& unit, std::vector<int> coord, Registry& registry);
+    std::vector<std::vector<int>> move(Entity& unit, std::vector<int> coord);
     void plot_with_units(Registry& registry);
     void plot_movement_frame(Registry& registry, const Entity& moving_unit, int delay_ms = 140);
+    std::vector<std::vector<int>> standing_attack_range(const Entity& unit, const Weapon& weapon);
     std::vector<std::vector<int>> attack_range(const Entity& unit, const Weapon& weapon);
     void attack_range(Entity& unit);
 };

@@ -150,6 +150,7 @@ void Mapmaker::place_unit(Entity& unit)
 	    guilds[coords[1]][coords[0]] = unit.group->guild_id;
 	}
         unit.location = coords;
+	unit.terrain_id = map[unit.location[1]][unit.location[0]];
         unit.path = generate_map(dimensions);
     }
     else throw std::invalid_argument("Unit already placed here!");
@@ -257,7 +258,7 @@ void Mapmaker::update_attack_range(Entity& unit)
     std::vector<std::vector<int>> accumulator = unit.path;
     for (std::vector<int>& row : accumulator)
     {
-	std::fill(row.begin(), row.end(), 1);
+	std::fill(row.begin(), row.end(), 0);
     }
     for (int i=0; i < count_inventory_slots(unit); i++)
     {
@@ -275,7 +276,7 @@ void Mapmaker::update_attack_range(Entity& unit)
 	    {
 		for (int j=0; j < out[0].size(); j++)
 		{
-		    accumulator[i][j] = accumulator[i][j] && out[i][j];
+		    accumulator[i][j] = accumulator[i][j] || out[i][j];
 		}
 	    }
 	}
@@ -284,7 +285,7 @@ void Mapmaker::update_attack_range(Entity& unit)
     unit.attack_range = accumulator;
 }
 
-std::vector<std::vector<int>> Mapmaker::render_move(Entity& unit, std::vector<int> delta_coord, Registry& registry)
+std::vector<std::vector<int>> Mapmaker::render_move(Entity& unit, std::vector<int> delta_coord)
 {
     std::vector<int> coord = {unit.location[0]+delta_coord[0], unit.location[1]+delta_coord[1]};
     if (coord[0] < 0 || coord[1] < 0 || coord[0] >= map[0].size() || coord[1] >= map.size())
@@ -306,6 +307,7 @@ std::vector<std::vector<int>> Mapmaker::render_move(Entity& unit, std::vector<in
     {
 	output.push_back(out[i]);
 	unit.location = out[i];
+	unit.terrain_id = map[unit.location[1]][unit.location[0]];
 	unit.turn = false;
     }
     path_trace(unit);
@@ -341,7 +343,7 @@ std::vector<int> retry(const std::vector<avl_for_atk> prompts)
     }
 }
 
-std::vector<std::vector<int>> Mapmaker::move(Entity& unit, std::vector<int> delta_coord, Registry& registry)
+std::vector<std::vector<int>> Mapmaker::move(Entity& unit, std::vector<int> delta_coord)
 {
     std::vector<int> coord = {unit.location[0]+delta_coord[0], unit.location[1]+delta_coord[1]};
     if (coord[0] < 0 || coord[1] < 0 || coord[0] >= map[0].size() || coord[1] >= map.size())
@@ -363,56 +365,12 @@ std::vector<std::vector<int>> Mapmaker::move(Entity& unit, std::vector<int> delt
     {
 	output.push_back(out[i]);
 	unit.location = out[i];
+	unit.terrain_id = map[unit.location[1]][unit.location[0]];
     }
-    if (prompt_attack(unit).empty())
-    {
-	path_trace(unit);
-	guilds[unit.location[1]][unit.location[0]] = unit.group->guild_id;
-	occupancy[unit.location[1]][unit.location[0]] = unit.entity_id;
-	unit.turn = false;
-    }
-    else
-    {
-	print_attack_prompts(prompt_attack(unit), occupancy, registry);
-	bool accept_battle;
-	std::cin >> std::boolalpha >> accept_battle;
-	if (accept_battle)
-	{
-	    std::vector<int> enemy_coords = retry(prompt_attack(unit));
-	    Entity& enemy = registry.get_unit(occupancy[enemy_coords[1]][enemy_coords[0]]);
-	    unit.inventory.EquippedSlot = enemy_coords[2];
-	    std::vector<CombatInfo> info = interact(unit, enemy);
-	    mechanics_ascii::interact_window(unit, enemy, info[0], info[1]);
-	    bool confirm;
-	    std::cin >> std::boolalpha >> confirm;
-	    if (confirm)
-	    {
-		battle(unit, enemy, *this);
-		mechanics_ascii::battle_window(unit, enemy);
-		if (unit.alive)
-		{
-		    path_trace(unit);
-		    guilds[unit.location[1]][unit.location[0]] = unit.group->guild_id;
-		    occupancy[unit.location[1]][unit.location[0]] = unit.entity_id;
-		}
-		unit.turn = false;
-	    }
-	    else
-	    {
-		path_trace(unit);
-		guilds[unit.location[1]][unit.location[0]] = unit.group->guild_id;
-		occupancy[unit.location[1]][unit.location[0]] = unit.entity_id;
-		unit.turn = false;
-	    }
-	}
-	else
-	{
-	    path_trace(unit);
-	    guilds[unit.location[1]][unit.location[0]] = unit.group->guild_id;
-	    occupancy[unit.location[1]][unit.location[0]] = unit.entity_id;
-	    unit.turn = false;
-	}
-    }
+    path_trace(unit);
+    guilds[unit.location[1]][unit.location[0]] = unit.group->guild_id;
+    occupancy[unit.location[1]][unit.location[0]] = unit.entity_id;
+    unit.turn = false;
     return output;
     
 }
@@ -473,6 +431,19 @@ std::vector<std::vector<int>> select_helper(std::vector<int> coord, std::vector<
 	// mid
 	return {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
     }
+}
+
+std::vector<std::vector<int>> Mapmaker::standing_attack_range(const Entity& unit, const Weapon& weapon)
+{
+    std::vector<std::vector<int>> attack_path = generate_map(dimensions);
+    for (std::vector<int>& row : attack_path)
+    {
+        std::fill(row.begin(), row.end(), -1);
+    }
+
+    std::vector<std::vector<int>> inner_range = attack_path;
+    trace(inner_range, attack_path, unit.location, weapon.MINRG, weapon.MAXRG);
+    return attack_path;
 }
 
 std::vector<std::vector<int>> Mapmaker::attack_range(const Entity& unit, const Weapon& weapon)

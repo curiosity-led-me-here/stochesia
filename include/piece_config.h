@@ -5,8 +5,9 @@
 #include <cstdlib>
 
 int get_dur(int id);
-void setup(Entity& unit, ItemID id, Environment::ConfigureEnv& config, fe_tiles::AnimationRenderer& render, fe_tiles::UnitVisual visual);
+void setup(Entity& unit, std::vector<ItemID> id, Environment::ConfigureEnv& config, fe_tiles::AnimationRenderer& render, fe_tiles::UnitVisual visual);
 namespace PieceSet
 {
     void set1(fe_tiles::AnimationRenderer& render, Environment& env, Environment::ConfigureEnv& config);
+    void set2(fe_tiles::AnimationRenderer& render, Environment& env, Environment::ConfigureEnv& config);
 }

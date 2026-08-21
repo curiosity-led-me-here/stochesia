@@ -1,11 +1,11 @@
 #include "game_data.h"
 #include "click.h"
 #include "integration.h"
-#include "entity_data.h"
 #include "entity_animation.h"
 #include "map_monitor.h"
 #include "maps.h"
 #include <cstdlib>
+#include "pathfinder.h"
 
 enum class ClickState
 {
@@ -29,6 +29,7 @@ struct ClickController
     static constexpr int inter_strike_pause_frames = 0x14;
     int inter_strike_pause = 0;
     int active_guild=0;
+    int selected_weapon = -1;
     std::vector<sequence> sq;
     Environment& env;
     fe_tiles::AnimationRenderer& render;
@@ -50,7 +51,7 @@ struct ClickController
 	    env.cursor[0] - unit.location[0],
 	    env.cursor[1] - unit.location[1]
 	};
-	std::vector<std::vector<int>> route = env.map().render_move(unit, offset, env.units());
+	std::vector<std::vector<int>> route = env.map().render_move(unit, offset);
 	return route;
     }
 
@@ -58,8 +59,64 @@ struct ClickController
     {
 	Entity& unit = env.units().get_unit(selected_id);
 	Entity& enemy= env.units().get_unit(hover_id);
-	unit.inventory.EquippedSlot = 0;
 	return battle(unit, enemy, env.map());
+    }
+
+    bool enemy_in_range(std::vector<std::vector<int>> standing_attack_range)
+    {
+	bool out = false;
+	Entity& selected_unit = env.units().get_unit(selected_id);
+	for (Entity* candidate : env.units().live_units())
+	{
+	    if (candidate == &selected_unit || candidate->group == selected_unit.group)
+	    {
+		continue;
+	    }
+	    const int x = candidate->location[0];
+	    const int y = candidate->location[1];
+
+	    if (standing_attack_range[y][x] == 1)
+	    {
+		out = true;
+		return out;
+	    }
+	}
+	return out;
+    }
+
+    bool enemy_in_range(std::vector<std::vector<int>> standing_attack_range, Entity& enemy)
+    {
+	bool out = false;
+	Entity& selected_unit = env.units().get_unit(selected_id);
+	Entity* candidate = &enemy;
+	if (candidate == &selected_unit || candidate->group == selected_unit.group)
+	{
+	    return out;
+	}
+	const int x = candidate->location[0];
+	const int y = candidate->location[1];
+
+	if (standing_attack_range[y][x] == 1)
+	{
+	    out = true;
+	    return out;
+	}
+	return out;
+    }
+
+    int eligible_weapon(int selected_id)
+    {
+	Entity& selected_unit = env.units().get_unit(selected_id);
+	int new_slot = selected_unit.inventory.EquippedSlot;
+	for (int offset=1; offset < 6; offset++)
+	{
+	    new_slot = (selected_unit.inventory.EquippedSlot+offset) % 5;
+	    if (is_weapon(selected_unit.inventory.slot[new_slot].ID) && weapon_affinity(selected_unit, get_weapon(Armory, selected_unit.inventory.slot[new_slot].ID)) && enemy_in_range(env.map().standing_attack_range(selected_unit, get_weapon(Armory, selected_unit.inventory.slot[new_slot].ID))))
+	    {
+		return new_slot;
+	    }
+	}
+	return new_slot;
     }
 
     void update_forecast_at_cursor()
@@ -81,7 +138,7 @@ struct ClickController
 	Entity& unit = env.units().get_unit(selected_id);
 	Entity& enemy = env.units().get_unit(hover_id);
 
-	std::vector<CombatInfo> info = interact(unit, enemy);
+	std::vector<CombatInfo> info = interact(unit, enemy, env.map());
 
 	monitor.show_battle_forecast(
         unit,
@@ -89,6 +146,22 @@ struct ClickController
         info[0],
         info[1]
 	);
+    }
+
+    void update_inventory_at_cursor()
+    {
+	const int hover_id = env.map().entity_at(env.cursor);
+	if (hover_id == 0)
+	{
+	    monitor.clear_inventory();
+	    return;
+	}
+	if (selected_id != 0)
+	{
+	    Entity& selected_unit = env.units().get_unit(selected_id);
+	    selected_unit.inventory.EquippedSlot = eligible_weapon(selected_id);
+	}
+	monitor.show_inventory(env.units().get_unit(hover_id));
     }
     
     bool belongs(int selected_id)
@@ -164,9 +237,23 @@ struct ClickController
 		refresh();
 	    }
 	    active_guild = ((active_guild + 1) % env.guilds.size());
-	    monitor.show_phase_intro(env.guilds[active_guild].name, render.guild_color(env.guilds[active_guild].guild_id));
-	    
+	    monitor.show_phase_intro(env.guilds[active_guild].name, render.guild_color(env.guilds[active_guild].guild_id));  
 	}
+    }
+
+    void voluntary_end_phase()
+    {
+	render.clear_paint();
+	monitor.request_redraw();
+	Guild& target = env.guilds[active_guild];
+	for (Entity* member : target.members)
+	{
+	    auto art = env.local_registry.at(member->entity_id);
+	    if (art.is_turn_greyscale()) { art.turn_greyscale(false); }
+	    refresh();
+	}
+	active_guild = ((active_guild + 1) % env.guilds.size());
+	monitor.show_phase_intro(env.guilds[active_guild].name, render.guild_color(env.guilds[active_guild].guild_id)); 
     }
 
     void animate_battle(std::vector<sequence> sq, int i, Environment& env)
@@ -177,55 +264,21 @@ struct ClickController
 	{
 	    return;
 	}
-	if (i != sq.size()-1)
+	if (scene.turn == 2)
 	{
-	    sequence next_seq = sq[i+1];
-	    if (next_seq.turn == 0)
-	    {
-		if (scene.turn == 2)
-		{
-		    env.local_registry.at(scene.unit.entity_id).critical(scene.opp, scene.opp_hp_after, false, true);
-		}
-		else if (scene.turn == 1)
-		{
-		    env.local_registry.at(scene.unit.entity_id).dash(scene.opp, scene.opp_hp_after, false, true);
-		}
-		else
-		{
-		    env.local_registry.at(scene.unit.entity_id).miss(scene.opp);
-		}
-	    }
-	    else
-	    {
-		if (scene.turn == 2)
-		{
-		    env.local_registry.at(scene.unit.entity_id).critical(scene.opp, scene.opp_hp_after);
-		}
-		else if (scene.turn == 1)
-		{
-		    env.local_registry.at(scene.unit.entity_id).dash(scene.opp, scene.opp_hp_after);
-		}
-		else
-		{
-		    env.local_registry.at(scene.unit.entity_id).miss(scene.opp);
-
-		}
-	    }
+	    env.local_registry.at(scene.unit.entity_id).critical(scene.opp, scene.opp_hp_after);
+	}
+	else if (scene.turn == 1)
+	{
+	    env.local_registry.at(scene.unit.entity_id).dash(scene.opp, scene.opp_hp_after);
+	}
+	else if (scene.turn == -2)
+	{
+	    env.local_registry.at(scene.unit.entity_id).wait(scene.opp);
 	}
 	else
 	{
-	    if (scene.turn == 2)
-	    {
-		env.local_registry.at(scene.unit.entity_id).critical(scene.opp, scene.opp_hp_after);
-	    }
-	    else if (scene.turn == 1)
-	    {
-		env.local_registry.at(scene.unit.entity_id).dash(scene.opp, scene.opp_hp_after);
-	    }
-	    else
-	    {
-		env.local_registry.at(scene.unit.entity_id).miss(scene.opp);
-	    }
+	    env.local_registry.at(scene.unit.entity_id).miss(scene.opp);
 	}
     }
     
@@ -243,12 +296,7 @@ struct ClickController
 	    }
 	    else
 	    {
-		Entity& unit = env.units().get_unit(selected_id);
-		int enemy_idx = env.map().entity_at(env.map().prompt_attack(env.units().get_unit(selected_id))[0].coords);
-		
-		Entity& enemy = env.units().get_unit(enemy_idx);
-		std::vector<CombatInfo> info = interact(unit, enemy);
-		monitor.show_battle_forecast(unit, enemy, info[0], info[1]);
+		update_inventory_at_cursor();
 		env.map().update_attack_range(env.units().get_unit(selected_id));
 		env.local_registry.at(selected_id).paint_red();
 		state = ClickState::ChooseTarget;
@@ -257,17 +305,8 @@ struct ClickController
 	}
 	if (animation_state == 2)
 	{
-	    // A terminal turn == 0 record only says that the preceding strike
-	    // killed its target. Its death fade was already started at impact.
-	    while (next_strike < static_cast<int>(sq.size()) &&
-		   sq[next_strike].turn == 0)
-	    {
-		++next_strike;
-	    }
-
-	    // FE8's default map-combat script sleeps for 0x14 frames after a
-	    // map-unit has returned from its strike, before the next round starts.
-	    if (next_strike != 0 &&
+	    if (next_strike < static_cast<int>(sq.size()) &&
+		next_strike != 0 &&
 		inter_strike_pause < inter_strike_pause_frames)
 	    {
 		inter_strike_pause++;
@@ -276,7 +315,15 @@ struct ClickController
 
 	    if (next_strike < sq.size())
 	    {
-		animate_battle(sq, next_strike, env);
+		const sequence& next_scene = sq[next_strike];
+		if (next_scene.turn == 0)
+		{
+		    env.local_registry.at(next_scene.unit.entity_id).death();
+		}
+		else
+		{
+		    animate_battle(sq, next_strike, env);
+		}
 		next_strike++;
 		inter_strike_pause = 0;
 		return;
@@ -294,6 +341,79 @@ struct ClickController
 		state = ClickState::GameOver;
 	    }
 	    return;
+	}
+    }
+
+    void show_inventory()
+    {
+	int selected_id = env.map().entity_at(env.cursor);
+	Entity& selected_unit = env.units().get_unit(selected_id);
+	if (selected_id != 0 && belongs(selected_id) && !env.local_registry.at(selected_id).is_turn_greyscale())
+	{
+	    int new_slot = (selected_unit.inventory.EquippedSlot+1) % 5;
+	    selected_unit.inventory.EquippedSlot = new_slot;
+	    monitor.show_inventory(selected_unit);
+	}
+	else
+	{
+	    monitor.show_inventory(selected_unit);
+	}
+    }
+
+    bool weapon_affinity(Entity& selected_unit, Weapon weapon)
+    {
+	bool out = false;
+	for (WeaponCategory cat : selected_unit.type.UsableWeapons)
+	{
+	    if (cat == weapon.CAT)
+	    {
+		out = true;
+		return out;
+	    }
+	}
+	return out;
+    }
+
+    bool enemy_in_range()
+    {
+	bool out = false;
+	Entity& selected_unit = env.units().get_unit(selected_id);
+	for (Entity* candidate : env.units().live_units())
+	{
+	    if (candidate == &selected_unit || candidate->group == selected_unit.group)
+	    {
+		continue;
+	    }
+	    const int x = candidate->location[0];
+	    const int y = candidate->location[1];
+
+	    if (selected_unit.attack_range[y][x] == 1)
+	    {
+		out = true;
+		return out;
+	    }
+	}
+	return out;
+    }
+    
+    void e()
+    {
+	Entity& selected_unit = env.units().get_unit(selected_id);
+	selected_unit.inventory.EquippedSlot = eligible_weapon(selected_id);
+	monitor.show_inventory(selected_unit);
+	env.local_registry.at(selected_id).clear_paint();
+	Weapon weapon = get_weapon(Armory, selected_unit.inventory.slot[selected_unit.inventory.EquippedSlot].ID);
+	for (WeaponCategory cat : selected_unit.type.UsableWeapons)
+	{
+	    if (cat == weapon.CAT)
+	    {
+		selected_unit.attack_range = env.map().standing_attack_range(selected_unit, weapon);
+		if (enemy_in_range())
+		{
+		    env.local_registry.at(selected_id).paint_red();
+		}
+		monitor.request_redraw();
+	    }
 	}
     }
     
@@ -343,9 +463,9 @@ struct ClickController
 		    {
 			Entity& unit = env.units().get_unit(selected_id);
 			int enemy_idx = env.map().entity_at(env.map().prompt_attack(env.units().get_unit(selected_id))[0].coords);
-			
+			unit.inventory.EquippedSlot = eligible_weapon(selected_id);
 			Entity& enemy = env.units().get_unit(enemy_idx);
-			std::vector<CombatInfo> info = interact(unit, enemy);
+			std::vector<CombatInfo> info = interact(unit, enemy, env.map());
 			monitor.show_battle_forecast(unit, enemy, info[0], info[1]);
 			env.local_registry.at(selected_id).clear_paint();
 			env.map().update_attack_range(env.units().get_unit(selected_id));
@@ -402,16 +522,15 @@ struct ClickController
 			monitor.clear_battle_forecast();
 			end_turn(hover_id);
 			monitor.request_redraw();
-	    }
-	    if (hover_id != 0 && hover_id != selected_id && red && belongs(selected_id))
-	    {
-		// battle() resolves HP synchronously. Save the currently visible HP
-		// before that happens; each sequence releases its own HP at impact.
-		render.sync_units(env.units().live_units());
-		sq = attack(hover_id);
-		next_strike=0;
-		inter_strike_pause=0;
-		env.local_registry.at(selected_id).clear_paint();
+		    }
+		    
+		    if (hover_id != 0 && hover_id != selected_id && red && belongs(selected_id))
+		    {
+			render.sync_units(env.units().live_units());
+			sq = attack(hover_id);
+			next_strike=0;
+			inter_strike_pause=0;
+			env.local_registry.at(selected_id).clear_paint();
 			animation_state = 2;
 			state = ClickState::Animation;
 			break;
@@ -434,6 +553,21 @@ struct ClickController
 	}
 };
 
+void wasd_functions(Environment& env, const fe_tiles::AnimationRenderer& render, fe_tiles::MapMonitor& monitor, ClickController click)
+{
+    monitor.set_cursor(env.cursor);
+    click.update_inventory_at_cursor();
+    click.update_forecast_at_cursor();
+    if (env.map().entity_at(env.cursor) == 0)
+    {
+	monitor.show_terrain_stats(env.map().get_map()[env.cursor[1]][env.cursor[0]]);
+    }
+    if (click.state == ClickState::ChooseTarget)
+    {
+	monitor.show_inventory(env.units().get_unit(click.selected_id));
+    }
+}
+
 
 void run_click_game(Environment& env, fe_tiles::AnimationRenderer& render, maps::MapRecipe& recipe)
 {
@@ -442,6 +576,11 @@ void run_click_game(Environment& env, fe_tiles::AnimationRenderer& render, maps:
     monitor.set_battle_animation_speed(0.69);
     monitor.set_cursor(env.cursor);
     ClickController click(env, render, monitor);
+    click.update_inventory_at_cursor();
+    if (env.map().entity_at(env.cursor) == 0)
+    {
+	monitor.show_terrain_stats(env.map().get_map()[env.cursor[1]][env.cursor[0]]);
+    }
     monitor.on_key([&](char key)
     {
 	if (key == '\r')
@@ -452,26 +591,68 @@ void run_click_game(Environment& env, fe_tiles::AnimationRenderer& render, maps:
 	if (key == 'w')
 	{
 	    env.move_up();
-	    monitor.set_cursor(env.cursor);
-	    click.update_forecast_at_cursor();
+	    wasd_functions(env, render, monitor, click);
 	}
 	if (key == 'a')
 	{
 	    env.move_left();
-	    monitor.set_cursor(env.cursor);
-	    click.update_forecast_at_cursor();
+	    wasd_functions(env, render, monitor, click);
 	}
 	if (key == 's')
 	{
 	    env.move_down();
-	    monitor.set_cursor(env.cursor);
-	    click.update_forecast_at_cursor();
+	    wasd_functions(env, render, monitor, click);
 	}
 	if (key == 'd')
 	{
 	    env.move_right();
-	    monitor.set_cursor(env.cursor);
-	    click.update_forecast_at_cursor();
+	    wasd_functions(env, render, monitor, click);
+	}
+	if (key == 'e')
+	{
+	    if (click.state != ClickState::ChooseTarget)
+	    {
+		click.show_inventory();
+	    }
+	    else if (click.state == ClickState::ChooseTarget && env.map().entity_at(env.cursor) != 0 && env.map().entity_at(env.cursor) != click.selected_id)
+	    {
+		Entity& unit = env.units().get_unit(click.selected_id);
+		const int slot = click.eligible_weapon(click.selected_id);
+		if (slot < 0 || slot >= 5 || !is_weapon(unit.inventory.slot[slot].ID))
+		{
+		    monitor.clear_battle_forecast();
+		    return;
+		}
+		if (click.weapon_affinity(unit, get_weapon(Armory, unit.inventory.slot[slot].ID)) &&  click.enemy_in_range(env.map().standing_attack_range(unit, get_weapon(Armory, unit.inventory.slot[slot].ID)), env.units().get_unit(env.map().entity_at(env.cursor))))
+		{
+		    int enemy_id = env.map().entity_at(env.cursor);
+		    Entity& enemy = env.units().get_unit(enemy_id);
+		    unit.inventory.EquippedSlot = slot;
+		    std::vector<CombatInfo> info = interact(unit, enemy, env.map());
+		    monitor.clear_battle_forecast();
+		    monitor.show_battle_forecast(unit, enemy, info[0], info[1]);   
+		}
+	    }
+	    
+	    else if (click.state == ClickState::ChooseTarget && env.map().entity_at(env.cursor) == click.selected_id)
+	    {
+		Entity& unit = env.units().get_unit(click.selected_id);
+		const int slot = unit.inventory.EquippedSlot;
+		if (slot < 0 || slot >= 5 || !is_weapon(unit.inventory.slot[slot].ID))
+		{
+		    monitor.clear_battle_forecast();
+		    return;
+		}
+		click.e();
+	    }
+	    else
+	    {
+		return;
+	    }
+	}
+	if (key == 'p')
+	{
+	    click.voluntary_end_phase();
 	}
     });
     

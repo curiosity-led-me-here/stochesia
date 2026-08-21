@@ -63,40 +63,33 @@ bool EntityAnimation::is_turn_greyscale() const
     return renderer_->turn_greyscale_enabled(entity_->entity_id);
 }
 
-void EntityAnimation::dash(Entity& target,
-                            bool attacker_defeated,
-                            bool target_defeated)
+void EntityAnimation::dash(Entity& target)
 {
-    renderer_->control().begin_strike(
-        *entity_, target, StrikeOutcome::Hit, attacker_defeated, target_defeated
-    );
+    renderer_->control().begin_strike(*entity_, target, StrikeOutcome::Hit);
 }
 
 void EntityAnimation::dash(Entity& target,
-                            int target_hp_after,
-                            bool attacker_defeated,
-                            bool target_defeated)
+                            int target_hp_after)
 {
     renderer_->stage_health_at_impact(target, target_hp_after);
-    renderer_->control().begin_strike(
-        *entity_, target, StrikeOutcome::Hit, attacker_defeated, target_defeated
-    );
+    renderer_->control().begin_strike(*entity_, target, StrikeOutcome::Hit);
 }
 
 void EntityAnimation::critical(Entity& target,
-                                int target_hp_after,
-                                bool attacker_defeated,
-                                bool target_defeated)
+                                int target_hp_after)
 {
     renderer_->stage_health_at_impact(target, target_hp_after);
-    renderer_->control().begin_strike(
-        *entity_, target, StrikeOutcome::Critical, attacker_defeated, target_defeated
-    );
+    renderer_->control().begin_strike(*entity_, target, StrikeOutcome::Critical);
 }
 
 void EntityAnimation::miss(Entity& target)
 {
     renderer_->control().begin_strike(*entity_, target, StrikeOutcome::Miss);
+}
+
+void EntityAnimation::wait(Entity& target)
+{
+    renderer_->control().begin_strike(*entity_, target, StrikeOutcome::Wait);
 }
 
 void EntityAnimation::death()

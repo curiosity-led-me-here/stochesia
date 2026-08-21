@@ -81,26 +81,24 @@ public:
                               const std::vector<std::vector<int>>& route_xy);
     std::optional<CompletedMove> take_completed_move();
 
-    // Call after YOUR combat outcome exists. The entity values are used only
-    // for their ID/location/sprite mapping. `*_defeated` should come from
-    // your own battle result, normally !entity.alive after battle().
+    // One normal hit. A hit never starts a death fade; schedule begin_death()
+    // yourself after the final resolved round has completed.
     void begin_attack(const Entity& attacker,
-                      const Entity& defender,
-                      bool attacker_defeated,
-                      bool defender_defeated);
+                      const Entity& defender);
 
     // The one-strike form used for an exact combat sequence. Your mechanics
     // decides whether this round hit or missed and calls it once per round in
     // order. That directly supports counters, doubles, and brave weapons,
     // without the renderer reconstructing attack order from final HP values.
+    // A strike never infers or starts death. FE8 starts MU_StartDeathFade only
+    // after the final round script has returned and MapAnimEnd has begun.
     void begin_strike(const Entity& attacker,
                       const Entity& defender,
-                      StrikeOutcome outcome,
-                      bool attacker_defeated = false,
-                      bool defender_defeated = false);
+                      StrikeOutcome outcome);
 
-    // A standalone map-unit death fade. Use this when there is no preceding
-    // attack lunge (event death, scripted removal, terrain hazard, etc.).
+    // A standalone map-unit death fade. For combat, call this only after the
+    // final hit/critical presentation and post-round pause; it is also used
+    // for event death, scripted removal, and terrain hazards.
     // The renderer intentionally does not change Entity::alive or occupancy.
     void begin_death(const Entity& defeated);
 

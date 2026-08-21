@@ -66,6 +66,7 @@ enum VisualTerrainID
     VISUAL_TERRAIN_COUNT
 };
 
+
 enum WeaponCategory
 {
     NONETYPE = -1,
@@ -78,6 +79,19 @@ enum WeaponCategory
     DARK  = 6,
     STAFF = 7,
 };
+
+enum UnitClass
+{
+    FOOT,
+    CAVALIER,
+    ARMOURED,
+    FLIER,
+    WRYM,
+    BANDIT,
+    PIRATE,
+    MAGIC,
+};
+
 
 enum ItemID
 {
@@ -112,6 +126,7 @@ struct Weapon
     int CRIT;
     int MINRG;
     int MAXRG;
+    std::vector<UnitClass> effective;
 };
 
 struct Healer
@@ -216,6 +231,7 @@ struct Entity
     bool alive=true;
     bool turn=true;
     std::string name;
+    UnitClass unitclass;
     int entity_id;
     std::vector<int> location;
     std::vector<std::vector<int>> path;
@@ -229,6 +245,7 @@ struct Entity
     EntityWeaponExp WExp;
     Growth growth;
     terrain::MovementType movement = terrain::MovementType::CommonT1;
+    int terrain_id;
     Guild* group = nullptr;
 };
 
@@ -261,6 +278,7 @@ struct CombatInfo
     bool DB;
     int CRIT;
     int WTA;
+    bool counter;
 };
 
 struct avl_for_atk

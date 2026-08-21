@@ -16,11 +16,60 @@
 #include "map_monitor.h"
 #include "map_tile_library.h"
 #include "fe8_unit_visuals.h"
+#include "game_data.h"
+#include "terrain_data.h"
 
 namespace
 {
 constexpr CGFloat kMargin = 24.0;
 constexpr CGFloat kSidebarWidth = 270.0;
+
+int map_unit_motion_frame(fe_tiles::UnitVisual visual,
+                          int animation_id,
+                          std::uint64_t game_tick,
+                          int fallback_frame)
+{
+    const fe_tiles::MapUnitMotionProgram* program =
+        fe_tiles::map_unit_motion_program(visual, animation_id);
+    if (program == nullptr || program->steps.empty())
+    {
+        return fallback_frame;
+    }
+
+    int cycle_ticks = 0;
+    for (const fe_tiles::MapUnitMotionStep& step : program->steps)
+    {
+        cycle_ticks += step.ticks;
+    }
+    if (cycle_ticks <= 0)
+    {
+        return fallback_frame;
+    }
+
+    int phase = static_cast<int>(game_tick % static_cast<std::uint64_t>(cycle_ticks));
+    for (const fe_tiles::MapUnitMotionStep& step : program->steps)
+    {
+        if (phase < step.ticks)
+        {
+            return step.frame;
+        }
+        phase -= step.ticks;
+    }
+    return fallback_frame;
+}
+
+int selected_motion_sheet_cell(int motion_frame, int fallback_cell)
+{
+    // The selected action refers to logical AP frames 16, 17, and 18. In
+    // every FE8 unit-icon sheet those frames respectively use source cells
+    // 12, 13, and 14: the first four source cells are reused for the mirrored
+    // right-facing animation, so logical frame IDs are not PNG-cell indices.
+    if (motion_frame < 16 || motion_frame > 18)
+    {
+        return fallback_cell;
+    }
+    return motion_frame - 4;
+}
 
 struct PaletteColor
 {
@@ -77,145 +126,119 @@ NSImage* load_image(const std::string& path)
     return [[NSImage alloc] initWithContentsOfFile:[NSString stringWithUTF8String:path.c_str()]];
 }
 
-// The FE8 text-engine atlas is an indexed PNG with an opaque white
-// background. Turn its black glyph pixels into a transparent, tinted image
-// once at startup.  This keeps the forecast's lettering pixel-perfect at any
-// monitor scale instead of falling back to macOS's vector system fonts.
-NSImage* tint_fe8_font_atlas(NSImage* source, NSColor* tint,
-                             std::array<int, 128>* glyph_widths = nullptr)
+constexpr NSString* kStochesiaUiInkMarker = @"stochesia-ui-ink";
+constexpr NSString* kStochesiaUiPinkMarker = @"stochesia-ui-pink";
+
+NSImage* stochesia_ui_text_style(NSString* marker)
 {
-    if (source == nil)
-    {
-        return nil;
-    }
-
-    NSRect proposed = NSMakeRect(0.0, 0.0, source.size.width, source.size.height);
-    CGImageRef image = [source CGImageForProposedRect:&proposed context:nil hints:nil];
-    if (image == nullptr)
-    {
-        return nil;
-    }
-
-    const std::size_t width = CGImageGetWidth(image);
-    const std::size_t height = CGImageGetHeight(image);
-    std::vector<std::uint8_t> pixels(width * height * 4, 0);
-    CGColorSpaceRef colors = CGColorSpaceCreateDeviceRGB();
-    CGContextRef context = CGBitmapContextCreate(
-        pixels.data(), width, height, 8, width * 4, colors,
-        kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big
-    );
-    CGColorSpaceRelease(colors);
-    if (context == nullptr)
-    {
-        return nil;
-    }
-
-    CGContextSetBlendMode(context, kCGBlendModeCopy);
-    CGContextDrawImage(context, CGRectMake(0.0, 0.0, width, height), image);
-
-    CGFloat red = 0.0;
-    CGFloat green = 0.0;
-    CGFloat blue = 0.0;
-    CGFloat alpha = 0.0;
-    // `colorWithCalibratedWhite:` is grayscale, so AppKit requires an
-    // explicit conversion before its red/green/blue components are queried.
-    NSColor* rgb_tint = [tint colorUsingColorSpace:[NSColorSpace deviceRGBColorSpace]];
-    if (rgb_tint == nil)
-    {
-        rgb_tint = [NSColor colorWithDeviceRed:0.0 green:0.0 blue:0.0 alpha:1.0];
-    }
-    [rgb_tint getRed:&red green:&green blue:&blue alpha:&alpha];
-
-    std::array<int, 128> left{};
-    std::array<int, 128> right{};
-    left.fill(16);
-    right.fill(-1);
-
-    for (std::size_t y = 0; y < height; ++y)
-    {
-        for (std::size_t x = 0; x < width; ++x)
-        {
-            std::uint8_t* rgba = pixels.data() + (y * width + x) * 4;
-            // The source glyph ink is dark; its paper-white backdrop is not
-            // part of the real GBA font and must become transparent.
-            const bool ink = rgba[3] != 0 &&
-                (static_cast<int>(rgba[0]) + static_cast<int>(rgba[1]) +
-                 static_cast<int>(rgba[2])) < 480;
-
-            if (!ink)
-            {
-                rgba[0] = rgba[1] = rgba[2] = rgba[3] = 0;
-                continue;
-            }
-
-            rgba[0] = static_cast<std::uint8_t>(red * 255.0);
-            rgba[1] = static_cast<std::uint8_t>(green * 255.0);
-            rgba[2] = static_cast<std::uint8_t>(blue * 255.0);
-            rgba[3] = static_cast<std::uint8_t>(alpha * 255.0);
-
-            if (glyph_widths != nullptr)
-            {
-                const int code = static_cast<int>((y / 16) * 16 + (x / 16));
-                if (code >= 0 && code < static_cast<int>(glyph_widths->size()))
-                {
-                    const int local_x = static_cast<int>(x % 16);
-                    left[code] = std::min(left[code], local_x);
-                    right[code] = std::max(right[code], local_x);
-                }
-            }
-        }
-    }
-
-    if (glyph_widths != nullptr)
-    {
-        for (std::size_t code = 0; code < glyph_widths->size(); ++code)
-        {
-            (*glyph_widths)[code] = right[code] >= left[code]
-                ? std::min(16, right[code] + 2)
-                : 4;
-        }
-        (*glyph_widths)[static_cast<unsigned char>(' ')] = 4;
-    }
-
-    CGImageRef fixed = CGBitmapContextCreateImage(context);
-    CGContextRelease(context);
-    NSImage* result = [[NSImage alloc] initWithCGImage:fixed size:source.size];
-    CGImageRelease(fixed);
-    return result;
+    // Existing panel calls carry their intended text tone through an image
+    // argument. Keep that compact call surface, but use this marker only as
+    // a colour role: Stochesia's UI no longer loads any FE font artwork.
+    NSImage* style = [[NSImage alloc] initWithSize:NSMakeSize(1.0, 1.0)];
+    [style setName:marker];
+    return style;
 }
 
-void draw_fe8_bitmap_text(NSImage* atlas, const std::array<int, 128>& widths,
+using StochesiaPixelGlyph = std::array<std::uint8_t, 7>;
+
+StochesiaPixelGlyph stochesia_pixel_glyph(unichar character)
+{
+    switch (character)
+    {
+        case 'A': return {{0x0E, 0x11, 0x11, 0x1F, 0x11, 0x11, 0x11}};
+        case 'B': return {{0x1E, 0x11, 0x11, 0x1E, 0x11, 0x11, 0x1E}};
+        case 'C': return {{0x0F, 0x10, 0x10, 0x10, 0x10, 0x10, 0x0F}};
+        case 'D': return {{0x1E, 0x11, 0x11, 0x11, 0x11, 0x11, 0x1E}};
+        case 'E': return {{0x1F, 0x10, 0x10, 0x1E, 0x10, 0x10, 0x1F}};
+        case 'F': return {{0x1F, 0x10, 0x10, 0x1E, 0x10, 0x10, 0x10}};
+        case 'G': return {{0x0F, 0x10, 0x10, 0x17, 0x11, 0x11, 0x0F}};
+        case 'H': return {{0x11, 0x11, 0x11, 0x1F, 0x11, 0x11, 0x11}};
+        case 'I': return {{0x1F, 0x04, 0x04, 0x04, 0x04, 0x04, 0x1F}};
+        case 'J': return {{0x01, 0x01, 0x01, 0x01, 0x11, 0x11, 0x0E}};
+        case 'K': return {{0x11, 0x12, 0x14, 0x18, 0x14, 0x12, 0x11}};
+        case 'L': return {{0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x1F}};
+        case 'M': return {{0x11, 0x1B, 0x15, 0x15, 0x11, 0x11, 0x11}};
+        case 'N': return {{0x11, 0x19, 0x15, 0x13, 0x11, 0x11, 0x11}};
+        case 'O': return {{0x0E, 0x11, 0x11, 0x11, 0x11, 0x11, 0x0E}};
+        case 'P': return {{0x1E, 0x11, 0x11, 0x1E, 0x10, 0x10, 0x10}};
+        case 'Q': return {{0x0E, 0x11, 0x11, 0x11, 0x15, 0x12, 0x0D}};
+        case 'R': return {{0x1E, 0x11, 0x11, 0x1E, 0x14, 0x12, 0x11}};
+        case 'S': return {{0x0F, 0x10, 0x10, 0x0E, 0x01, 0x01, 0x1E}};
+        case 'T': return {{0x1F, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04}};
+        case 'U': return {{0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x0E}};
+        case 'V': return {{0x11, 0x11, 0x11, 0x11, 0x11, 0x0A, 0x04}};
+        case 'W': return {{0x11, 0x11, 0x11, 0x15, 0x15, 0x15, 0x0A}};
+        case 'X': return {{0x11, 0x11, 0x0A, 0x04, 0x0A, 0x11, 0x11}};
+        case 'Y': return {{0x11, 0x11, 0x0A, 0x04, 0x04, 0x04, 0x04}};
+        case 'Z': return {{0x1F, 0x01, 0x02, 0x04, 0x08, 0x10, 0x1F}};
+        case '0': return {{0x0E, 0x13, 0x15, 0x15, 0x19, 0x11, 0x0E}};
+        case '1': return {{0x04, 0x0C, 0x14, 0x04, 0x04, 0x04, 0x1F}};
+        case '2': return {{0x0E, 0x11, 0x01, 0x02, 0x04, 0x08, 0x1F}};
+        case '3': return {{0x1E, 0x01, 0x01, 0x0E, 0x01, 0x01, 0x1E}};
+        case '4': return {{0x02, 0x06, 0x0A, 0x12, 0x1F, 0x02, 0x02}};
+        case '5': return {{0x1F, 0x10, 0x10, 0x1E, 0x01, 0x01, 0x1E}};
+        case '6': return {{0x0E, 0x10, 0x10, 0x1E, 0x11, 0x11, 0x0E}};
+        case '7': return {{0x1F, 0x01, 0x02, 0x04, 0x08, 0x08, 0x08}};
+        case '8': return {{0x0E, 0x11, 0x11, 0x0E, 0x11, 0x11, 0x0E}};
+        case '9': return {{0x0E, 0x11, 0x11, 0x0F, 0x01, 0x01, 0x0E}};
+        case '-': return {{0x00, 0x00, 0x00, 0x1F, 0x00, 0x00, 0x00}};
+        case '+': return {{0x00, 0x04, 0x04, 0x1F, 0x04, 0x04, 0x00}};
+        case '/': return {{0x01, 0x02, 0x02, 0x04, 0x08, 0x08, 0x10}};
+        case '%': return {{0x19, 0x1A, 0x04, 0x08, 0x16, 0x13, 0x00}};
+        case '!': return {{0x04, 0x04, 0x04, 0x04, 0x04, 0x00, 0x04}};
+        case '?': return {{0x0E, 0x11, 0x01, 0x02, 0x04, 0x00, 0x04}};
+        case '\'': return {{0x04, 0x04, 0x02, 0x00, 0x00, 0x00, 0x00}};
+        case ':': return {{0x00, 0x04, 0x00, 0x00, 0x04, 0x00, 0x00}};
+        case '.': return {{0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00}};
+        case ' ': return {{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}};
+        default:  return {{0x0E, 0x11, 0x01, 0x02, 0x04, 0x00, 0x04}};
+    }
+}
+
+void draw_fe8_bitmap_text(NSImage* style, const std::array<int, 128>&,
                           NSString* text, NSPoint origin, CGFloat scale)
 {
-    if (atlas == nil || text == nil)
+    if (style == nil || text == nil || text.length == 0)
     {
         return;
     }
 
-    [[NSGraphicsContext currentContext] setImageInterpolation:NSImageInterpolationNone];
-    CGFloat x = origin.x;
-    for (NSUInteger index = 0; index < text.length; ++index)
+    const bool ink = [[style name] isEqualToString:kStochesiaUiInkMarker];
+    const bool pink = [[style name] isEqualToString:kStochesiaUiPinkMarker];
+    NSColor* colour = pink
+        ? [NSColor colorWithCalibratedRed:0.94 green:0.48 blue:0.66 alpha:1.0]
+        : (ink
+            ? [NSColor colorWithCalibratedRed:0.035 green:0.055 blue:0.085 alpha:1.0]
+            : [NSColor colorWithCalibratedRed:0.94 green:0.98 blue:1.0 alpha:1.0]);
+    // Most sidebar labels arrive at a fractional scale. Rounding previously
+    // collapsed them to one physical pixel while their rows were two or three
+    // times taller. Round upward at this threshold so the same glyph design
+    // remains readable and fills the UI rhythm.
+    const CGFloat pixel = std::max<CGFloat>(1.0, std::ceil(0.90 * scale));
+    const NSString* uppercase_text = [text uppercaseString];
+    CGFloat x = std::round(origin.x);
+    const CGFloat y = std::round(origin.y);
+    [colour setFill];
+    for (NSUInteger index = 0; index < uppercase_text.length; ++index)
     {
-        unichar character = [text characterAtIndex:index];
-        if (character >= widths.size())
-        {
-            character = '?';
-        }
-
-        const NSRect source = NSMakeRect(
-            static_cast<CGFloat>((character & 15) * 16),
-            // The FE8 atlas indexes character row 0 from its top edge, while
-            // NSImage source rectangles use a bottom-left origin.
-            static_cast<CGFloat>((15 - (character >> 4)) * 16), 16.0, 16.0
+        const StochesiaPixelGlyph glyph = stochesia_pixel_glyph(
+            [uppercase_text characterAtIndex:index]
         );
-        const NSRect target = NSMakeRect(x, origin.y, 16.0 * scale, 16.0 * scale);
-        [atlas drawInRect:target
-                 fromRect:source
-                operation:NSCompositingOperationSourceOver
-                 fraction:1.0
-           respectFlipped:YES
-                    hints:nil];
-        x += static_cast<CGFloat>(widths[character]) * scale;
+        for (std::size_t row = 0; row < glyph.size(); ++row)
+        {
+            for (int column = 0; column < 5; ++column)
+            {
+                if ((glyph[row] & (1U << (4 - column))) != 0)
+                {
+                    NSRectFill(NSMakeRect(
+                        x + static_cast<CGFloat>(column) * pixel,
+                        y + static_cast<CGFloat>(row) * pixel,
+                        pixel, pixel
+                    ));
+                }
+            }
+        }
+        x += 6.0 * pixel;
     }
 }
 
@@ -494,6 +517,10 @@ std::string item_name_for_forecast(ItemID item)
         case LIGHTNING: return "Lightning";
         case FLUX: return "Flux";
         case THUNDER: return "Thunder";
+        case VULNERARY: return "Vulnerary";
+        case ELIXIR: return "Elixir";
+        case HEAL: return "Heal";
+        case MEND: return "Mend";
         default: return "--";
     }
 }
@@ -510,6 +537,10 @@ std::string_view item_icon_for_forecast(ItemID item)
         case LIGHTNING: return "graphics/item_icon/item_icon_light_lightning.png";
         case FLUX: return "graphics/item_icon/item_icon_dark_flux.png";
         case THUNDER: return "graphics/item_icon/item_icon_anima_thunder.png";
+        case VULNERARY: return "graphics/item_icon/item_icon_vulnerary.png";
+        case ELIXIR: return "graphics/item_icon/item_icon_elixir.png";
+        case HEAL:
+        case MEND: return "graphics/item_icon/item_icon_staff_heal.png";
         default: return {};
     }
 }
@@ -551,6 +582,37 @@ struct MapMonitor::Impl
         CombatInfo defender_combat{};
     };
 
+    struct InventoryPanel
+    {
+        std::string unit_name;
+        int level = 0;
+        int max_hp = 0;
+        Stats stats{};
+        std::array<ItemID, 5> items = {
+            NO_ITEM, NO_ITEM, NO_ITEM, NO_ITEM, NO_ITEM
+        };
+        std::array<int, 5> uses{};
+        int equipped_slot = -1;
+        ItemID equipped_item = NO_ITEM;
+        std::string equipped_name = "Unarmed";
+        bool equipped_is_weapon = false;
+        int weapon_mt = 0;
+        int weapon_wt = 0;
+        int weapon_hit = 0;
+        int weapon_crit = 0;
+        int weapon_min_range = 0;
+        int weapon_max_range = 0;
+    };
+
+    struct TerrainPanel
+    {
+        std::string name;
+        int heal_percent = 0;
+        int avoid_bonus = 0;
+        int defense_bonus = 0;
+        bool passable_with_action = false;
+    };
+
     maps::MapRecipe recipe;
     AnimationRenderer* renderer = nullptr;
     Options options;
@@ -567,6 +629,8 @@ struct MapMonitor::Impl
     std::optional<std::pair<int, int>> cursor;
     std::vector<std::vector<std::pair<int, int>>> route_arrows;
     std::optional<BattleForecast> battle_forecast;
+    std::optional<InventoryPanel> inventory;
+    std::optional<TerrainPanel> terrain_stats;
     std::optional<PhaseIntro> phase_intro;
     std::optional<PhaseDialogue> phase_dialogue;
     std::optional<GameOver> game_over;
@@ -587,6 +651,7 @@ struct MapMonitor::Impl
     NSMutableDictionary<NSString*, NSNumber*>* opaque_tops = nil;
     NSImage* forecast_font_ink = nil;
     NSImage* forecast_font_white = nil;
+    NSImage* forecast_font_pink = nil;
     std::array<int, 128> forecast_glyph_widths{};
 
     Impl(maps::MapRecipe next_recipe, AnimationRenderer& next_renderer, Options next_options)
@@ -663,25 +728,13 @@ struct MapMonitor::Impl
             );
         }
 
-        // Bundled from FEBuilderGBA's FE8 text-engine source. It gives the
-        // forecast real FE-style bitmap lettering while remaining completely
-        // self-contained inside map_tile_library at runtime.
-        NSImage* forecast_font = load_image(fe8_asset_path(
-            options.library_root, "graphics/font/fe8_text_bold.png"
-        ));
-        if (forecast_font == nil)
-        {
-            throw std::runtime_error(
-                "MapMonitor could not load the FE8 battle-forecast font atlas."
-            );
-        }
-        forecast_font_ink = tint_fe8_font_atlas(
-            forecast_font, [NSColor colorWithCalibratedWhite:0.06 alpha:1.0],
-            &forecast_glyph_widths
-        );
-        forecast_font_white = tint_fe8_font_atlas(
-            forecast_font, [NSColor colorWithCalibratedWhite:0.98 alpha:1.0]
-        );
+        // Stochesia Pixel UI is rendered from the custom bitmap glyphs in
+        // draw_fe8_bitmap_text. These are tone markers, not glyph atlases.
+        forecast_font_ink = stochesia_ui_text_style(kStochesiaUiInkMarker);
+        forecast_font_white = stochesia_ui_text_style(@"stochesia-ui-light");
+        forecast_font_pink = stochesia_ui_text_style(kStochesiaUiPinkMarker);
+        forecast_glyph_widths.fill(8);
+        forecast_glyph_widths[static_cast<unsigned char>(' ')] = 4;
     }
 
     Palette palette_for(const GuildColor& color) const
@@ -1310,6 +1363,31 @@ static void draw_route_destination(NSRect cell, NSColor* color)
     NSRectFill(self.bounds);
     [self layoutBoard];
 
+    const auto& active_hit = state->renderer->hit_effect();
+    const bool critical_background_shake = active_hit.has_value() &&
+        active_hit->critical && active_hit->tick >= 1 &&
+        active_hit->tick <= static_cast<int>(active_hit->background_shake.size());
+    const bool critical_sprite_shake = active_hit.has_value() &&
+        active_hit->critical && active_hit->tick >= 12 && active_hit->tick < 24;
+    const CGFloat source_pixel = _cell_pixels / 16.0;
+    const CGFloat sprite_shake_x = critical_sprite_shake
+        ? ((active_hit->tick - 12) & 1 ? -3.0 : 2.0) * source_pixel / _cell_pixels
+        : 0.0;
+
+    // NewBG0Shaker runs for 16 frames at critical impact. It offsets map
+    // backgrounds only; map units, the cursor, and the UI are separate GBA
+    // layers. Our terrain image is the corresponding map background.
+    [NSGraphicsContext saveGraphicsState];
+    CGContextClipToRect([[NSGraphicsContext currentContext] CGContext], NSRectToCGRect(_board));
+    if (critical_background_shake)
+    {
+        const std::array<int, 2>& offset = active_hit->background_shake[
+            static_cast<std::size_t>(active_hit->tick - 1)
+        ];
+        NSAffineTransform* transform = [NSAffineTransform transform];
+        [transform translateXBy:offset[0] * source_pixel yBy:offset[1] * source_pixel];
+        [transform concat];
+    }
     [[NSGraphicsContext currentContext] setImageInterpolation:NSImageInterpolationNone];
     [state->image drawInRect:_board
                     fromRect:NSMakeRect(0, 0, state->image.size.width, state->image.size.height)
@@ -1317,6 +1395,7 @@ static void draw_route_destination(NSRect cell, NSColor* color)
                     fraction:1.0
               respectFlipped:YES
                        hints:nil];
+    [NSGraphicsContext restoreGraphicsState];
 
     const fe_tiles::RenderGrid& blue = state->renderer->blue_tiles();
     const fe_tiles::RenderGrid& red = state->renderer->red_tiles();
@@ -1376,22 +1455,41 @@ static void draw_route_destination(NSRect cell, NSColor* color)
 
     for (const fe_tiles::UnitPose& pose : state->renderer->unit_poses())
     {
-        const bool stationary = std::floor(pose.x) == pose.x && std::floor(pose.y) == pose.y;
+        fe_tiles::UnitPose display_pose = pose;
+        if (critical_sprite_shake && pose.entity_id == active_hit->pose.entity_id)
+        {
+            display_pose.x += sprite_shake_x;
+        }
+        const bool stationary = std::floor(display_pose.x) == display_pose.x &&
+                                std::floor(display_pose.y) == display_pose.y;
         const bool hovered = state->cursor.has_value() &&
-            state->cursor->first == static_cast<int>(pose.x) &&
-            state->cursor->second == static_cast<int>(pose.y);
+            state->cursor->first == static_cast<int>(display_pose.x) &&
+            state->cursor->second == static_cast<int>(display_pose.y);
+
+        // FE8 changes the focused map unit from its small SMS wait sprite to
+        // the full MU's action-4 "selected" loop. It stays on the same tile;
+        // its logical frames are 16, 17, 18, 17 at 20, 4, 20, 4 Hz.
+        if (stationary && hovered && !state->renderer->is_busy())
+        {
+            const int motion_frame = map_unit_motion_frame(
+                display_pose.visual, 4, state->idle_tick, -1
+            );
+            display_pose.sheet_cell = selected_motion_sheet_cell(
+                motion_frame, display_pose.sheet_cell
+            );
+        }
 
         // Away from the cursor FE8 uses the small, three-frame SMS wait
         // artwork. Cursor-over-unit and every active presentation retain the
         // existing full 32x32 selected/moving MU animation.
         if (stationary && !hovered && !state->renderer->is_busy() &&
-            pose.sheet_cell >= 12)
+            display_pose.sheet_cell >= 12)
         {
-            [self drawWaitingUnit:pose];
+            [self drawWaitingUnit:display_pose];
         }
         else
         {
-            [self drawUnit:pose white:NO];
+            [self drawUnit:display_pose white:NO];
         }
     }
     for (const fe_tiles::HealthBar& health : state->renderer->health_bars())
@@ -1456,52 +1554,63 @@ static void draw_route_destination(NSRect cell, NSColor* color)
 
     if (const auto& hit = state->renderer->hit_effect(); hit.has_value())
     {
-        // FE8 uses a temporary OBJ palette, not a modern glow. A normal hit
-        // starts white and fades over 17 ticks. A critical alternates the
-        // flash palette and normal palette, then shakes by +/- two original
-        // pixels before the fade back.
+        // MoveUnitCritFlash calls its faded/regular palette routines at
+        // ROM-script ticks 1, 3, 6, 8, and 11. At tick 12 it starts FE8's
+        // 21-tick palette fade-back while MU_CritFlash_SpriteShakeLoop moves
+        // the actual target MU by +2, -3 source pixels for 12 frames.
         CGFloat opacity = 0.0;
-        if (hit->critical && hit->tick < 12)
+        if (hit->critical)
         {
             const int tick = hit->tick;
-            const bool flash = tick < 2 || (tick >= 5 && tick < 7) || tick >= 10;
-            opacity = flash ? 1.0 : 0.0;
-        }
-        else if (hit->critical)
-        {
-            opacity = std::clamp(
-                (29.0 - static_cast<CGFloat>(hit->tick)) / 17.0, 0.0, 1.0
-            );
+            if ((tick >= 1 && tick <= 2) || (tick >= 6 && tick <= 7) || tick == 11)
+            {
+                opacity = 1.0;
+            }
+            else if (tick >= 12 && tick < 33)
+            {
+                opacity = std::clamp(
+                    (33.0 - static_cast<CGFloat>(tick)) / 21.0, 0.0, 1.0
+                );
+            }
         }
         else
         {
+            // StartMuHitFlash immediately swaps the target to FE8's solid
+            // white MU palette, then StartPalFade restores the original
+            // palette over 20 steps. ProcScr_MuHitFlash switches the MU back
+            // to its normal palette after its 17-frame sleep, so the final
+            // unfinished part of that fade is intentionally a snap.
+            const int fade_frame = std::max(0, hit->tick - 1);
             opacity = std::clamp(
-                (17.0 - static_cast<CGFloat>(hit->tick)) / 17.0, 0.0, 0.90
+                (20.0 - static_cast<CGFloat>(fade_frame)) / 20.0, 0.0, 1.0
             );
         }
 
-        if (opacity > 0.0)
+        // The generic all-white sheet is the death flash. It is not a good
+        // stand-in for FE8's non-lethal critical palette pulse: that makes a
+        // living target look as though it is already dying.
+        if (opacity > 0.0 && !hit->critical)
         {
-            [NSGraphicsContext saveGraphicsState];
-            if (hit->critical && hit->tick >= 12 && hit->tick < 24)
+            fe_tiles::UnitPose display_pose = hit->pose;
+            if (critical_sprite_shake)
             {
-                const CGFloat original_pixel = _cell_pixels / 16.0;
-                const CGFloat shake = (hit->tick & 1) ? 2.0 : -2.0;
-                NSAffineTransform* transform = [NSAffineTransform transform];
-                [transform translateXBy:shake * original_pixel yBy:0.0];
-                [transform concat];
+                display_pose.x += sprite_shake_x;
             }
+            [NSGraphicsContext saveGraphicsState];
             CGContextSetAlpha([[NSGraphicsContext currentContext] CGContext], opacity);
-            [self drawUnit:hit->pose white:YES];
+            [self drawUnit:display_pose white:YES];
             [NSGraphicsContext restoreGraphicsState];
         }
     }
     for (const fe_tiles::DeathEffect& effect : state->renderer->death_effects())
     {
-        // DeathEffect exists for the lethal-impact frame only. The 17-frame
-        // white glow is already drawn from HitEffect above, matching FE8's
-        // StartMuHitFlash without a second pause after the hit.
+        // MU_StartDeathFade begins with alpha 16, then its 0x20-frame proc
+        // lowers the blend coefficient to zero. This is a distinct phase,
+        // started only by EntityAnimation::death() after the final round.
+        const int time_left = std::max(0, 0x20 - std::max(0, effect.tick - 1));
+        const CGFloat opacity = static_cast<CGFloat>(time_left >> 1) / 16.0;
         [NSGraphicsContext saveGraphicsState];
+        CGContextSetAlpha([[NSGraphicsContext currentContext] CGContext], opacity);
         [self drawUnit:effect.pose white:YES];
         [NSGraphicsContext restoreGraphicsState];
     }
@@ -1714,7 +1823,9 @@ static void draw_route_destination(NSRect cell, NSColor* color)
     {
         const fe_tiles::MapMonitor::Impl::BattleForecast& forecast = *state->battle_forecast;
         const CGFloat side_x = NSMaxX(_board) + kMargin;
-        const CGFloat panel_width = kSidebarWidth - kMargin;
+        const CGFloat panel_width = std::max<CGFloat>(
+            1.0, self.bounds.size.width - side_x - kMargin
+        );
         // A persistent phase dialogue occupies the top of the sidebar. Put
         // the combat forecast immediately below it rather than letting the
         // two panels overlap. Constrain its scale by remaining height too.
@@ -1727,18 +1838,14 @@ static void draw_route_destination(NSRect cell, NSColor* color)
         const CGFloat remaining_height = std::max<CGFloat>(
             1.0, self.bounds.size.height - forecast_y - kMargin
         );
-        // FE8's standard battle forecast is exactly 120x176 source pixels.
-        // All geometry below deliberately remains expressed in that original
-        // coordinate system, so the monitor is a scaled GBA panel rather
-        // than a modern sidebar card that merely contains the same numbers.
         const CGFloat scale = std::min({
-            1.80,
-            (panel_width - 8.0) / 120.0,
+            3.0,
+            panel_width / 120.0,
             remaining_height / 176.0
         });
-        const CGFloat panel_w = 120.0 * scale;
+        const CGFloat source_width = panel_width / scale;
         const CGFloat panel_h = 176.0 * scale;
-        const CGFloat px = side_x + (panel_width - panel_w) * 0.5;
+        const CGFloat px = side_x;
         const CGFloat py = forecast_y;
         const auto rect = [=](CGFloat x, CGFloat y, CGFloat w, CGFloat h)
         {
@@ -1796,22 +1903,30 @@ static void draw_route_destination(NSRect cell, NSColor* color)
 
         // The original has a black/gold/black frame, then four textured
         // fields: actor blue, defender red, parchment labels, and red footer.
-        fill(outline, 0.0, 0.0, 120.0, 176.0);
-        fill(gold_highlight, 2.0, 2.0, 116.0, 172.0);
-        fill(gold_edge, 3.0, 3.0, 114.0, 170.0);
-        fill(outline, 5.0, 5.0, 110.0, 166.0);
-        texture(actor_blue, actor_blue_light, 6, 6, 108, 26, 1);
-        texture(target_red, target_red_light, 6, 32, 38, 98, 2);
-        texture(parchment, parchment_light, 44, 32, 28, 98, 3);
-        texture(actor_blue_dark, actor_blue, 72, 32, 42, 98, 4);
-        texture(target_red_dark, target_red, 6, 130, 108, 40, 5);
+        const CGFloat body_x = 6.0;
+        const CGFloat body_width = source_width - 12.0;
+        const CGFloat defender_width = body_width * 0.35;
+        const CGFloat label_x = body_x + defender_width;
+        const CGFloat label_width = body_width * 0.26;
+        const CGFloat actor_x = label_x + label_width;
+        const CGFloat actor_width = body_x + body_width - actor_x;
+
+        fill(outline, 0.0, 0.0, source_width, 176.0);
+        fill(gold_highlight, 2.0, 2.0, source_width - 4.0, 172.0);
+        fill(gold_edge, 3.0, 3.0, source_width - 6.0, 170.0);
+        fill(outline, 5.0, 5.0, source_width - 10.0, 166.0);
+        texture(actor_blue, actor_blue_light, 6, 6, source_width - 12.0, 26, 1);
+        texture(target_red, target_red_light, body_x, 32, defender_width, 98, 2);
+        texture(parchment, parchment_light, label_x, 32, label_width, 98, 3);
+        texture(actor_blue_dark, actor_blue, actor_x, 32, actor_width, 98, 4);
+        texture(target_red_dark, target_red, 6, 130, source_width - 12.0, 40, 5);
 
         // A few hard palette edges make the faux tile fields read like FE8's
         // UI graphics rather than a flat CSS rectangle.
-        fill(gold_edge, 43.0, 32.0, 1.0, 98.0);
-        fill(parchment_shadow, 70.0, 32.0, 2.0, 98.0);
-        fill(outline, 6.0, 31.0, 108.0, 1.0);
-        fill(outline, 6.0, 129.0, 108.0, 1.0);
+        fill(gold_edge, label_x - 1.0, 32.0, 1.0, 98.0);
+        fill(parchment_shadow, actor_x - 2.0, 32.0, 2.0, 98.0);
+        fill(outline, 6.0, 31.0, source_width - 12.0, 1.0);
+        fill(outline, 6.0, 129.0, source_width - 12.0, 1.0);
 
         const CGFloat name_scale = scale * 0.76;
         const CGFloat stat_scale = scale * 0.96;
@@ -1819,7 +1934,7 @@ static void draw_route_destination(NSRect cell, NSColor* color)
         const CGFloat item_scale = scale * 0.66;
 
         draw_icon(forecast.attacker_weapon, 8.0, 10.0);
-        draw_icon(forecast.defender_weapon, 92.0, 143.0);
+        draw_icon(forecast.defender_weapon, source_width - 28.0, 143.0);
         draw_fe8_outlined_text(
             state->forecast_font_white, state->forecast_font_ink,
             state->forecast_glyph_widths,
@@ -1858,7 +1973,10 @@ static void draw_route_destination(NSRect cell, NSColor* color)
             const CGFloat y = 38.0 + static_cast<CGFloat>(row) * 22.0;
             draw_fe8_bitmap_text(
                 state->forecast_font_ink, state->forecast_glyph_widths,
-                labels[row], NSMakePoint(px + 49.0 * scale, py + y * scale), label_scale
+                labels[row], NSMakePoint(
+                    px + (label_x + std::max<CGFloat>(3.0, (label_width - 18.0) * 0.5)) * scale,
+                    py + y * scale
+                ), label_scale
             );
 
             const std::string actor = forecast.attacker_weapon == NO_ITEM && row > 0
@@ -1869,45 +1987,419 @@ static void draw_route_destination(NSRect cell, NSColor* color)
                 state->forecast_font_white, state->forecast_font_ink,
                 state->forecast_glyph_widths,
                 [NSString stringWithUTF8String:defender.c_str()],
-                NSMakePoint(px + 8.0 * scale, py + (y - 3.0) * scale), stat_scale
+                NSMakePoint(px + (body_x + 2.0) * scale, py + (y - 3.0) * scale), stat_scale
             );
             draw_fe8_outlined_text(
                 state->forecast_font_white, state->forecast_font_ink,
                 state->forecast_glyph_widths,
                 [NSString stringWithUTF8String:actor.c_str()],
-                NSMakePoint(px + 78.0 * scale, py + (y - 3.0) * scale), stat_scale
+                NSMakePoint(px + (actor_x + 6.0) * scale, py + (y - 3.0) * scale), stat_scale
             );
         }
 
-        // FE8's `PutBattleForecastMultipliers()` advances 4 angle units per
-        // frame, producing an ellipse of radius 4x2 source pixels around Mt.
+        // Keep the follow-up marker alive beside Mt, never on top of it.
+        // The small orbit is purely the X2 text: there is no badge or circle.
         const double angle = static_cast<double>((state->idle_tick * 4) & 0xFF) *
                              (2.0 * M_PI / 256.0);
-        const CGFloat orbit_x = static_cast<CGFloat>(std::sin(angle) * 4.0) * scale;
-        const CGFloat orbit_y = static_cast<CGFloat>(std::cos(angle) * 2.0) * scale;
-        const auto draw_multiplier = [&](bool doubled, CGFloat base_x)
+        const CGFloat orbit_x = static_cast<CGFloat>(std::sin(angle) * 1.5) * scale;
+        const CGFloat orbit_y = static_cast<CGFloat>(std::cos(angle) * 1.0) * scale;
+        const auto draw_multiplier = [&](bool doubled, int mt, CGFloat value_x)
         {
             if (!doubled)
             {
                 return;
             }
-            const NSRect badge = NSMakeRect(px + base_x * scale + orbit_x,
-                                            py + 53.0 * scale + orbit_y,
-                                            15.0 * scale, 11.0 * scale);
-            [[NSColor colorWithCalibratedRed:0.09 green:0.06 blue:0.07 alpha:0.95] setFill];
-            [[NSBezierPath bezierPathWithOvalInRect:badge] fill];
-            [[NSColor colorWithCalibratedRed:0.96 green:0.80 blue:0.25 alpha:1.0] setStroke];
-            [[NSBezierPath bezierPathWithOvalInRect:NSInsetRect(badge, scale * 0.5, scale * 0.5)] stroke];
+            const CGFloat digit_cell = std::max<CGFloat>(
+                1.0, std::ceil(0.90 * stat_scale)
+            );
+            const CGFloat number_width = static_cast<CGFloat>(std::to_string(mt).size()) *
+                6.0 * digit_cell / scale;
             draw_fe8_outlined_text(
-                state->forecast_font_white, state->forecast_font_ink,
+                state->forecast_font_pink, state->forecast_font_ink,
                 state->forecast_glyph_widths, @"x2",
-                NSMakePoint(NSMinX(badge) + 2.0 * scale,
-                            NSMinY(badge) - 1.0 * scale),
+                NSMakePoint(px + (value_x + number_width + 4.0) * scale + orbit_x,
+                            py + 57.0 * scale + orbit_y),
                 scale * 0.42
             );
         };
-        draw_multiplier(forecast.defender_combat.DB, 18.0);
-        draw_multiplier(forecast.attacker_combat.DB, 78.0);
+        draw_multiplier(forecast.defender_combat.DB,
+                        forecast.defender_combat.MT, body_x + 2.0);
+        draw_multiplier(forecast.attacker_combat.DB,
+                        forecast.attacker_combat.MT, actor_x + 6.0);
+    }
+
+    // Cursor inventory shares the forecast sidebar. A forecast takes visual
+    // precedence; the latest inventory snapshot reappears when it is cleared.
+    if (state->inventory.has_value() && !state->battle_forecast.has_value())
+    {
+        const fe_tiles::MapMonitor::Impl::InventoryPanel& inventory = *state->inventory;
+        const CGFloat side_x = NSMaxX(_board) + kMargin;
+        const CGFloat panel_width = std::max<CGFloat>(
+            1.0, self.bounds.size.width - side_x - kMargin
+        );
+        const CGFloat phase_dialogue_height = state->phase_dialogue.has_value()
+            ? std::min<CGFloat>(158.0, self.bounds.size.height - 2.0 * kMargin)
+            : 0.0;
+        const CGFloat inventory_y = state->phase_dialogue.has_value()
+            ? kMargin + 16.0 + phase_dialogue_height + 12.0
+            : 26.0;
+        const CGFloat remaining_height = std::max<CGFloat>(
+            1.0, self.bounds.size.height - inventory_y - kMargin
+        );
+        const CGFloat minimum_source_column_width = 94.0;
+        const CGFloat scale = std::min({
+            3.0,
+            remaining_height / 216.0,
+            panel_width / (minimum_source_column_width * 2.0 + 4.0)
+        });
+        const CGFloat source_width = panel_width / scale;
+        const CGFloat source_height = remaining_height / scale;
+        const CGFloat px = side_x;
+        const CGFloat py = inventory_y;
+        const auto rect = [=](CGFloat x, CGFloat y, CGFloat w, CGFloat h)
+        {
+            return NSMakeRect(px + x * scale, py + y * scale, w * scale, h * scale);
+        };
+        const auto fill = [&rect](NSColor* color, CGFloat x, CGFloat y, CGFloat w, CGFloat h)
+        {
+            [color setFill];
+            NSRectFill(rect(x, y, w, h));
+        };
+        const auto draw_icon = [&](ItemID item, CGFloat x, CGFloat y)
+        {
+            NSImage* icon = state->item_icon_for(item);
+            if (icon == nil)
+            {
+                return;
+            }
+            [[NSGraphicsContext currentContext] setImageInterpolation:NSImageInterpolationNone];
+            [icon drawInRect:rect(x, y, 16.0, 16.0)
+                   fromRect:NSMakeRect(0.0, 0.0, icon.size.width, icon.size.height)
+                  operation:NSCompositingOperationSourceOver
+                   fraction:1.0
+             respectFlipped:YES
+                   hints:nil];
+        };
+
+        NSColor* outline = [NSColor colorWithCalibratedRed:0.055 green:0.043 blue:0.047 alpha:1.0];
+        NSColor* gold_highlight = [NSColor colorWithCalibratedRed:1.0 green:0.94 blue:0.72 alpha:1.0];
+        NSColor* gold_edge = [NSColor colorWithCalibratedRed:0.90 green:0.72 blue:0.30 alpha:1.0];
+        NSColor* blue = [NSColor colorWithCalibratedRed:0.16 green:0.31 blue:0.55 alpha:1.0];
+        NSColor* blue_light = [NSColor colorWithCalibratedRed:0.26 green:0.45 blue:0.71 alpha:1.0];
+        NSColor* blue_dark = [NSColor colorWithCalibratedRed:0.08 green:0.17 blue:0.31 alpha:1.0];
+        NSColor* selected = [NSColor colorWithCalibratedRed:0.56 green:0.40 blue:0.13 alpha:1.0];
+
+        const CGFloat panel_gap = 4.0;
+        const CGFloat inventory_width = (source_width - panel_gap) * 0.5;
+        const CGFloat stats_x = inventory_width + panel_gap;
+        const CGFloat stats_width = source_width - stats_x;
+        const auto draw_panel_frame = [&](CGFloat x, CGFloat width)
+        {
+            fill(outline, x, 0.0, width, source_height);
+            fill(gold_highlight, x + 2.0, 2.0, width - 4.0, source_height - 4.0);
+            fill(gold_edge, x + 3.0, 3.0, width - 6.0, source_height - 6.0);
+            fill(outline, x + 5.0, 5.0, width - 10.0, source_height - 10.0);
+            fill(blue, x + 6.0, 6.0, width - 12.0, 24.0);
+            fill(blue_light, x + 7.0, 7.0, width - 14.0, 2.0);
+        };
+
+        draw_panel_frame(0.0, inventory_width);
+        draw_panel_frame(stats_x, stats_width);
+
+        draw_fe8_bitmap_text(
+            state->forecast_font_white, state->forecast_glyph_widths, @"INVENTORY",
+            NSMakePoint(px + 9.0 * scale, py + 8.0 * scale), scale * 0.53
+        );
+        draw_fe8_outlined_text(
+            state->forecast_font_white, state->forecast_font_ink,
+            state->forecast_glyph_widths,
+            [NSString stringWithUTF8String:inventory.unit_name.c_str()],
+            NSMakePoint(px + 9.0 * scale, py + 18.0 * scale), scale * 0.52
+        );
+        draw_fe8_bitmap_text(
+            state->forecast_font_white, state->forecast_glyph_widths, @"STATS",
+            NSMakePoint(px + (stats_x + 9.0) * scale, py + 8.0 * scale), scale * 0.53
+        );
+        const std::string level = "Lv " + std::to_string(inventory.level);
+        draw_fe8_outlined_text(
+            state->forecast_font_white, state->forecast_font_ink,
+            state->forecast_glyph_widths,
+            [NSString stringWithUTF8String:inventory.unit_name.c_str()],
+            NSMakePoint(px + (stats_x + 9.0) * scale, py + 18.0 * scale), scale * 0.48
+        );
+        draw_fe8_outlined_text(
+            state->forecast_font_white, state->forecast_font_ink,
+            state->forecast_glyph_widths,
+            [NSString stringWithUTF8String:level.c_str()],
+            NSMakePoint(px + (stats_x + stats_width - 28.0) * scale, py + 18.0 * scale), scale * 0.48
+        );
+
+        for (int slot = 0; slot < 5; ++slot)
+        {
+            const CGFloat row_y = 34.0 + static_cast<CGFloat>(slot) * 20.0;
+            const bool equipped = slot == inventory.equipped_slot;
+            fill(equipped ? selected : blue_dark, 8.0, row_y, inventory_width - 16.0, 18.0);
+            fill(equipped ? gold_highlight : blue, 9.0, row_y + 1.0, inventory_width - 18.0, 1.0);
+
+            const ItemID item = inventory.items[slot];
+            draw_icon(item, 12.0, row_y + 1.0);
+            const std::string name = item_name_for_forecast(item);
+            const std::string uses = item == NO_ITEM
+                ? "--"
+                : std::to_string(std::max(0, inventory.uses[slot]));
+            draw_fe8_outlined_text(
+                state->forecast_font_white, state->forecast_font_ink,
+                state->forecast_glyph_widths,
+                [NSString stringWithUTF8String:name.c_str()],
+                NSMakePoint(px + 31.0 * scale, py + (row_y + 4.0) * scale),
+                scale * 0.43
+            );
+            draw_fe8_outlined_text(
+                state->forecast_font_white, state->forecast_font_ink,
+                state->forecast_glyph_widths,
+                [NSString stringWithUTF8String:uses.c_str()],
+                NSMakePoint(px + (inventory_width - 15.0) * scale,
+                            py + (row_y + 4.0) * scale),
+                scale * 0.43
+            );
+        }
+
+        fill(gold_edge, 8.0, 138.0, inventory_width - 16.0, 2.0);
+        fill(blue_dark, 8.0, 142.0, inventory_width - 16.0, source_height - 150.0);
+        fill(blue, 9.0, 143.0, inventory_width - 18.0, 1.0);
+        draw_fe8_bitmap_text(
+            state->forecast_font_white, state->forecast_glyph_widths, @"WEAPON",
+            NSMakePoint(px + 12.0 * scale, py + 146.0 * scale), scale * 0.53
+        );
+        draw_icon(inventory.equipped_item, 12.0, 160.0);
+        draw_fe8_outlined_text(
+            state->forecast_font_white, state->forecast_font_ink,
+            state->forecast_glyph_widths,
+            [NSString stringWithUTF8String:inventory.equipped_name.c_str()],
+            NSMakePoint(px + 31.0 * scale, py + 162.0 * scale), scale * 0.47
+        );
+
+        if (inventory.equipped_is_weapon)
+        {
+            const std::array<std::pair<NSString*, std::string>, 5> values = {{
+                {@"Mt", std::to_string(inventory.weapon_mt)},
+                {@"Wt", std::to_string(inventory.weapon_wt)},
+                {@"Hit", std::to_string(inventory.weapon_hit)},
+                {@"Crit", std::to_string(inventory.weapon_crit)},
+                {@"Rng", std::to_string(inventory.weapon_min_range) +
+                         "-" + std::to_string(inventory.weapon_max_range)},
+            }};
+            // Keep all three rows inside the minimum 216-source-pixel card.
+            // On taller sidebars the card background grows, but the FE8-style
+            // stat block remains compact rather than spilling below its frame.
+            const CGFloat stats_top = 176.0;
+            const CGFloat stats_step = std::max<CGFloat>(12.0, std::min<CGFloat>(
+                20.0, (source_height - 18.0 - stats_top) / 2.0
+            ));
+            const std::array<CGFloat, 5> x = {
+                10.0, inventory_width * 0.54, 10.0, inventory_width * 0.54, 10.0
+            };
+            const std::array<CGFloat, 5> y = {
+                stats_top, stats_top, stats_top + stats_step,
+                stats_top + stats_step, stats_top + stats_step * 2.0
+            };
+            for (std::size_t index = 0; index < values.size(); ++index)
+            {
+                draw_fe8_bitmap_text(
+                    state->forecast_font_white, state->forecast_glyph_widths,
+                    values[index].first,
+                    NSMakePoint(px + x[index] * scale, py + y[index] * scale), scale * 0.48
+                );
+                draw_fe8_outlined_text(
+                    state->forecast_font_white, state->forecast_font_ink,
+                    state->forecast_glyph_widths,
+                    [NSString stringWithUTF8String:values[index].second.c_str()],
+                    NSMakePoint(px + (x[index] + 20.0) * scale, py + y[index] * scale),
+                    scale * 0.42
+                );
+            }
+        }
+        else
+        {
+            const std::string detail = inventory.equipped_item == NO_ITEM
+                ? "UNARMED"
+                : "NO WEAPON DATA";
+            draw_fe8_outlined_text(
+                state->forecast_font_white, state->forecast_font_ink,
+                state->forecast_glyph_widths,
+                [NSString stringWithUTF8String:detail.c_str()],
+                NSMakePoint(px + 12.0 * scale, py + 184.0 * scale), scale * 0.56
+            );
+        }
+
+        const std::array<std::pair<NSString*, std::string>, 10> unit_stats = {{
+            {@"HP", std::to_string(inventory.stats.HP) + "/" + std::to_string(inventory.max_hp)},
+            {@"Str", std::to_string(inventory.stats.STR)},
+            {@"Mag", std::to_string(inventory.stats.MAG)},
+            {@"Skl", std::to_string(inventory.stats.SKL)},
+            {@"Spd", std::to_string(inventory.stats.SPD)},
+            {@"Lck", std::to_string(inventory.stats.LUC)},
+            {@"Def", std::to_string(inventory.stats.DEF)},
+            {@"Res", std::to_string(inventory.stats.RES)},
+            {@"Mov", std::to_string(inventory.stats.MOV)},
+            {@"Con", std::to_string(inventory.stats.CON)},
+        }};
+        const CGFloat stats_left_x = stats_x + 10.0;
+        const CGFloat stats_right_x = stats_x + stats_width * 0.60;
+        for (int row = 0; row < 5; ++row)
+        {
+            const CGFloat row_y = 34.0 + static_cast<CGFloat>(row) * 21.0;
+            fill(blue_dark, stats_x + 8.0, row_y, stats_width - 16.0, 19.0);
+            fill(blue, stats_x + 9.0, row_y + 1.0, stats_width - 18.0, 1.0);
+
+            for (int column = 0; column < 2; ++column)
+            {
+                const std::size_t index = static_cast<std::size_t>(row * 2 + column);
+                const CGFloat x = column == 0 ? stats_left_x : stats_right_x;
+                draw_fe8_bitmap_text(
+                    state->forecast_font_white, state->forecast_glyph_widths,
+                    unit_stats[index].first,
+                    NSMakePoint(px + x * scale, py + (row_y + 4.0) * scale),
+                    scale * 0.42
+                );
+                draw_fe8_outlined_text(
+                    state->forecast_font_white, state->forecast_font_ink,
+                    state->forecast_glyph_widths,
+                    [NSString stringWithUTF8String:unit_stats[index].second.c_str()],
+                    NSMakePoint(px + (x + 19.0) * scale, py + (row_y + 4.0) * scale),
+                    scale * 0.43
+                );
+            }
+        }
+
+        if (state->terrain_stats.has_value())
+        {
+            const fe_tiles::MapMonitor::Impl::TerrainPanel& terrain = *state->terrain_stats;
+            fill(gold_edge, stats_x + 8.0, 144.0, stats_width - 16.0, 2.0);
+            fill(blue_dark, stats_x + 8.0, 148.0, stats_width - 16.0, 60.0);
+            fill(blue, stats_x + 9.0, 149.0, stats_width - 18.0, 1.0);
+            draw_fe8_bitmap_text(
+                state->forecast_font_white, state->forecast_glyph_widths, @"TERRAIN",
+                NSMakePoint(px + (stats_x + 10.0) * scale, py + 152.0 * scale), scale * 0.45
+            );
+            draw_fe8_outlined_text(
+                state->forecast_font_white, state->forecast_font_ink,
+                state->forecast_glyph_widths,
+                [NSString stringWithUTF8String:terrain.name.c_str()],
+                NSMakePoint(px + (stats_x + 10.0) * scale, py + 162.0 * scale), scale * 0.42
+            );
+
+            const std::array<std::pair<NSString*, std::string>, 4> terrain_values = {{
+                {@"Def", std::to_string(terrain.defense_bonus)},
+                {@"Avo", std::to_string(terrain.avoid_bonus)},
+                {@"Heal", std::to_string(terrain.heal_percent) + "%"},
+                {@"Act", terrain.passable_with_action ? "YES" : "NO"},
+            }};
+            const std::array<CGFloat, 4> terrain_x = {{
+                stats_x + 10.0, stats_x + stats_width * 0.60,
+                stats_x + 10.0, stats_x + stats_width * 0.60,
+            }};
+            const std::array<CGFloat, 4> terrain_y = {{172.0, 172.0, 188.0, 188.0}};
+            for (std::size_t index = 0; index < terrain_values.size(); ++index)
+            {
+                draw_fe8_bitmap_text(
+                    state->forecast_font_white, state->forecast_glyph_widths,
+                    terrain_values[index].first,
+                    NSMakePoint(px + terrain_x[index] * scale,
+                                py + terrain_y[index] * scale), scale * 0.40
+                );
+                draw_fe8_outlined_text(
+                    state->forecast_font_white, state->forecast_font_ink,
+                    state->forecast_glyph_widths,
+                    [NSString stringWithUTF8String:terrain_values[index].second.c_str()],
+                    NSMakePoint(px + (terrain_x[index] + 19.0) * scale,
+                                py + terrain_y[index] * scale), scale * 0.40
+                );
+            }
+        }
+    }
+
+    // An empty tile has no inventory snapshot, but it can still report its
+    // terrain through the same sidebar. Inventory takes precedence because
+    // its stats card already includes this panel.
+    if (state->terrain_stats.has_value() && !state->inventory.has_value() &&
+        !state->battle_forecast.has_value())
+    {
+        const fe_tiles::MapMonitor::Impl::TerrainPanel& terrain = *state->terrain_stats;
+        const CGFloat side_x = NSMaxX(_board) + kMargin;
+        const CGFloat panel_width = std::max<CGFloat>(
+            1.0, self.bounds.size.width - side_x - kMargin
+        );
+        const CGFloat phase_dialogue_height = state->phase_dialogue.has_value()
+            ? std::min<CGFloat>(158.0, self.bounds.size.height - 2.0 * kMargin)
+            : 0.0;
+        const CGFloat panel_y = state->phase_dialogue.has_value()
+            ? kMargin + 16.0 + phase_dialogue_height + 12.0
+            : 26.0;
+        const CGFloat available_height = std::max<CGFloat>(
+            1.0, self.bounds.size.height - panel_y - kMargin
+        );
+        const CGFloat scale = std::min({3.0, available_height / 92.0, panel_width / 120.0});
+        const CGFloat source_width = panel_width / scale;
+        const CGFloat source_height = 92.0;
+        const auto rect = [=](CGFloat x, CGFloat y, CGFloat w, CGFloat h)
+        {
+            return NSMakeRect(side_x + x * scale, panel_y + y * scale, w * scale, h * scale);
+        };
+        const auto fill = [&rect](NSColor* color, CGFloat x, CGFloat y, CGFloat w, CGFloat h)
+        {
+            [color setFill];
+            NSRectFill(rect(x, y, w, h));
+        };
+        NSColor* outline = [NSColor colorWithCalibratedRed:0.055 green:0.043 blue:0.047 alpha:1.0];
+        NSColor* gold_highlight = [NSColor colorWithCalibratedRed:1.0 green:0.94 blue:0.72 alpha:1.0];
+        NSColor* gold_edge = [NSColor colorWithCalibratedRed:0.90 green:0.72 blue:0.30 alpha:1.0];
+        NSColor* blue = [NSColor colorWithCalibratedRed:0.16 green:0.31 blue:0.55 alpha:1.0];
+        NSColor* blue_light = [NSColor colorWithCalibratedRed:0.26 green:0.45 blue:0.71 alpha:1.0];
+        NSColor* blue_dark = [NSColor colorWithCalibratedRed:0.08 green:0.17 blue:0.31 alpha:1.0];
+
+        fill(outline, 0.0, 0.0, source_width, source_height);
+        fill(gold_highlight, 2.0, 2.0, source_width - 4.0, source_height - 4.0);
+        fill(gold_edge, 3.0, 3.0, source_width - 6.0, source_height - 6.0);
+        fill(outline, 5.0, 5.0, source_width - 10.0, source_height - 10.0);
+        fill(blue, 6.0, 6.0, source_width - 12.0, 24.0);
+        fill(blue_light, 7.0, 7.0, source_width - 14.0, 2.0);
+        fill(blue_dark, 8.0, 34.0, source_width - 16.0, 48.0);
+        fill(blue, 9.0, 35.0, source_width - 18.0, 1.0);
+        draw_fe8_bitmap_text(
+            state->forecast_font_white, state->forecast_glyph_widths, @"TERRAIN",
+            NSMakePoint(side_x + 10.0 * scale, panel_y + 8.0 * scale), scale * 0.53
+        );
+        draw_fe8_outlined_text(
+            state->forecast_font_white, state->forecast_font_ink,
+            state->forecast_glyph_widths,
+            [NSString stringWithUTF8String:terrain.name.c_str()],
+            NSMakePoint(side_x + 10.0 * scale, panel_y + 19.0 * scale), scale * 0.50
+        );
+
+        const std::array<std::pair<NSString*, std::string>, 4> terrain_values = {{
+            {@"Def", std::to_string(terrain.defense_bonus)},
+            {@"Avo", std::to_string(terrain.avoid_bonus)},
+            {@"Heal", std::to_string(terrain.heal_percent) + "%"},
+            {@"Action", terrain.passable_with_action ? "YES" : "NO"},
+        }};
+        const std::array<CGFloat, 4> x = {{10.0, source_width * 0.53, 10.0, source_width * 0.53}};
+        const std::array<CGFloat, 4> y = {{43.0, 43.0, 62.0, 62.0}};
+        for (std::size_t index = 0; index < terrain_values.size(); ++index)
+        {
+            draw_fe8_bitmap_text(
+                state->forecast_font_white, state->forecast_glyph_widths,
+                terrain_values[index].first,
+                NSMakePoint(side_x + x[index] * scale, panel_y + y[index] * scale), scale * 0.48
+            );
+            draw_fe8_outlined_text(
+                state->forecast_font_white, state->forecast_font_ink,
+                state->forecast_glyph_widths,
+                [NSString stringWithUTF8String:terrain_values[index].second.c_str()],
+                NSMakePoint(side_x + (x[index] + 26.0) * scale,
+                            panel_y + y[index] * scale), scale * 0.46
+            );
+        }
     }
 
     // The map receives FE8's animated phase card above. Mirror its title in
@@ -2443,6 +2935,84 @@ bool MapMonitor::battle_forecast_visible() const
     return impl_->battle_forecast.has_value();
 }
 
+void MapMonitor::show_inventory(const Entity& unit)
+{
+    Impl::InventoryPanel panel;
+    panel.unit_name = unit.name;
+    panel.level = unit.Lvl;
+    panel.max_hp = unit.ogstats.HP;
+    panel.stats = unit.stats;
+    panel.equipped_slot = unit.inventory.EquippedSlot;
+    for (int slot = 0; slot < 5; ++slot)
+    {
+        panel.items[slot] = unit.inventory.slot[slot].ID;
+        panel.uses[slot] = unit.inventory.slot[slot].usesRemaining;
+    }
+
+    if (panel.equipped_slot >= 0 && panel.equipped_slot < 5)
+    {
+        panel.equipped_item = panel.items[panel.equipped_slot];
+        panel.equipped_name = item_name_for_forecast(panel.equipped_item);
+
+        if (panel.equipped_item != NO_ITEM)
+        {
+            try
+            {
+                const Weapon weapon = get_weapon(Armory, panel.equipped_item);
+                panel.equipped_is_weapon = true;
+                panel.weapon_mt = weapon.MT;
+                panel.weapon_wt = weapon.WT;
+                panel.weapon_hit = weapon.HIT;
+                panel.weapon_crit = weapon.CRIT;
+                panel.weapon_min_range = weapon.MINRG;
+                panel.weapon_max_range = weapon.MAXRG;
+            }
+            catch (const std::invalid_argument&)
+            {
+                // The inventory still displays a non-weapon's slot, icon,
+                // name, and uses; it simply has no weapon stat block.
+            }
+        }
+    }
+    impl_->inventory = std::move(panel);
+    request_redraw();
+}
+
+void MapMonitor::clear_inventory()
+{
+    impl_->inventory.reset();
+    request_redraw();
+}
+
+bool MapMonitor::inventory_visible() const
+{
+    return impl_->inventory.has_value();
+}
+
+void MapMonitor::show_terrain_stats(int terrain_id)
+{
+    const terrain::TerrainData& data = terrain::get(terrain_id);
+    Impl::TerrainPanel panel;
+    panel.name = std::string(data.name);
+    panel.heal_percent = data.heal_percent;
+    panel.avoid_bonus = data.avoid_bonus;
+    panel.defense_bonus = data.defense_bonus;
+    panel.passable_with_action = data.passable_with_action;
+    impl_->terrain_stats = std::move(panel);
+    request_redraw();
+}
+
+void MapMonitor::clear_terrain_stats()
+{
+    impl_->terrain_stats.reset();
+    request_redraw();
+}
+
+bool MapMonitor::terrain_stats_visible() const
+{
+    return impl_->terrain_stats.has_value();
+}
+
 void MapMonitor::show_phase_intro(const std::string& guild_name, GuildColor color)
 {
     if (guild_name.empty())
@@ -2469,6 +3039,7 @@ bool MapMonitor::phase_intro_visible() const
 void MapMonitor::show_game_over()
 {
     impl_->battle_forecast.reset();
+    impl_->inventory.reset();
     impl_->phase_intro.reset();
     impl_->phase_dialogue.reset();
     impl_->game_over = Impl::GameOver{};

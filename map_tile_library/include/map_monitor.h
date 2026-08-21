@@ -113,6 +113,23 @@ public:
     void clear_battle_forecast();
     bool battle_forecast_visible() const;
 
+    // Displays a read-only inventory panel for `unit`: its five item slots,
+    // remaining uses, and equipped slot. The monitor snapshots this data, so
+    // it never retains or mutates the Entity. A battle forecast takes visual
+    // precedence while it is shown.
+    void show_inventory(const Entity& unit);
+    void clear_inventory();
+    bool inventory_visible() const;
+
+    // Displays a read-only terrain panel for the supplied native FE8 terrain
+    // ID. The monitor snapshots the terrain data, so the caller may use this
+    // for the tile under the cursor without exposing a Mapmaker to the UI.
+    // When an inventory panel is visible, terrain data appears below the unit
+    // stats; otherwise it occupies its own sidebar card.
+    void show_terrain_stats(int terrain_id);
+    void clear_terrain_stats();
+    bool terrain_stats_visible() const;
+
     // Plays FE8's 68-frame phase-change presentation over the map: diagonal
     // squares sweep in, the title enters after six frames, holds, then exits.
     // The original ROM contains only PLAYER/ENEMY/OTHER title art, so this

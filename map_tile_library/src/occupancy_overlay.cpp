@@ -13,6 +13,7 @@ constexpr int kFastWalkSpeedQ4 = 32; // FE8 default: 2 original pixels / tick.
 constexpr int kStrikeImpactTick = 6;
 constexpr int kMissPopupLifetime = 20;
 constexpr int kFastLungeLifetime = 20;
+constexpr int kCriticalFlashLifetime = 41;
 // The lethal map hit already owns FE8's visible 17-frame white palette flash.
 // Keep the frozen death pose for its birth frame only, so it hides the unit
 // immediately without adding a second, lingering post-hit fade.
@@ -132,6 +133,15 @@ void update_attack_pose(fe_tiles::AttackEffect& effect)
 
 namespace fe_tiles
 {
+std::uint32_t CombatPresentation::next_other_rn()
+{
+    // FE8's GetOtherRN recurrence. This is deliberately presentation-only:
+    // critical feedback must not consume the mechanics RNG.
+    const std::uint32_t scaled = other_rn_ << 2;
+    other_rn_ = ((scaled + 2) * (scaled + 3)) >> 2;
+    return other_rn_;
+}
+
 void CombatPresentation::begin(BattleWindow result,
                                const std::optional<UnitPose>& attacker_pose,
                                const std::optional<UnitPose>& defender_pose)
@@ -141,40 +151,37 @@ void CombatPresentation::begin(BattleWindow result,
         throw std::logic_error("A map battle presentation is already active.");
     }
 
-    pending_deaths_.clear();
-    death_effects_.clear();
     miss_effect_.reset();
     hit_effect_.reset();
+    wait_effect_.reset();
     pending_miss_ = false;
     pending_hit_ = false;
     pending_critical_ = false;
     target_pose_.reset();
 
-    if (result.attacker_defeated && attacker_pose.has_value())
-    {
-        pending_deaths_.push_back({*attacker_pose});
-    }
-    if (result.defender_defeated && defender_pose.has_value())
-    {
-        pending_deaths_.push_back({*defender_pose});
-    }
-
     if (attacker_pose.has_value() && defender_pose.has_value())
     {
-        attack_effect_ = {
-            *attacker_pose,
-            attacker_pose->x,
-            attacker_pose->y,
-            defender_pose->x,
-            defender_pose->y,
-            0,
-        };
-        update_attack_pose(*attack_effect_);
-        pending_miss_ = result.strike_outcome == StrikeOutcome::Miss;
-        pending_hit_ = result.strike_outcome == StrikeOutcome::Hit ||
-                       result.strike_outcome == StrikeOutcome::Critical;
-        pending_critical_ = result.strike_outcome == StrikeOutcome::Critical;
-        target_pose_ = defender_pose;
+        if (result.strike_outcome == StrikeOutcome::Wait)
+        {
+            wait_effect_ = {0};
+        }
+        else
+        {
+            attack_effect_ = {
+                *attacker_pose,
+                attacker_pose->x,
+                attacker_pose->y,
+                defender_pose->x,
+                defender_pose->y,
+                0,
+            };
+            update_attack_pose(*attack_effect_);
+            pending_miss_ = result.strike_outcome == StrikeOutcome::Miss;
+            pending_hit_ = result.strike_outcome == StrikeOutcome::Hit ||
+                           result.strike_outcome == StrikeOutcome::Critical;
+            pending_critical_ = result.strike_outcome == StrikeOutcome::Critical;
+            target_pose_ = defender_pose;
+        }
     }
 }
 
@@ -187,18 +194,26 @@ void CombatPresentation::begin_death(UnitPose pose)
     attack_effect_.reset();
     miss_effect_.reset();
     hit_effect_.reset();
+    wait_effect_.reset();
     pending_miss_ = false;
     pending_hit_ = false;
     pending_critical_ = false;
     target_pose_.reset();
-    pending_deaths_.clear();
     death_effects_.clear();
     death_effects_.push_back({pose, 0});
 }
 
 void CombatPresentation::tick_fe_frame()
 {
-    bool started_deaths_this_frame = false;
+    if (wait_effect_.has_value())
+    {
+        ++wait_effect_->tick;
+        if (wait_effect_->tick >= kFastLungeLifetime)
+        {
+            wait_effect_.reset();
+        }
+    }
+
     if (attack_effect_.has_value())
     {
         ++attack_effect_->tick;
@@ -221,21 +236,24 @@ void CombatPresentation::tick_fe_frame()
         if (pending_hit_ && attack_effect_->tick >= kStrikeImpactTick &&
             target_pose_.has_value())
         {
-            hit_effect_ = {*target_pose_, 0, pending_critical_};
+            HitEffect effect{*target_pose_, 0, pending_critical_};
+            if (effect.critical)
+            {
+                // NewBG0Shaker moves both BG0 and BG1 with four independent
+                // GetOtherRN() % 9 - 4 samples per frame. Stochesia renders
+                // the map on one layer, so retain the BG0 pair and still
+                // consume the BG1 pair to preserve the original recurrence.
+                for (auto& offset : effect.background_shake)
+                {
+                    offset[0] = static_cast<int>(next_other_rn() % 9) - 4;
+                    offset[1] = static_cast<int>(next_other_rn() % 9) - 4;
+                    next_other_rn();
+                    next_other_rn();
+                }
+            }
+            hit_effect_ = effect;
             pending_hit_ = false;
             pending_critical_ = false;
-        }
-
-        // A lethal result begins its fade on the impact frame, not after the
-        // attacker has completed the return part of the lunge.
-        if (attack_effect_->tick >= kStrikeImpactTick && !pending_deaths_.empty())
-        {
-            for (const PendingDeath& pending : pending_deaths_)
-            {
-                death_effects_.push_back({pending.pose, 0});
-            }
-            pending_deaths_.clear();
-            started_deaths_this_frame = true;
         }
 
         if (attack_effect_->tick >= kFastLungeLifetime)
@@ -260,29 +278,15 @@ void CombatPresentation::tick_fe_frame()
     if (hit_effect_.has_value())
     {
         ++hit_effect_->tick;
-        // FE8's ordinary hit palette restores after 17 ticks. Criticals
-        // alternate palettes first, shake for 12 ticks, then finish their
-        // 17-tick fade-back phase.
-        const int lifetime = hit_effect_->critical ? 29 : 17;
+        // MoveUnitCritFlash is: 12 ticks of palette setup, a 12-tick sprite
+        // shake, then PROC_SLEEP(17) before palette restoration. The 21-tick
+        // fade-back begins with the sprite shake and finishes before that
+        // final wait; the presentation still holds for all 41 ticks.
+        const int lifetime = hit_effect_->critical ? kCriticalFlashLifetime : 17;
         if (hit_effect_->tick >= lifetime)
         {
             hit_effect_.reset();
         }
-    }
-
-    if (!attack_effect_.has_value() && !pending_deaths_.empty())
-    {
-        for (const PendingDeath& pending : pending_deaths_)
-        {
-            death_effects_.push_back({pending.pose, 0});
-        }
-        pending_deaths_.clear();
-        started_deaths_this_frame = true;
-    }
-
-    if (started_deaths_this_frame)
-    {
-        return;
     }
 
     for (DeathEffect& effect : death_effects_)
@@ -301,8 +305,8 @@ void CombatPresentation::tick_fe_frame()
 
 bool CombatPresentation::is_presenting() const
 {
-    return attack_effect_.has_value() || pending_miss_ || pending_hit_ || miss_effect_.has_value() ||
-           hit_effect_.has_value() || !pending_deaths_.empty() || !death_effects_.empty();
+    return attack_effect_.has_value() || wait_effect_.has_value() || pending_miss_ || pending_hit_ || miss_effect_.has_value() ||
+           hit_effect_.has_value() || !death_effects_.empty();
 }
 
 const std::optional<AttackEffect>& CombatPresentation::attack_effect() const

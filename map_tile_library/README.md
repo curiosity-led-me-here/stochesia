@@ -573,11 +573,12 @@ is taken directly from FE8's `ProcScr_MapAnimDefaultItemEffect`: the subject
 faces the target, moves four times by `0x10` q4 (one original pixel per 60 Hz
 frame), shows the outcome, then returns with four matching steps. For a miss,
 the original calls `MapAnim_BeginMISSAnim(target)` at impact time; the same
-target anchor is exposed through `miss_effect()`. If `attacker_defeated` or
-`defender_defeated` is true, the frozen map sprite then uses FE8's actual
-`MU_StartDeathFade`: a white palette flash and a 32-frame fade. The defeated
-entity can already be gone from your Registry/occupancy—the snapshot is
-intentionally independent so it cannot ghost or disappear early.
+target anchor is exposed through `miss_effect()`. FE8 does not begin a death
+fade at the hit: it finishes the final round, then its `MapAnimEnd` script
+calls `MU_StartDeathFade`. Therefore call `begin_death(defeated)` separately,
+after the final hit/critical presentation and post-round delay. The frozen
+pose is independent of Registry/occupancy, so the defeated entity may already
+be absent from the live scene.
 
 ## Terminal-controlled movement preview
 

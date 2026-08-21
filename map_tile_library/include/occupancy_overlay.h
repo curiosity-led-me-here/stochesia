@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <optional>
 #include <string>
@@ -94,6 +95,7 @@ enum class StrikeOutcome
     Hit,
     Miss,
     Critical,
+    Wait,
 };
 
 // Renderer input after your mechanics layer has resolved a battle. This is
@@ -123,6 +125,9 @@ struct BattleWindow
     int defender_crit = 0;
     int defender_attack_speed = -1;
     StrikeOutcome strike_outcome = StrikeOutcome::Hit;
+    // Resolved-combat metadata for the caller. CombatPresentation never uses
+    // these to start a fade: the caller explicitly starts begin_death() after
+    // the completed final round.
     bool attacker_defeated = false;
     bool defender_defeated = false;
 };
@@ -164,15 +169,23 @@ struct MissEffect
     int tick = 0;
 };
 
-// Normal FE8 map hits call StartMuHitFlash on the target. The original effect
-// uses a temporary palette and restores it after 17 ticks. We retain the
-// target pose and tick so a frontend can draw that flash independently from
-// the attacker lunge.
+// Normal FE8 map hits call StartMuHitFlash on the target. Criticals instead
+// use MoveUnitCritFlash plus NewBG0Shaker: the target's palette pulses, its
+// sprite jitters, and the map backgrounds shake. The offsets are sampled when
+// the strike begins so a paint redraw never changes the current frame.
 struct HitEffect
 {
     UnitPose pose;
     int tick = 0;
     bool critical = false;
+    std::array<std::array<int, 2>, 16> background_shake{};
+};
+
+// A combat turn in which the acting unit has no usable weapon. Both units
+// remain facing each other while the battle queue advances.
+struct WaitEffect
+{
+    int tick = 0;
 };
 
 // Pure presentation state for FE8-style map combat with battle animations
@@ -196,20 +209,18 @@ public:
     const std::vector<DeathEffect>& death_effects() const;
 
 private:
-    struct PendingDeath
-    {
-        UnitPose pose;
-    };
-
     std::optional<AttackEffect> attack_effect_;
     std::optional<MissEffect> miss_effect_;
     std::optional<HitEffect> hit_effect_;
+    std::optional<WaitEffect> wait_effect_;
     bool pending_miss_ = false;
     bool pending_hit_ = false;
     bool pending_critical_ = false;
     std::optional<UnitPose> target_pose_;
-    std::vector<PendingDeath> pending_deaths_;
     std::vector<DeathEffect> death_effects_;
+    std::uint32_t other_rn_ = 0;
+
+    std::uint32_t next_other_rn();
 };
 
 // Renderer-side FE8 map-unit animation state. It has no knowledge of combat,
