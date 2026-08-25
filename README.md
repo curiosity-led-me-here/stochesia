@@ -29,5 +29,7 @@ I plan on adding more and more interesting dynamics into the battlefield such as
 ## Still under development and unplayable.
 
 ![Sample setup](img/sample.png)
+## 
 ![Sample setup](img/sample2.png)
+## 
 ![Sample setup](img/sample3.png)
