@@ -6,6 +6,7 @@
 #include "maps.h"
 #include <cstdlib>
 #include "pathfinder.h"
+using namespace std;
 
 enum class ClickState
 {
@@ -30,7 +31,7 @@ struct ClickController
     int inter_strike_pause = 0;
     int active_guild=0;
     int selected_weapon = -1;
-    std::vector<sequence> sq;
+    vector<sequence> sq;
     Environment& env;
     fe_tiles::AnimationRenderer& render;
     fe_tiles::MapMonitor& monitor;
@@ -44,25 +45,25 @@ struct ClickController
 	inter_strike_pause = 0;
     }
 
-    std::vector<std::vector<int>> move()
+    vector<vector<int>> move()
     {
 	Entity& unit= env.units().get_unit(selected_id);
-	std::vector<int> offset = {
+	vector<int> offset = {
 	    env.cursor[0] - unit.location[0],
 	    env.cursor[1] - unit.location[1]
 	};
-	std::vector<std::vector<int>> route = env.map().render_move(unit, offset);
+	vector<vector<int>> route = env.map().render_move(unit, offset);
 	return route;
     }
 
-    std::vector<sequence> attack(int hover_id)
+    vector<sequence> attack(int hover_id)
     {
 	Entity& unit = env.units().get_unit(selected_id);
 	Entity& enemy= env.units().get_unit(hover_id);
 	return battle(unit, enemy, env.map());
     }
 
-    bool enemy_in_range(std::vector<std::vector<int>> standing_attack_range)
+    bool enemy_in_range(vector<vector<int>> standing_attack_range)
     {
 	bool out = false;
 	Entity& selected_unit = env.units().get_unit(selected_id);
@@ -84,7 +85,7 @@ struct ClickController
 	return out;
     }
 
-    bool enemy_in_range(std::vector<std::vector<int>> standing_attack_range, Entity& enemy)
+    bool enemy_in_range(vector<vector<int>> standing_attack_range, Entity& enemy)
     {
 	bool out = false;
 	Entity& selected_unit = env.units().get_unit(selected_id);
@@ -138,7 +139,7 @@ struct ClickController
 	Entity& unit = env.units().get_unit(selected_id);
 	Entity& enemy = env.units().get_unit(hover_id);
 
-	std::vector<CombatInfo> info = interact(unit, enemy, env.map());
+	vector<CombatInfo> info = interact(unit, enemy, env.map());
 
 	monitor.show_battle_forecast(
         unit,
@@ -210,7 +211,7 @@ struct ClickController
             }
 	}
 
-	throw std::invalid_argument("Guild does not exist.");
+	throw invalid_argument("Guild does not exist.");
     }
 
     int who_won()
@@ -256,7 +257,7 @@ struct ClickController
 	monitor.show_phase_intro(env.guilds[active_guild].name, render.guild_color(env.guilds[active_guild].guild_id)); 
     }
 
-    void animate_battle(std::vector<sequence> sq, int i, Environment& env)
+    void animate_battle(vector<sequence> sq, int i, Environment& env)
     {
 	// 0: death, 1: hit, 2: crit, -1: miss
 	sequence scene = sq[i];
@@ -337,7 +338,7 @@ struct ClickController
 	    monitor.request_redraw();
 	    if (game_over())
 	    {
-		std::cout << "\nGame over\n";
+		cout << "\nGame over\n";
 		state = ClickState::GameOver;
 	    }
 	    return;
@@ -465,7 +466,7 @@ struct ClickController
 			int enemy_idx = env.map().entity_at(env.map().prompt_attack(env.units().get_unit(selected_id))[0].coords);
 			unit.inventory.EquippedSlot = eligible_weapon(selected_id);
 			Entity& enemy = env.units().get_unit(enemy_idx);
-			std::vector<CombatInfo> info = interact(unit, enemy, env.map());
+			vector<CombatInfo> info = interact(unit, enemy, env.map());
 			monitor.show_battle_forecast(unit, enemy, info[0], info[1]);
 			env.local_registry.at(selected_id).clear_paint();
 			env.map().update_attack_range(env.units().get_unit(selected_id));
@@ -500,7 +501,7 @@ struct ClickController
 		    
 		    else if (hover_id == 0 && blue && belongs(selected_id) && !env.local_registry.at(selected_id).is_turn_greyscale())
 		    {
-			std::vector<std::vector<int>> route = move();
+			vector<vector<int>> route = move();
 			render.sync_units(env.units().live_units());
 			env.local_registry.at(selected_id).clear_paint();
 			bool started = env.local_registry.at(selected_id).play_committed_move(route);
@@ -628,7 +629,7 @@ void run_click_game(Environment& env, fe_tiles::AnimationRenderer& render, maps:
 		    int enemy_id = env.map().entity_at(env.cursor);
 		    Entity& enemy = env.units().get_unit(enemy_id);
 		    unit.inventory.EquippedSlot = slot;
-		    std::vector<CombatInfo> info = interact(unit, enemy, env.map());
+		    vector<CombatInfo> info = interact(unit, enemy, env.map());
 		    monitor.clear_battle_forecast();
 		    monitor.show_battle_forecast(unit, enemy, info[0], info[1]);   
 		}

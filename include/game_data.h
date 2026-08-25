@@ -3,12 +3,13 @@
 #include <string>
 #include "game_types.h"
 #include "matrixlib.h"
+using namespace std;
 
-extern const std::vector<Rank> TierInfo;
+extern const vector<Rank> TierInfo;
 
-extern const std::vector<Weapon> Armory;
+extern const vector<Weapon> Armory;
 
-extern const std::vector<Healer> HealingData;
+extern const vector<Healer> HealingData;
 
 template <typename T>
 auto findbyid(const T& bank, int id)
@@ -20,12 +21,12 @@ auto findbyid(const T& bank, int id)
 	    return X;
 	}
     }
-    throw std::invalid_argument("No such item in the bank.");
+    throw invalid_argument("No such item in the bank.");
 }
 
-extern Weapon get_weapon(const std::vector<Weapon>& Armory, int id);
+extern Weapon get_weapon(const vector<Weapon>& Armory, int id);
 
-extern Healer get_heal(const std::vector<Healer> HealingData, int id);
+extern Healer get_heal(const vector<Healer> HealingData, int id);
 
 extern void get_next_rank(WeaponLevelExp& x);
 

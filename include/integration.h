@@ -15,16 +15,17 @@
 #include "entity_animation.h"
 #include "map_monitor.h"
 #include "maps.h"
+using namespace std;
 
 extern bool phase_done(Guild& team);
 
 extern int all_dead(Guild& team);
 
-extern bool game_over(std::vector<Guild> guilds);
+extern bool game_over(vector<Guild> guilds);
 
-extern Guild survivor(std::vector<Guild> guilds);
+extern Guild survivor(vector<Guild> guilds);
 
-extern Command process_command(std::string name);
+extern Command process_command(string name);
 
 class Environment
 {
@@ -34,9 +35,9 @@ class Environment
 	Registry registry;
 	
     public:
-	std::vector<int> cursor;
-	std::vector<Guild> guilds;
-	std::unordered_map<int, fe_tiles::EntityAnimation> local_registry;
+	vector<int> cursor;
+	vector<Guild> guilds;
+	unordered_map<int, fe_tiles::EntityAnimation> local_registry;
 	Environment(const maps::TerrainMap& recipe);
 	Environment(const maps::MapRecipe& recipe);
 	void move_up();
@@ -55,9 +56,9 @@ class Environment
 		Environment& env;
 	    public:
 		ConfigureEnv(Environment& env);
-		void add_guild(std::string name, int id);
+		void add_guild(string name, int id);
 		Entity& configure_entity(Entity unit, int id, Guild& guild);
-		void configure_entity_location(Entity& out_unit, const std::vector<int> location);
+		void configure_entity_location(Entity& out_unit, const vector<int> location);
 		void configure_render(Entity& unit, fe_tiles::AnimationRenderer& render, fe_tiles::UnitVisual);
 	    };
 	    class Game

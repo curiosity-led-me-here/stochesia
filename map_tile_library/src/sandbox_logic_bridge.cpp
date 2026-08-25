@@ -6,13 +6,14 @@
 
 #include "general_pathtracing.h"
 #include "terrain_data.h"
+using namespace std;
 
 namespace
 {
 using fe_tiles::Cell;
 using fe_tiles::IntGrid;
 
-constexpr std::array<Cell, 4> kDirections = {
+constexpr array<Cell, 4> kDirections = {
     Cell{0, 1}, Cell{0, -1}, Cell{1, 0}, Cell{-1, 0},
 };
 
@@ -77,7 +78,7 @@ int terrain_for_visual_class(int tile_class)
     }
 }
 
-bool same_cell(const std::vector<int>& position, Cell cell)
+bool same_cell(const vector<int>& position, Cell cell)
 {
     return position.size() >= 2 && position[0] == cell.x && position[1] == cell.y;
 }
@@ -86,12 +87,12 @@ bool same_cell(const std::vector<int>& position, Cell cell)
 namespace fe_tiles
 {
 SandboxLogicBridge::SandboxLogicBridge(IntGrid terrain)
-    : terrain_(std::move(terrain))
+    : terrain_(move(terrain))
 {
     require_rectangular(terrain_);
-    movement_.assign(terrain_.size(), std::vector<int>(terrain_.front().size(), -1));
-    attack_.assign(terrain_.size(), std::vector<int>(terrain_.front().size(), 0));
-    standing_attack_.assign(terrain_.size(), std::vector<int>(terrain_.front().size(), 0));
+    movement_.assign(terrain_.size(), vector<int>(terrain_.front().size(), -1));
+    attack_.assign(terrain_.size(), vector<int>(terrain_.front().size(), 0));
+    standing_attack_.assign(terrain_.size(), vector<int>(terrain_.front().size(), 0));
     rebuild_mapmaker();
 }
 
@@ -99,15 +100,15 @@ void SandboxLogicBridge::require_rectangular(const IntGrid& terrain) const
 {
     if (terrain.empty() || terrain.front().empty())
     {
-        throw std::invalid_argument("The sandbox terrain grid cannot be empty.");
+        throw invalid_argument("The sandbox terrain grid cannot be empty.");
     }
-    const std::size_t width = terrain.front().size();
-    if (std::any_of(terrain.begin(), terrain.end(), [width](const std::vector<int>& row)
+    const size_t width = terrain.front().size();
+    if (any_of(terrain.begin(), terrain.end(), [width](const vector<int>& row)
         {
             return row.size() != width;
         }))
     {
-        throw std::invalid_argument("The sandbox terrain grid must be rectangular.");
+        throw invalid_argument("The sandbox terrain grid must be rectangular.");
     }
 }
 
@@ -115,10 +116,10 @@ IntGrid SandboxLogicBridge::gameplay_terrain_from_visual_classes(const IntGrid& 
 {
     if (classes.empty() || classes.front().empty())
     {
-        throw std::invalid_argument("Visual class grid cannot be empty.");
+        throw invalid_argument("Visual class grid cannot be empty.");
     }
     IntGrid terrain = classes;
-    for (std::vector<int>& row : terrain)
+    for (vector<int>& row : terrain)
     {
         for (int& tile_class : row)
         {
@@ -131,7 +132,7 @@ IntGrid SandboxLogicBridge::gameplay_terrain_from_visual_classes(const IntGrid& 
 void SandboxLogicBridge::set_terrain(IntGrid terrain)
 {
     require_rectangular(terrain);
-    terrain_ = std::move(terrain);
+    terrain_ = move(terrain);
     clear_preview();
     rebuild_mapmaker();
 }
@@ -141,11 +142,11 @@ const IntGrid& SandboxLogicBridge::terrain() const
     return terrain_;
 }
 
-void SandboxLogicBridge::create_chapter_one_roster(const std::array<Cell, 4>& locations)
+void SandboxLogicBridge::create_chapter_one_roster(const array<Cell, 4>& locations)
 {
     if (units_[0] != nullptr)
     {
-        throw std::logic_error("The workbench roster was already created.");
+        throw logic_error("The workbench roster was already created.");
     }
 
     guilds_[0].name = "Renais";
@@ -176,13 +177,13 @@ void SandboxLogicBridge::create_chapter_one_roster(const std::array<Cell, 4>& lo
     guilds_[1].add(*units_[2]);
     guilds_[1].add(*units_[3]);
 
-    for (std::size_t index = 0; index < units_.size(); ++index)
+    for (size_t index = 0; index < units_.size(); ++index)
     {
         if (locations[index].x < 0 || locations[index].y < 0 ||
             locations[index].y >= static_cast<int>(terrain_.size()) ||
             locations[index].x >= static_cast<int>(terrain_.front().size()))
         {
-            throw std::out_of_range("Workbench roster location is outside the terrain grid.");
+            throw out_of_range("Workbench roster location is outside the terrain grid.");
         }
         units_[index]->location = {locations[index].x, locations[index].y};
     }
@@ -191,7 +192,7 @@ void SandboxLogicBridge::create_chapter_one_roster(const std::array<Cell, 4>& lo
 
 Entity* SandboxLogicBridge::find_unit(int entity_id) const
 {
-    const auto it = std::find_if(units_.begin(), units_.end(), [entity_id](const Entity* unit)
+    const auto it = find_if(units_.begin(), units_.end(), [entity_id](const Entity* unit)
         {
             return unit != nullptr && unit->entity_id == entity_id;
         });
@@ -200,7 +201,7 @@ Entity* SandboxLogicBridge::find_unit(int entity_id) const
 
 Entity* SandboxLogicBridge::find_unit_at(Cell location) const
 {
-    const auto it = std::find_if(units_.begin(), units_.end(), [location](const Entity* unit)
+    const auto it = find_if(units_.begin(), units_.end(), [location](const Entity* unit)
         {
             return unit != nullptr && unit->alive && same_cell(unit->location, location);
         });
@@ -212,7 +213,7 @@ Entity& SandboxLogicBridge::unit(int entity_id)
     Entity* found = find_unit(entity_id);
     if (found == nullptr)
     {
-        throw std::invalid_argument("Unknown workbench entity ID.");
+        throw invalid_argument("Unknown workbench entity ID.");
     }
     return *found;
 }
@@ -222,12 +223,12 @@ const Entity& SandboxLogicBridge::unit(int entity_id) const
     const Entity* found = find_unit(entity_id);
     if (found == nullptr)
     {
-        throw std::invalid_argument("Unknown workbench entity ID.");
+        throw invalid_argument("Unknown workbench entity ID.");
     }
     return *found;
 }
 
-std::vector<Entity*> SandboxLogicBridge::units() const
+vector<Entity*> SandboxLogicBridge::units() const
 {
     return {units_.begin(), units_.end()};
 }
@@ -238,15 +239,15 @@ void SandboxLogicBridge::clear_preview()
     available_attacks_.clear();
     const int height = static_cast<int>(terrain_.size());
     const int width = height > 0 ? static_cast<int>(terrain_.front().size()) : 0;
-    movement_.assign(height, std::vector<int>(width, -1));
-    attack_.assign(height, std::vector<int>(width, 0));
-    standing_attack_.assign(height, std::vector<int>(width, 0));
+    movement_.assign(height, vector<int>(width, -1));
+    attack_.assign(height, vector<int>(width, 0));
+    standing_attack_.assign(height, vector<int>(width, 0));
 }
 
 void SandboxLogicBridge::rebuild_mapmaker()
 {
     require_rectangular(terrain_);
-    board_ = std::make_unique<Mapmaker>(terrain_);
+    board_ = make_unique<Mapmaker>(terrain_);
     for (Entity* current : units_)
     {
         if (current != nullptr && current->alive)
@@ -261,11 +262,11 @@ void SandboxLogicBridge::inspect(int entity_id)
     Entity& current = unit(entity_id);
     if (!current.alive)
     {
-        throw std::invalid_argument("That entity is dead.");
+        throw invalid_argument("That entity is dead.");
     }
     if (!current.turn)
     {
-        throw std::invalid_argument("That entity has already acted this phase.");
+        throw invalid_argument("That entity has already acted this phase.");
     }
     rebuild_mapmaker();
     board_->path_trace(current);
@@ -274,7 +275,7 @@ void SandboxLogicBridge::inspect(int entity_id)
     movement_[current.location[1]][current.location[0]] =
         current.path[current.location[1]][current.location[0]];
     attack_ = current.attack_range;
-    standing_attack_.assign(terrain_.size(), std::vector<int>(terrain_.front().size(), 0));
+    standing_attack_.assign(terrain_.size(), vector<int>(terrain_.front().size(), 0));
     available_attacks_.clear();
     selected_entity_id_ = entity_id;
 }
@@ -294,11 +295,11 @@ const IntGrid& SandboxLogicBridge::attack() const
     return attack_;
 }
 
-std::vector<Cell> SandboxLogicBridge::route_to(int entity_id, Cell destination) const
+vector<Cell> SandboxLogicBridge::route_to(int entity_id, Cell destination) const
 {
     if (entity_id != selected_entity_id_)
     {
-        throw std::invalid_argument("Run inspect/check for this entity first.");
+        throw invalid_argument("Run inspect/check for this entity first.");
     }
     const Entity& current = unit(entity_id);
     if (destination.x < 0 || destination.y < 0 ||
@@ -306,14 +307,14 @@ std::vector<Cell> SandboxLogicBridge::route_to(int entity_id, Cell destination) 
         destination.x >= static_cast<int>(movement_.front().size()) ||
         movement_[destination.y][destination.x] < 0)
     {
-        throw std::invalid_argument("Destination is not landable according to Mapmaker.");
+        throw invalid_argument("Destination is not landable according to Mapmaker.");
     }
     if (same_cell(current.location, destination))
     {
-        throw std::invalid_argument("Choose a destination different from the current tile.");
+        throw invalid_argument("Choose a destination different from the current tile.");
     }
 
-    std::vector<Cell> reverse_route = {destination};
+    vector<Cell> reverse_route = {destination};
     Cell cursor = destination;
     const Cell origin = {current.location[0], current.location[1]};
     const int max_steps = static_cast<int>(terrain_.size() * terrain_.front().size());
@@ -321,7 +322,7 @@ std::vector<Cell> SandboxLogicBridge::route_to(int entity_id, Cell destination) 
     {
         if (steps >= max_steps)
         {
-            throw std::logic_error("Mapmaker movement state did not lead back to the unit origin.");
+            throw logic_error("Mapmaker movement state did not lead back to the unit origin.");
         }
         const int cost = terrain::movement_cost(
             terrain_[cursor.y][cursor.x], current.movement
@@ -346,46 +347,46 @@ std::vector<Cell> SandboxLogicBridge::route_to(int entity_id, Cell destination) 
         }
         if (!found_parent)
         {
-            throw std::logic_error("Could not reconstruct a Mapmaker movement route.");
+            throw logic_error("Could not reconstruct a Mapmaker movement route.");
         }
     }
-    std::reverse(reverse_route.begin(), reverse_route.end());
+    reverse(reverse_route.begin(), reverse_route.end());
     return reverse_route;
 }
 
 IntGrid SandboxLogicBridge::make_weapon_attack_grid(const Entity& current, const Weapon& weapon) const
 {
-    IntGrid result(terrain_.size(), std::vector<int>(terrain_.front().size(), 0));
-    IntGrid out_min(terrain_.size(), std::vector<int>(terrain_.front().size(), -1));
+    IntGrid result(terrain_.size(), vector<int>(terrain_.front().size(), 0));
+    IntGrid out_min(terrain_.size(), vector<int>(terrain_.front().size(), -1));
     IntGrid out_max = out_min;
 
     // trace() normalizes both its grids as inclusive radii, so the inner grid
     // must end at MINRG - 1. Passing MINRG itself is the source sandbox bug
     // that removes a 1-range weapon's entire ring. This is bridge-only until
     // you decide to make the same one-line correction in general_pathtracing.
-    const int inner_radius = std::max(0, weapon.MINRG - 1);
+    const int inner_radius = max(0, weapon.MINRG - 1);
     trace(out_min, out_max, current.location, inner_radius, weapon.MAXRG);
     return out_max;
 }
 
 IntGrid SandboxLogicBridge::make_standing_attack_grid(const Entity& current) const
 {
-    IntGrid result(terrain_.size(), std::vector<int>(terrain_.front().size(), 0));
+    IntGrid result(terrain_.size(), vector<int>(terrain_.front().size(), 0));
     for (const ItemStack& item : current.inventory.slot)
     {
         try
         {
             const Weapon weapon = get_weapon(Armory, item.ID);
             const IntGrid out_max = make_weapon_attack_grid(current, weapon);
-            for (std::size_t y = 0; y < result.size(); ++y)
+            for (size_t y = 0; y < result.size(); ++y)
             {
-                for (std::size_t x = 0; x < result[y].size(); ++x)
+                for (size_t x = 0; x < result[y].size(); ++x)
                 {
-                    result[y][x] = std::max(result[y][x], out_max[y][x]);
+                    result[y][x] = max(result[y][x], out_max[y][x]);
                 }
             }
         }
-        catch (const std::invalid_argument&)
+        catch (const invalid_argument&)
         {
             // NO_ITEM and healing-only entries are correctly not attack tools.
         }
@@ -398,10 +399,10 @@ void SandboxLogicBridge::preview_arrival(int entity_id, Cell destination)
     Entity& current = unit(entity_id);
     if (entity_id != selected_entity_id_)
     {
-        throw std::invalid_argument("Run inspect/check for this entity first.");
+        throw invalid_argument("Run inspect/check for this entity first.");
     }
 
-    const std::vector<int> original_location = current.location;
+    const vector<int> original_location = current.location;
     current.location = {destination.x, destination.y};
     try
     {
@@ -431,7 +432,7 @@ void SandboxLogicBridge::preview_arrival(int entity_id, Cell destination)
                     }
                 }
             }
-            catch (const std::invalid_argument&)
+            catch (const invalid_argument&)
             {
                 // Empty inventory slot: no weapon, no target prompt.
             }
@@ -450,7 +451,7 @@ const IntGrid& SandboxLogicBridge::standing_attack() const
     return standing_attack_;
 }
 
-const std::vector<avl_for_atk>& SandboxLogicBridge::available_attacks() const
+const vector<avl_for_atk>& SandboxLogicBridge::available_attacks() const
 {
     return available_attacks_;
 }
@@ -474,15 +475,15 @@ BattleResolution SandboxLogicBridge::attack(int attacker_id, Cell defender_locat
 {
     if (attacker_id != selected_entity_id_)
     {
-        throw std::invalid_argument("The active attacker does not match the checked entity.");
+        throw invalid_argument("The active attacker does not match the checked entity.");
     }
     Entity& attacker = unit(attacker_id);
     Entity* defender = find_unit_at(defender_location);
     if (defender == nullptr)
     {
-        throw std::invalid_argument("No living entity occupies that attack coordinate.");
+        throw invalid_argument("No living entity occupies that attack coordinate.");
     }
-    const auto exact_choice = std::find_if(available_attacks_.begin(), available_attacks_.end(),
+    const auto exact_choice = find_if(available_attacks_.begin(), available_attacks_.end(),
         [defender_location, inventory_slot](const avl_for_atk& choice)
         {
             return choice.coords.size() == 2 &&
@@ -492,13 +493,13 @@ BattleResolution SandboxLogicBridge::attack(int attacker_id, Cell defender_locat
         });
     if (exact_choice == available_attacks_.end())
     {
-        throw std::invalid_argument("That target/weapon slot is not in Mapmaker::prompt_attack().");
+        throw invalid_argument("That target/weapon slot is not in Mapmaker::prompt_attack().");
     }
 
     attacker.inventory.EquippedSlot = inventory_slot;
     const int attacker_hp_before = attacker.stats.HP;
     const int defender_hp_before = defender->stats.HP;
-    const std::vector<CombatInfo> forecast = interact(attacker, *defender);
+    const vector<CombatInfo> forecast = interact(attacker, *defender);
     battle(attacker, *defender, *board_);
     attacker.turn = false;
 

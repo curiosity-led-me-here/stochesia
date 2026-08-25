@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "logic_render_control.h"
+using namespace std;
 
 // Kept as a forward declaration so including this renderer header does not
 // pull the entire sandbox pathfinder implementation into every GUI file.
@@ -28,12 +29,12 @@ class EntityAnimation
 public:
     // Start 60 Hz visual movement on the route approved by your logic.
     // Each coordinate is {x, y}, including the entity's starting tile.
-    bool move(const std::vector<std::vector<int>>& coords);
+    bool move(const vector<vector<int>>& coords);
 
     // Play a route returned by your already-completed Mapmaker::move().
     // This is the compatible form for the sandbox's current synchronous move
     // implementation, which commits Entity::location before returning.
-    bool play_committed_move(const std::vector<std::vector<int>>& coords);
+    bool play_committed_move(const vector<vector<int>>& coords);
 
     // Paint a supplied [y][x] grid into the respective overlay. Blue uses
     // values >= 0; red uses non-zero values. These names deliberately accept
@@ -120,7 +121,7 @@ public:
     // assign them before binding that Guild's units. A raw colour is 0xRRGGBB
     // and produces a shaded custom FE-style team palette.
     void set_guild_color(const Guild& guild, GuildColor color);
-    void set_guild_color(const Guild& guild, std::uint32_t rgb_code);
+    void set_guild_color(const Guild& guild, uint32_t rgb_code);
 
     // Returns the colour registered for this Guild ID. If the renderer has
     // not been given one, it returns the same player-blue fallback used when
@@ -129,7 +130,7 @@ public:
 
     // Rebuilds the render-only occupancy layer from living units. Call after
     // your own game logic commits a movement, death, spawn, or removal.
-    void sync_units(const std::vector<Entity*>& live_entities);
+    void sync_units(const vector<Entity*>& live_entities);
 
     // One GUI frame. Movement always advances at 60 Hz. `advance_combat`
     // lets a frontend slow only the battle presentation clock.
@@ -137,7 +138,7 @@ public:
     bool is_busy() const;
     bool is_moving() const;
     bool is_presenting_combat() const;
-    std::optional<CompletedMove> take_completed_move();
+    optional<CompletedMove> take_completed_move();
 
     // Draw data for a GUI frontend.
     const RenderGrid& blue_tiles() const;
@@ -146,11 +147,11 @@ public:
     // selected and even when the overlays were already empty.
     void clear_paint();
     const OccupancyGrid& occupancy() const;
-    std::vector<UnitPose> unit_poses() const;
-    std::vector<HealthBar> health_bars() const;
-    const std::optional<MissEffect>& miss_effect() const;
-    const std::optional<HitEffect>& hit_effect() const;
-    const std::vector<DeathEffect>& death_effects() const;
+    vector<UnitPose> unit_poses() const;
+    vector<HealthBar> health_bars() const;
+    const optional<MissEffect>& miss_effect() const;
+    const optional<HitEffect>& hit_effect() const;
+    const vector<DeathEffect>& death_effects() const;
 
     // Read-only presentation state used by MapMonitor. It is deliberately
     // separate from Entity::turn: game logic remains the authority on turns.
@@ -162,9 +163,9 @@ private:
     RenderGrid terrain_;
     RenderGrid blue_;
     RenderGrid red_;
-    std::unique_ptr<LogicRenderControl> control_;
-    std::unordered_map<int, GuildColor> guild_colours_;
-    std::unordered_set<int> turn_greyscale_ids_;
+    unique_ptr<LogicRenderControl> control_;
+    unordered_map<int, GuildColor> guild_colours_;
+    unordered_set<int> turn_greyscale_ids_;
 
     struct HealthState
     {
@@ -172,7 +173,7 @@ private:
         int current_hp = 0;
         int maximum_hp = 1;
     };
-    std::unordered_map<int, HealthState> health_;
+    unordered_map<int, HealthState> health_;
 
     LogicRenderControl& control();
     const LogicRenderControl& control() const;
@@ -183,6 +184,6 @@ private:
 
     // Values captured by your resolved battle(), then released only when its
     // corresponding visual strike reaches FE8's impact frame.
-    std::unordered_map<int, int> staged_impact_hp_;
+    unordered_map<int, int> staged_impact_hp_;
 };
 }

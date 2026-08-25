@@ -6,6 +6,7 @@
 #include <unordered_set>
 
 #include "pathfinder.h"
+using namespace std;
 
 namespace fe_tiles
 {
@@ -14,12 +15,12 @@ EntityAnimation::EntityAnimation(AnimationRenderer& renderer, Entity& entity)
 {
 }
 
-bool EntityAnimation::move(const std::vector<std::vector<int>>& coords)
+bool EntityAnimation::move(const vector<vector<int>>& coords)
 {
     return renderer_->control().begin_move(*entity_, coords);
 }
 
-bool EntityAnimation::play_committed_move(const std::vector<std::vector<int>>& coords)
+bool EntityAnimation::play_committed_move(const vector<vector<int>>& coords)
 {
     return renderer_->control().begin_committed_move(*entity_, coords);
 }
@@ -107,20 +108,20 @@ void AnimationRenderer::load_map(Mapmaker& map)
     terrain_ = map.get_map();
     if (terrain_.empty() || terrain_.front().empty())
     {
-        throw std::invalid_argument("load_map(): Mapmaker returned an empty map.");
+        throw invalid_argument("load_map(): Mapmaker returned an empty map.");
     }
-    const std::size_t columns = terrain_.front().size();
+    const size_t columns = terrain_.front().size();
     for (const RenderGrid::value_type& row : terrain_)
     {
         if (row.size() != columns)
         {
-            throw std::invalid_argument("load_map(): Mapmaker map must be rectangular.");
+            throw invalid_argument("load_map(): Mapmaker map must be rectangular.");
         }
     }
 
-    blue_.assign(terrain_.size(), std::vector<int>(columns, -1));
-    red_.assign(terrain_.size(), std::vector<int>(columns, 0));
-    control_ = std::make_unique<LogicRenderControl>(
+    blue_.assign(terrain_.size(), vector<int>(columns, -1));
+    red_.assign(terrain_.size(), vector<int>(columns, 0));
+    control_ = make_unique<LogicRenderControl>(
         static_cast<int>(terrain_.size()), static_cast<int>(columns)
     );
 }
@@ -134,7 +135,7 @@ const RenderGrid& AnimationRenderer::terrain_ids() const
 {
     if (!has_map())
     {
-        throw std::logic_error("Call load_map(map) before reading terrain IDs.");
+        throw logic_error("Call load_map(map) before reading terrain IDs.");
     }
     return terrain_;
 }
@@ -157,12 +158,12 @@ EntityAnimation AnimationRenderer::entity_for_fe8_class(Entity& unit,
                                                          int fe8_class_id,
                                                          GuildColor color)
 {
-    const std::optional<UnitVisual> visual = unit_visual_for_class(fe8_class_id);
+    const optional<UnitVisual> visual = unit_visual_for_class(fe8_class_id);
     if (!visual.has_value())
     {
-        throw std::invalid_argument(
+        throw invalid_argument(
             "No literal FE8 map-unit visual exists for class ID "
-            + std::to_string(fe8_class_id) + "."
+            + to_string(fe8_class_id) + "."
         );
     }
     return entity(unit, *visual, color);
@@ -172,12 +173,12 @@ void AnimationRenderer::set_guild_color(const Guild& guild, GuildColor color)
 {
     if (guild.guild_id == 0)
     {
-        throw std::invalid_argument("Guild ID zero is reserved and cannot receive a renderer colour.");
+        throw invalid_argument("Guild ID zero is reserved and cannot receive a renderer colour.");
     }
     guild_colours_[guild.guild_id] = color;
 }
 
-void AnimationRenderer::set_guild_color(const Guild& guild, std::uint32_t rgb_code)
+void AnimationRenderer::set_guild_color(const Guild& guild, uint32_t rgb_code)
 {
     set_guild_color(guild, GuildColor::custom(rgb_code));
 }
@@ -188,9 +189,9 @@ GuildColor AnimationRenderer::guild_color(int guild_id) const
     return found != guild_colours_.end() ? found->second : GuildColor::player();
 }
 
-void AnimationRenderer::sync_units(const std::vector<Entity*>& live_entities)
+void AnimationRenderer::sync_units(const vector<Entity*>& live_entities)
 {
-    std::unordered_set<int> still_present;
+    unordered_set<int> still_present;
     for (Entity* entity : live_entities)
     {
         if (entity == nullptr || !entity->alive)
@@ -198,8 +199,8 @@ void AnimationRenderer::sync_units(const std::vector<Entity*>& live_entities)
             continue;
         }
 
-        const int maximum_hp = std::max(1, entity->ogstats.HP);
-        const int current_hp = std::clamp(entity->stats.HP, 0, maximum_hp);
+        const int maximum_hp = max(1, entity->ogstats.HP);
+        const int current_hp = clamp(entity->stats.HP, 0, maximum_hp);
         still_present.insert(entity->entity_id);
 
         const auto existing = health_.find(entity->entity_id);
@@ -260,7 +261,7 @@ void AnimationRenderer::tick_60hz(bool advance_combat)
         const auto health = health_.find(target_id);
         if (staged != staged_impact_hp_.end() && health != health_.end())
         {
-            health->second.current_hp = std::clamp(
+            health->second.current_hp = clamp(
                 staged->second, 0, health->second.maximum_hp
             );
             staged_impact_hp_.erase(staged);
@@ -278,11 +279,11 @@ void AnimationRenderer::tick_60hz(bool advance_combat)
         const double target = static_cast<double>(health.current_hp);
         if (health.displayed_hp > target)
         {
-            health.displayed_hp = std::max(target, health.displayed_hp - 1.0);
+            health.displayed_hp = max(target, health.displayed_hp - 1.0);
         }
         else if (health.displayed_hp < target)
         {
-            health.displayed_hp = std::min(target, health.displayed_hp + 1.0);
+            health.displayed_hp = min(target, health.displayed_hp + 1.0);
         }
     }
 }
@@ -302,7 +303,7 @@ bool AnimationRenderer::is_presenting_combat() const
     return control().is_presenting_attack();
 }
 
-std::optional<CompletedMove> AnimationRenderer::take_completed_move()
+optional<CompletedMove> AnimationRenderer::take_completed_move()
 {
     return control().take_completed_move();
 }
@@ -319,13 +320,13 @@ const RenderGrid& AnimationRenderer::red_tiles() const
 
 void AnimationRenderer::clear_paint()
 {
-    for (std::vector<int>& row : blue_)
+    for (vector<int>& row : blue_)
     {
-        std::fill(row.begin(), row.end(), -1);
+        fill(row.begin(), row.end(), -1);
     }
-    for (std::vector<int>& row : red_)
+    for (vector<int>& row : red_)
     {
-        std::fill(row.begin(), row.end(), 0);
+        fill(row.begin(), row.end(), 0);
     }
     apply_paint();
 }
@@ -335,15 +336,15 @@ const OccupancyGrid& AnimationRenderer::occupancy() const
     return control().occupancy();
 }
 
-std::vector<UnitPose> AnimationRenderer::unit_poses() const
+vector<UnitPose> AnimationRenderer::unit_poses() const
 {
     return control().visible_unit_poses();
 }
 
-std::vector<HealthBar> AnimationRenderer::health_bars() const
+vector<HealthBar> AnimationRenderer::health_bars() const
 {
-    std::vector<HealthBar> result;
-    std::unordered_set<int> dying_ids;
+    vector<HealthBar> result;
+    unordered_set<int> dying_ids;
     for (const DeathEffect& effect : death_effects())
     {
         dying_ids.insert(effect.pose.entity_id);
@@ -378,17 +379,17 @@ std::vector<HealthBar> AnimationRenderer::health_bars() const
     return result;
 }
 
-const std::optional<MissEffect>& AnimationRenderer::miss_effect() const
+const optional<MissEffect>& AnimationRenderer::miss_effect() const
 {
     return control().miss_effect();
 }
 
-const std::optional<HitEffect>& AnimationRenderer::hit_effect() const
+const optional<HitEffect>& AnimationRenderer::hit_effect() const
 {
     return control().hit_effect();
 }
 
-const std::vector<DeathEffect>& AnimationRenderer::death_effects() const
+const vector<DeathEffect>& AnimationRenderer::death_effects() const
 {
     return control().death_effects();
 }
@@ -402,7 +403,7 @@ LogicRenderControl& AnimationRenderer::control()
 {
     if (control_ == nullptr)
     {
-        throw std::logic_error("Call load_map(map) before using animations.");
+        throw logic_error("Call load_map(map) before using animations.");
     }
     return *control_;
 }
@@ -411,7 +412,7 @@ const LogicRenderControl& AnimationRenderer::control() const
 {
     if (control_ == nullptr)
     {
-        throw std::logic_error("Call load_map(map) before using animations.");
+        throw logic_error("Call load_map(map) before using animations.");
     }
     return *control_;
 }
@@ -421,11 +422,11 @@ void AnimationRenderer::stage_health_at_impact(const Entity& target, int hp_afte
     const auto health = health_.find(target.entity_id);
     if (health == health_.end())
     {
-        throw std::logic_error(
+        throw logic_error(
             "Call sync_units() before resolving a battle so the renderer can preserve pre-hit HP."
         );
     }
-    staged_impact_hp_[target.entity_id] = std::clamp(
+    staged_impact_hp_[target.entity_id] = clamp(
         hp_after, 0, health->second.maximum_hp
     );
 }
@@ -446,13 +447,13 @@ void AnimationRenderer::require_dimensions(const RenderGrid& grid, const char* n
 {
     if (grid.size() != terrain_.size())
     {
-        throw std::invalid_argument(std::string(name) + " height does not match loaded map.");
+        throw invalid_argument(string(name) + " height does not match loaded map.");
     }
-    for (std::size_t y = 0; y < grid.size(); ++y)
+    for (size_t y = 0; y < grid.size(); ++y)
     {
         if (grid[y].size() != terrain_[y].size())
         {
-            throw std::invalid_argument(std::string(name) + " width does not match loaded map.");
+            throw invalid_argument(string(name) + " width does not match loaded map.");
         }
     }
 }

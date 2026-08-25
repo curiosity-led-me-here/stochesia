@@ -4,17 +4,18 @@
 #include "entity_animation.h"
 #include "piece_config.h"
 #include <cstdlib>
+using namespace std;
 
 int get_dur(int id)
 {
     return get_weapon(Armory, id).DUR;
 }
 
-void setup(Entity& unit, std::vector<ItemID> id, Environment::ConfigureEnv& config, fe_tiles::AnimationRenderer& render, fe_tiles::UnitVisual visual)
+void setup(Entity& unit, vector<ItemID> id, Environment::ConfigureEnv& config, fe_tiles::AnimationRenderer& render, fe_tiles::UnitVisual visual)
 {
     if (id.size() > 4)
     {
-	throw std::invalid_argument("Too many weapons!");
+	throw invalid_argument("Too many weapons!");
     }
     for (int i=0; i < id.size(); i++)
     {

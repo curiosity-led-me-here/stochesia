@@ -17,6 +17,7 @@
 #include "map_tile_library.h"
 #include "occupancy_overlay.h"
 #include "sandbox_logic_bridge.h"
+using namespace std;
 
 namespace
 {
@@ -34,12 +35,12 @@ constexpr CGFloat kUnitCanvasInTiles = 1.9;
 
 struct PaletteColor
 {
-    std::uint8_t r;
-    std::uint8_t g;
-    std::uint8_t b;
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
 };
 
-using Palette = std::array<PaletteColor, 16>;
+using Palette = array<PaletteColor, 16>;
 
 const char* class_name(int tile_class)
 {
@@ -66,7 +67,7 @@ const char* class_name(int tile_class)
 // No PNG is written anywhere by this program.
 struct Workshop
 {
-    std::string root;
+    string root;
     int theme = fe_tiles::THEME_CHAPTERS_01;
     int selected_class = fe_tiles::PLAIN;
     int selected_subclass = 0;
@@ -82,37 +83,37 @@ struct Workshop
     fe_tiles::OccupancyGrid occupancy;
     fe_tiles::SpriteLayer sprites;
     fe_tiles::CombatPresentation combat_presentation;
-    std::unique_ptr<fe_tiles::SandboxLogicBridge> logic;
+    unique_ptr<fe_tiles::SandboxLogicBridge> logic;
     fe_tiles::IntGrid preview_cost;
     fe_tiles::IntGrid preview_attack;
-    std::vector<std::vector<fe_tiles::Cell>> preview_parent;
-    std::optional<int> checked_entity;
+    vector<vector<fe_tiles::Cell>> preview_parent;
+    optional<int> checked_entity;
     struct PendingMove
     {
         int entity_id = 0;
         fe_tiles::Cell destination;
     };
-    std::optional<PendingMove> pending_move;
+    optional<PendingMove> pending_move;
     bool awaiting_attack_choice = false;
     bool sync_after_attack = false;
-    std::unique_ptr<fe_tiles::TileCanvas> canvas;
-    std::string status;
+    unique_ptr<fe_tiles::TileCanvas> canvas;
+    string status;
     bool invariant_movement_enabled = false;
-    std::size_t next_invariant_unit = 0;
-    std::array<std::size_t, 4> invariant_steps = {0, 0, 0, 0};
+    size_t next_invariant_unit = 0;
+    array<size_t, 4> invariant_steps = {0, 0, 0, 0};
 
-    explicit Workshop(std::string library_root)
-        : root(std::move(library_root)),
-          classes(kRows, std::vector<int>(kColumns, fe_tiles::PLAIN)),
-          visuals(kRows, std::vector<int>(kColumns, fe_tiles::make_tile_code(0, 0))),
-          occupancy(kRows, std::vector<int>(kColumns, 0)),
+    explicit Workshop(string library_root)
+        : root(move(library_root)),
+          classes(kRows, vector<int>(kColumns, fe_tiles::PLAIN)),
+          visuals(kRows, vector<int>(kColumns, fe_tiles::make_tile_code(0, 0))),
+          occupancy(kRows, vector<int>(kColumns, 0)),
           sprites(occupancy),
-          preview_cost(kRows, std::vector<int>(kColumns, -1)),
-          preview_attack(kRows, std::vector<int>(kColumns, 0)),
-          preview_parent(kRows, std::vector<fe_tiles::Cell>(kColumns))
+          preview_cost(kRows, vector<int>(kColumns, -1)),
+          preview_attack(kRows, vector<int>(kColumns, 0)),
+          preview_parent(kRows, vector<fe_tiles::Cell>(kColumns))
     {
         build_starter_map();
-        logic = std::make_unique<fe_tiles::SandboxLogicBridge>(
+        logic = make_unique<fe_tiles::SandboxLogicBridge>(
             fe_tiles::SandboxLogicBridge::gameplay_terrain_from_visual_classes(classes)
         );
         logic->create_chapter_one_roster({{
@@ -167,13 +168,13 @@ struct Workshop
 
     void clear_preview()
     {
-        for (std::vector<int>& row : preview_cost)
+        for (vector<int>& row : preview_cost)
         {
-            std::fill(row.begin(), row.end(), -1);
+            fill(row.begin(), row.end(), -1);
         }
-        for (std::vector<int>& row : preview_attack)
+        for (vector<int>& row : preview_attack)
         {
-            std::fill(row.begin(), row.end(), 0);
+            fill(row.begin(), row.end(), 0);
         }
         checked_entity.reset();
         awaiting_attack_choice = false;
@@ -181,9 +182,9 @@ struct Workshop
 
     void sync_occupancy_from_logic()
     {
-        for (std::vector<int>& row : occupancy)
+        for (vector<int>& row : occupancy)
         {
-            std::fill(row.begin(), row.end(), 0);
+            fill(row.begin(), row.end(), 0);
         }
         if (!logic)
         {
@@ -217,22 +218,22 @@ struct Workshop
         sync_occupancy_from_logic();
     }
 
-    std::optional<fe_tiles::UnitPose> pose_for(int entity_id) const
+    optional<fe_tiles::UnitPose> pose_for(int entity_id) const
     {
-        const std::vector<fe_tiles::UnitPose> poses = sprites.poses();
-        const auto it = std::find_if(poses.begin(), poses.end(),
+        const vector<fe_tiles::UnitPose> poses = sprites.poses();
+        const auto it = find_if(poses.begin(), poses.end(),
             [entity_id](const fe_tiles::UnitPose& pose)
             {
                 return pose.entity_id == entity_id;
             });
         if (it == poses.end())
         {
-            return std::nullopt;
+            return nullopt;
         }
         return *it;
     }
 
-    std::string check_entity(int entity_id)
+    string check_entity(int entity_id)
     {
         if (sprites.is_animating() || combat_presentation.is_presenting() || pending_move.has_value())
         {
@@ -246,15 +247,15 @@ struct Workshop
             preview_cost = logic->movement();
             preview_attack = logic->attack();
             status = "Mapmaker path_trace + attack_range: blue is landable movement; red is attack-only.";
-            return "check: entity " + std::to_string(entity_id) + " selected by sandbox logic.";
+            return "check: entity " + to_string(entity_id) + " selected by sandbox logic.";
         }
-        catch (const std::exception& error)
+        catch (const exception& error)
         {
-            return std::string("check: ") + error.what();
+            return string("check: ") + error.what();
         }
     }
 
-    std::string move_checked_by_offset(int delta_x, int delta_y)
+    string move_checked_by_offset(int delta_x, int delta_y)
     {
         if (sprites.is_animating() || combat_presentation.is_presenting() || pending_move.has_value())
         {
@@ -276,7 +277,7 @@ struct Workshop
                 unit.location[0] + delta_x,
                 unit.location[1] - delta_y,
             };
-            const std::vector<fe_tiles::Cell> route = logic->route_to(*checked_entity, destination);
+            const vector<fe_tiles::Cell> route = logic->route_to(*checked_entity, destination);
             if (!sprites.begin_move(*checked_entity, route))
             {
                 return "move: renderer rejected the Mapmaker route.";
@@ -284,15 +285,15 @@ struct Workshop
             pending_move = PendingMove{*checked_entity, destination};
             status = "Animating the route reconstructed from Mapmaker::path_trace().";
             return "move: following the sandbox route to {x=" +
-                   std::to_string(destination.x) + ", y=" + std::to_string(destination.y) + "}.";
+                   to_string(destination.x) + ", y=" + to_string(destination.y) + "}.";
         }
-        catch (const std::exception& error)
+        catch (const exception& error)
         {
-            return std::string("move: ") + error.what();
+            return string("move: ") + error.what();
         }
     }
 
-    std::string attack_selected_target(int x, int y, int inventory_slot)
+    string attack_selected_target(int x, int y, int inventory_slot)
     {
         if (!awaiting_attack_choice || !checked_entity.has_value())
         {
@@ -339,13 +340,13 @@ struct Workshop
             status = "battle() resolved the attack; rendering FE8's map-unit lunge.";
             return "attack: sandbox battle resolved; displaying the map attack animation.";
         }
-        catch (const std::exception& error)
+        catch (const exception& error)
         {
-            return std::string("attack: ") + error.what();
+            return string("attack: ") + error.what();
         }
     }
 
-    std::string wait_after_move()
+    string wait_after_move()
     {
         if (!awaiting_attack_choice || !checked_entity.has_value())
         {
@@ -357,17 +358,17 @@ struct Workshop
         return "wait: unit turn complete.";
     }
 
-    std::string ready_phase(int guild_id)
+    string ready_phase(int guild_id)
     {
         logic->ready_guild(guild_id);
-        status = "Marked living guild " + std::to_string(guild_id) + " units READY.";
-        return "phase: guild " + std::to_string(guild_id) + " is ready.";
+        status = "Marked living guild " + to_string(guild_id) + " units READY.";
+        return "phase: guild " + to_string(guild_id) + " is ready.";
     }
 
-    std::string execute_terminal_command(const std::string& line)
+    string execute_terminal_command(const string& line)
     {
-        std::istringstream input(line);
-        std::string command;
+        istringstream input(line);
+        string command;
         input >> command;
         if (command == "check")
         {
@@ -423,15 +424,15 @@ struct Workshop
     {
         if (subclass_total(tile_class) <= 0)
         {
-            status = std::string("That class does not exist in theme ") +
-                     std::to_string(theme) + ".";
+            status = string("That class does not exist in theme ") +
+                     to_string(theme) + ".";
             return false;
         }
         selected_class = tile_class;
         selected_subclass = 0;
         selected_orientation = 0;
         normalize_selection();
-        status = "Selected " + std::string(class_name(selected_class)) + ".";
+        status = "Selected " + string(class_name(selected_class)) + ".";
         return true;
     }
 
@@ -458,20 +459,20 @@ struct Workshop
         {
             if (!choose_first_available_class())
             {
-                throw std::runtime_error("This theme contains no drawable tile classes.");
+                throw runtime_error("This theme contains no drawable tile classes.");
             }
             selected_subclass_count = subclass_total(selected_class);
         }
 
-        selected_subclass = std::clamp(selected_subclass, 0, selected_subclass_count - 1);
+        selected_subclass = clamp(selected_subclass, 0, selected_subclass_count - 1);
         selected_orientation_count = fe_tiles::orientation_count(
             theme, selected_class, selected_subclass, root
         );
         if (selected_orientation_count <= 0)
         {
-            throw std::runtime_error("Selected class/subclass has no orientations.");
+            throw runtime_error("Selected class/subclass has no orientations.");
         }
-        selected_orientation = std::clamp(selected_orientation, 0, selected_orientation_count - 1);
+        selected_orientation = clamp(selected_orientation, 0, selected_orientation_count - 1);
     }
 
     void redraw()
@@ -479,17 +480,17 @@ struct Workshop
         try
         {
             normalize_selection();
-            auto next = std::make_unique<fe_tiles::TileCanvas>(kRows, kColumns);
+            auto next = make_unique<fe_tiles::TileCanvas>(kRows, kColumns);
             next->draw(theme, classes, visuals, root);
-            canvas = std::move(next);
+            canvas = move(next);
             if (status.empty())
             {
                 status = "Ready. Click the board to paint a literal FE8 source tile.";
             }
         }
-        catch (const std::exception& error)
+        catch (const exception& error)
         {
-            status = std::string("Render error: ") + error.what();
+            status = string("Render error: ") + error.what();
         }
     }
 
@@ -497,13 +498,13 @@ struct Workshop
     {
         normalize_selection();
         const int code = fe_tiles::make_tile_code(selected_subclass, selected_orientation);
-        for (std::vector<int>& row : classes)
+        for (vector<int>& row : classes)
         {
-            std::fill(row.begin(), row.end(), selected_class);
+            fill(row.begin(), row.end(), selected_class);
         }
-        for (std::vector<int>& row : visuals)
+        for (vector<int>& row : visuals)
         {
-            std::fill(row.begin(), row.end(), code);
+            fill(row.begin(), row.end(), code);
         }
         refresh_logic_terrain();
         status = "Filled the canvas with the selected literal tile.";
@@ -525,7 +526,7 @@ struct Workshop
         classes[y][x] = selected_class;
         visuals[y][x] = fe_tiles::make_tile_code(selected_subclass, selected_orientation);
         refresh_logic_terrain();
-        std::ostringstream message;
+        ostringstream message;
         message << "Painted {x=" << x << ", y=" << y << "}: "
                 << class_name(selected_class) << " / subclass "
                 << selected_subclass << " / orientation " << selected_orientation << ".";
@@ -533,15 +534,15 @@ struct Workshop
         redraw();
     }
 
-    static void write_cpp_grid(std::ostream& output,
+    static void write_cpp_grid(ostream& output,
                                const char* name,
                                const fe_tiles::IntGrid& grid)
     {
         output << "maps::IntGrid " << name << " = {\n";
-        for (const std::vector<int>& row : grid)
+        for (const vector<int>& row : grid)
         {
             output << "    {";
-            for (std::size_t x = 0; x < row.size(); ++x)
+            for (size_t x = 0; x < row.size(); ++x)
             {
                 if (x != 0)
                 {
@@ -557,13 +558,13 @@ struct Workshop
     // Export exactly the three aligned [y][x] layers needed by maps::compose.
     // This performs no image export and does not touch the sandbox's map;
     // it is simply a copyable handoff from visual editing to your game logic.
-    bool export_recipe(const std::string& destination)
+    bool export_recipe(const string& destination)
     {
         try
         {
             const fe_tiles::IntGrid terrain =
                 fe_tiles::SandboxLogicBridge::gameplay_terrain_from_visual_classes(classes);
-            std::ofstream output(destination);
+            ofstream output(destination);
             if (!output)
             {
                 status = "Could not write recipe export: " + destination;
@@ -584,9 +585,9 @@ struct Workshop
             status = "Exported terrain_grid, classes, and tiles to " + destination;
             return true;
         }
-        catch (const std::exception& error)
+        catch (const exception& error)
         {
-            status = std::string("Recipe export failed: ") + error.what();
+            status = string("Recipe export failed: ") + error.what();
             return false;
         }
     }
@@ -601,7 +602,7 @@ struct Workshop
         selected_subclass = fe_tiles::subclass_from_code(visuals[y][x]);
         selected_orientation = fe_tiles::orientation_from_code(visuals[y][x]);
         normalize_selection();
-        std::ostringstream message;
+        ostringstream message;
         message << "Sampled {x=" << x << ", y=" << y << "}.";
         status = message.str();
     }
@@ -648,7 +649,7 @@ struct Workshop
             if (choose_first_available_class())
             {
                 fill_selected();
-                status = "Changed to theme " + std::to_string(theme) +
+                status = "Changed to theme " + to_string(theme) +
                          " and reset the canvas to a compatible base tile.";
                 return;
             }
@@ -708,15 +709,15 @@ struct Workshop
         // This demo exercises the exact public path contract: an ordered
         // cardinal route. Replace this vector with your pathfinder's route
         // when we wire the real Mapmaker object in.
-        const std::array<std::vector<fe_tiles::Cell>, 4> patterns = {{
+        const array<vector<fe_tiles::Cell>, 4> patterns = {{
             {{1, 0}, {1, 0}, {0, 1}, {0, 1}},
             {{-1, 0}, {-1, 0}, {0, -1}, {0, -1}},
             {{0, 1}, {0, 1}, {1, 0}, {1, 0}},
             {{0, -1}, {0, -1}, {-1, 0}, {-1, 0}},
         }};
-        for (const std::vector<fe_tiles::Cell>& pattern : patterns)
+        for (const vector<fe_tiles::Cell>& pattern : patterns)
         {
-            std::vector<fe_tiles::Cell> route = {*origin};
+            vector<fe_tiles::Cell> route = {*origin};
             fe_tiles::Cell next = *origin;
             for (const fe_tiles::Cell& delta : pattern)
             {
@@ -744,8 +745,8 @@ struct Workshop
         // edge at a time so the test is deterministic and occupancy can stay
         // a plain [y][x] entity-ID layer. These are a renderer test harness,
         // not a replacement for your Mapmaker-approved movement routes.
-        const std::array<int, 4> entity_ids = {1, 2, 3, 4};
-        const std::array<std::array<fe_tiles::Cell, 4>, 4> loops = {{
+        const array<int, 4> entity_ids = {1, 2, 3, 4};
+        const array<array<fe_tiles::Cell, 4>, 4> loops = {{
             {{{1, 0}, {0, 1}, {-1, 0}, {0, -1}}},
             {{{-1, 0}, {0, 1}, {1, 0}, {0, -1}}},
             {{{1, 0}, {0, -1}, {-1, 0}, {0, 1}}},
@@ -754,7 +755,7 @@ struct Workshop
 
         for (int attempt = 0; attempt < 4; ++attempt)
         {
-            const std::size_t unit_index = next_invariant_unit;
+            const size_t unit_index = next_invariant_unit;
             next_invariant_unit = (next_invariant_unit + 1) % entity_ids.size();
             const int entity_id = entity_ids[unit_index];
             const auto origin = sprites.location_of(entity_id);
@@ -767,7 +768,7 @@ struct Workshop
             if (sprites.begin_move(entity_id, {*origin, destination}))
             {
                 invariant_steps[unit_index] = (invariant_steps[unit_index] + 1) % loops[unit_index].size();
-                status = "Invariant movement test: entity " + std::to_string(entity_id) + " is moving.";
+                status = "Invariant movement test: entity " + to_string(entity_id) + " is moving.";
                 return true;
             }
         }
@@ -816,9 +817,9 @@ struct Workshop
             sync_occupancy_from_logic();
             logic->preview_arrival(moved.entity_id, moved.destination);
 
-            for (std::vector<int>& row : preview_cost)
+            for (vector<int>& row : preview_cost)
             {
-                std::fill(row.begin(), row.end(), -1);
+                fill(row.begin(), row.end(), -1);
             }
             preview_attack = logic->standing_attack();
             checked_entity = moved.entity_id;
@@ -832,7 +833,7 @@ struct Workshop
             }
 
             awaiting_attack_choice = true;
-            std::ostringstream choices;
+            ostringstream choices;
             choices << "Standing attack range formed. Targets: ";
             for (const avl_for_atk& choice : logic->available_attacks())
             {
@@ -840,20 +841,20 @@ struct Workshop
                         << ", slot " << choice.inventory_id << ") ";
             }
             status = choices.str();
-            std::cout << "Attack options from Mapmaker::prompt_attack():\n";
+            cout << "Attack options from Mapmaker::prompt_attack():\n";
             for (const avl_for_atk& choice : logic->available_attacks())
             {
-                std::cout << "  attack " << choice.coords[0] << ' ' << choice.coords[1]
+                cout << "  attack " << choice.coords[0] << ' ' << choice.coords[1]
                           << ' ' << choice.inventory_id << "  // "
                           << choice.weapon.NAME << '\n';
             }
-            std::cout << "  wait\nworkbench> " << std::flush;
+            cout << "  wait\nworkbench> " << flush;
         }
-        catch (const std::exception& error)
+        catch (const exception& error)
         {
             pending_move.reset();
             clear_preview();
-            status = std::string("Sandbox move handoff failed: ") + error.what();
+            status = string("Sandbox move handoff failed: ") + error.what();
         }
     }
 };
@@ -884,17 +885,17 @@ NSImage* make_canvas_image(const fe_tiles::TileCanvas& canvas)
     return image;
 }
 
-NSImage* load_image(const std::string& path)
+NSImage* load_image(const string& path)
 {
     return [[NSImage alloc] initWithContentsOfFile:[NSString stringWithUTF8String:path.c_str()]];
 }
 
-Palette load_gba_palette(const std::string& path)
+Palette load_gba_palette(const string& path)
 {
-    std::ifstream file(path, std::ios::binary);
+    ifstream file(path, ios::binary);
     if (!file)
     {
-        throw std::runtime_error("Could not open FE8 map-unit palette: " + path);
+        throw runtime_error("Could not open FE8 map-unit palette: " + path);
     }
     Palette palette{};
     for (PaletteColor& color : palette)
@@ -905,18 +906,18 @@ Palette load_gba_palette(const std::string& path)
         file.read(reinterpret_cast<char*>(&high), 1);
         if (!file)
         {
-            throw std::runtime_error("FE8 map-unit palette is incomplete: " + path);
+            throw runtime_error("FE8 map-unit palette is incomplete: " + path);
         }
-        const std::uint16_t bgr555 = static_cast<std::uint16_t>(low) |
-                                     (static_cast<std::uint16_t>(high) << 8);
-        color.r = static_cast<std::uint8_t>(((bgr555 >> 0) & 31) * 255 / 31);
-        color.g = static_cast<std::uint8_t>(((bgr555 >> 5) & 31) * 255 / 31);
-        color.b = static_cast<std::uint8_t>(((bgr555 >> 10) & 31) * 255 / 31);
+        const uint16_t bgr555 = static_cast<uint16_t>(low) |
+                                     (static_cast<uint16_t>(high) << 8);
+        color.r = static_cast<uint8_t>(((bgr555 >> 0) & 31) * 255 / 31);
+        color.g = static_cast<uint8_t>(((bgr555 >> 5) & 31) * 255 / 31);
+        color.b = static_cast<uint8_t>(((bgr555 >> 10) & 31) * 255 / 31);
     }
     return palette;
 }
 
-int palette_distance(std::uint8_t r, std::uint8_t g, std::uint8_t b,
+int palette_distance(uint8_t r, uint8_t g, uint8_t b,
                      const PaletteColor& palette_color)
 {
     const int dr = static_cast<int>(r) - palette_color.r;
@@ -936,9 +937,9 @@ NSImage* restore_sprite_transparency(NSImage* source, const Palette& palette)
     {
         return nil;
     }
-    const std::size_t width = CGImageGetWidth(image);
-    const std::size_t height = CGImageGetHeight(image);
-    std::vector<std::uint8_t> pixels(width * height * 4, 0);
+    const size_t width = CGImageGetWidth(image);
+    const size_t height = CGImageGetHeight(image);
+    vector<uint8_t> pixels(width * height * 4, 0);
     CGColorSpaceRef colors = CGColorSpaceCreateDeviceRGB();
     CGContextRef context = CGBitmapContextCreate(
         pixels.data(), width, height, 8, width * 4, colors,
@@ -952,9 +953,9 @@ NSImage* restore_sprite_transparency(NSImage* source, const Palette& palette)
     CGContextSetBlendMode(context, kCGBlendModeCopy);
     CGContextDrawImage(context, CGRectMake(0.0, 0.0, width, height), image);
 
-    for (std::size_t pixel = 0; pixel < width * height; ++pixel)
+    for (size_t pixel = 0; pixel < width * height; ++pixel)
     {
-        std::uint8_t* rgba = pixels.data() + pixel * 4;
+        uint8_t* rgba = pixels.data() + pixel * 4;
         int closest = 0;
         int distance = palette_distance(rgba[0], rgba[1], rgba[2], palette[0]);
         for (int index = 1; index < 16; ++index)
@@ -998,9 +999,9 @@ NSImage* restore_sprite_transparency(NSImage* source, const Palette& palette)
     {
         return nil;
     }
-    const std::size_t width = CGImageGetWidth(image);
-    const std::size_t height = CGImageGetHeight(image);
-    std::vector<std::uint8_t> pixels(width * height * 4, 0);
+    const size_t width = CGImageGetWidth(image);
+    const size_t height = CGImageGetHeight(image);
+    vector<uint8_t> pixels(width * height * 4, 0);
     CGColorSpaceRef colors = CGColorSpaceCreateDeviceRGB();
     CGContextRef context = CGBitmapContextCreate(
         pixels.data(), width, height, 8, width * 4, colors,
@@ -1014,12 +1015,12 @@ NSImage* restore_sprite_transparency(NSImage* source, const Palette& palette)
     CGContextSetBlendMode(context, kCGBlendModeCopy);
     CGContextDrawImage(context, CGRectMake(0.0, 0.0, width, height), image);
 
-    const std::uint8_t key_r = pixels[0];
-    const std::uint8_t key_g = pixels[1];
-    const std::uint8_t key_b = pixels[2];
-    for (std::size_t pixel = 0; pixel < width * height; ++pixel)
+    const uint8_t key_r = pixels[0];
+    const uint8_t key_g = pixels[1];
+    const uint8_t key_b = pixels[2];
+    for (size_t pixel = 0; pixel < width * height; ++pixel)
     {
-        std::uint8_t* rgba = pixels.data() + pixel * 4;
+        uint8_t* rgba = pixels.data() + pixel * 4;
         if (rgba[0] == key_r && rgba[1] == key_g && rgba[2] == key_b)
         {
             rgba[0] = rgba[1] = rgba[2] = rgba[3] = 0;
@@ -1040,9 +1041,9 @@ NSImage* white_sprite(NSImage* source)
     {
         return nil;
     }
-    const std::size_t width = CGImageGetWidth(image);
-    const std::size_t height = CGImageGetHeight(image);
-    std::vector<std::uint8_t> pixels(width * height * 4, 0);
+    const size_t width = CGImageGetWidth(image);
+    const size_t height = CGImageGetHeight(image);
+    vector<uint8_t> pixels(width * height * 4, 0);
     CGColorSpaceRef colors = CGColorSpaceCreateDeviceRGB();
     CGContextRef context = CGBitmapContextCreate(
         pixels.data(), width, height, 8, width * 4, colors,
@@ -1055,9 +1056,9 @@ NSImage* white_sprite(NSImage* source)
     }
     CGContextSetBlendMode(context, kCGBlendModeCopy);
     CGContextDrawImage(context, CGRectMake(0.0, 0.0, width, height), image);
-    for (std::size_t pixel = 0; pixel < width * height; ++pixel)
+    for (size_t pixel = 0; pixel < width * height; ++pixel)
     {
-        std::uint8_t* rgba = pixels.data() + pixel * 4;
+        uint8_t* rgba = pixels.data() + pixel * 4;
         if (rgba[3] != 0)
         {
             rgba[0] = rgba[1] = rgba[2] = 255;
@@ -1072,7 +1073,7 @@ NSImage* white_sprite(NSImage* source)
 
 // Exact tile layouts bundled by FEBuilderGBA's "FE8 Battle Stats with Anims
 // Off v2" patch. The high bit is Tiled's horizontal-flip flag.
-[[maybe_unused]] constexpr std::array<std::uint32_t, 99> kAnimsOffLeftBox = {{
+[[maybe_unused]] constexpr array<uint32_t, 99> kAnimsOffLeftBox = {{
     0x80000006, 7, 8, 9, 4, 4, 4, 4, 4, 4, 4,
     0x80000011, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16,
     0x80000017, 19, 19, 20, 21, 21, 21, 21, 21, 22, 19,
@@ -1084,7 +1085,7 @@ NSImage* white_sprite(NSImage* source)
     0x8000000E, 11, 12, 12, 12, 12, 12, 12, 12, 13, 13,
 }};
 
-[[maybe_unused]] constexpr std::array<std::uint32_t, 108> kAnimsOffRightBox = {{
+[[maybe_unused]] constexpr array<uint32_t, 108> kAnimsOffRightBox = {{
     1, 4, 4, 4, 4, 4, 4, 4, 7, 8, 9, 6,
     1, 24, 16, 16, 16, 16, 16, 16, 16, 16, 16, 17,
     1, 25, 19, 20, 21, 21, 21, 21, 21, 22, 19, 23,
@@ -1098,7 +1099,7 @@ NSImage* white_sprite(NSImage* source)
 
 NSString* visual_key(fe_tiles::UnitVisual visual)
 {
-    const std::string key(fe_tiles::unit_visual_info(visual).key);
+    const string key(fe_tiles::unit_visual_info(visual).key);
     return [NSString stringWithUTF8String:key.c_str()];
 }
 
@@ -1119,7 +1120,7 @@ void draw_text(NSString* text, NSPoint point, NSFont* font, NSColor* color)
 
 @interface MapWorkbenchView : NSView
 {
-    std::unique_ptr<Workshop> _workshop;
+    unique_ptr<Workshop> _workshop;
     NSImage* _canvasImage;
     NSMutableDictionary<NSString*, NSImage*>* _unitSheets;
     NSMutableDictionary<NSString*, NSImage*>* _whiteUnitSheets;
@@ -1132,9 +1133,9 @@ void draw_text(NSString* text, NSPoint point, NSFont* font, NSColor* color)
     CGFloat _cellPixels;
     NSTimer* _timer;
 }
-- (instancetype)initWithFrame:(NSRect)frame libraryRoot:(std::string)root;
+- (instancetype)initWithFrame:(NSRect)frame libraryRoot:(string)root;
 - (void)startTerminalCommandReader;
-- (void)processTerminalCommand:(const std::string&)command;
+- (void)processTerminalCommand:(const string&)command;
 - (void)drawUnit:(const fe_tiles::UnitPose&)pose usingSheets:(NSDictionary<NSString*, NSImage*>*)sheets;
 - (void)drawDeathEffects;
 - (void)exportRecipe;
@@ -1142,15 +1143,15 @@ void draw_text(NSString* text, NSPoint point, NSFont* font, NSColor* color)
 
 @implementation MapWorkbenchView
 
-- (instancetype)initWithFrame:(NSRect)frame libraryRoot:(std::string)root
+- (instancetype)initWithFrame:(NSRect)frame libraryRoot:(string)root
 {
     self = [super initWithFrame:frame];
     if (self)
     {
-        _workshop = std::make_unique<Workshop>(std::move(root));
+        _workshop = make_unique<Workshop>(move(root));
         _canvasImage = _workshop->canvas ? make_canvas_image(*_workshop->canvas) : nil;
-        const std::string fe8_root = FE8_SOURCE_ROOT;
-        const std::string sprite_root = fe8_root + "/graphics/unit_icon/move/";
+        const string fe8_root = FE8_SOURCE_ROOT;
+        const string sprite_root = fe8_root + "/graphics/unit_icon/move/";
         const Palette player_palette = load_gba_palette(
             fe8_root + "/graphics/unit_icon/palette/unit_icon_pal_player.agbpal"
         );
@@ -1208,21 +1209,21 @@ void draw_text(NSString* text, NSPoint point, NSFont* font, NSColor* color)
 
 - (void)startTerminalCommandReader
 {
-    std::cout << "\nFE8 Tile Workbench terminal controls\n"
+    cout << "\nFE8 Tile Workbench terminal controls\n"
               << "  check <int unit id>\n"
               << "  move <int x offset> <int y offset>\n"
               << "  attack <target x> <target y> <inventory slot>\n"
               << "  wait\n"
               << "  phase <guild id>\n"
-              << "  help\n\nworkbench> " << std::flush;
+              << "  help\n\nworkbench> " << flush;
 
     __weak MapWorkbenchView* weakSelf = self;
-    std::thread([weakSelf]
+    thread([weakSelf]
     {
-        std::string line;
-        while (std::getline(std::cin, line))
+        string line;
+        while (getline(cin, line))
         {
-            const std::string command = line;
+            const string command = line;
             dispatch_async(dispatch_get_main_queue(), ^{
                 MapWorkbenchView* view = weakSelf;
                 if (view != nil)
@@ -1234,20 +1235,20 @@ void draw_text(NSString* text, NSPoint point, NSFont* font, NSColor* color)
     }).detach();
 }
 
-- (void)processTerminalCommand:(const std::string&)command
+- (void)processTerminalCommand:(const string&)command
 {
-    const std::string response = _workshop->execute_terminal_command(command);
-    std::cout << response << "\nworkbench> " << std::flush;
+    const string response = _workshop->execute_terminal_command(command);
+    cout << response << "\nworkbench> " << flush;
     [self setNeedsDisplay:YES];
 }
 
 - (void)layoutBoard
 {
     const NSRect bounds = self.bounds;
-    const CGFloat availableWidth = std::max<CGFloat>(1.0, bounds.size.width - kSidebarWidth - 3.0 * kMargin);
-    const CGFloat availableHeight = std::max<CGFloat>(1.0, bounds.size.height - 2.0 * kMargin);
-    _cellPixels = std::floor(std::min(availableWidth / kColumns, availableHeight / kRows));
-    _cellPixels = std::max<CGFloat>(1.0, _cellPixels);
+    const CGFloat availableWidth = max<CGFloat>(1.0, bounds.size.width - kSidebarWidth - 3.0 * kMargin);
+    const CGFloat availableHeight = max<CGFloat>(1.0, bounds.size.height - 2.0 * kMargin);
+    _cellPixels = floor(min(availableWidth / kColumns, availableHeight / kRows));
+    _cellPixels = max<CGFloat>(1.0, _cellPixels);
     const CGFloat boardWidth = _cellPixels * kColumns;
     const CGFloat boardHeight = _cellPixels * kRows;
     _boardRect = NSMakeRect(kMargin, kMargin + (availableHeight - boardHeight) / 2.0,
@@ -1304,7 +1305,7 @@ void draw_text(NSString* text, NSPoint point, NSFont* font, NSColor* color)
     // SpriteLayer::poses() is already deduplicated by entity ID. A moving
     // entity contributes its fractional animation pose only, never an extra
     // static sprite at its old occupancy cell.
-    const std::optional<fe_tiles::AttackEffect>& attack =
+    const optional<fe_tiles::AttackEffect>& attack =
         _workshop->combat_presentation.attack_effect();
     for (const fe_tiles::UnitPose& pose : _workshop->sprites.poses())
     {
@@ -1327,7 +1328,7 @@ void draw_text(NSString* text, NSPoint point, NSFont* font, NSColor* color)
         // This is FE8's map-unit death, not the full battle-sprite effect:
         // MU_StartDeathFade freezes the MU, flashes its palette white, and
         // blends it to zero alpha over timeLeft = 0x20 frames.
-        const CGFloat opacity = std::clamp(
+        const CGFloat opacity = clamp(
             (32.0 - static_cast<CGFloat>(effect.tick)) / 32.0, 0.0, 1.0
         );
         [NSGraphicsContext saveGraphicsState];
@@ -1337,7 +1338,7 @@ void draw_text(NSString* text, NSPoint point, NSFont* font, NSColor* color)
     }
 }
 
-- (void)drawBattleBox:(const std::uint32_t*)tiles
+- (void)drawBattleBox:(const uint32_t*)tiles
                 width:(int)width
                height:(int)height
                    at:(NSPoint)origin
@@ -1347,13 +1348,13 @@ void draw_text(NSString* text, NSPoint point, NSFont* font, NSColor* color)
     {
         return;
     }
-    constexpr std::uint32_t kTiledFlipHorizontal = 0x80000000;
-    constexpr std::uint32_t kTiledGidMask = 0x1FFFFFFF;
+    constexpr uint32_t kTiledFlipHorizontal = 0x80000000;
+    constexpr uint32_t kTiledGidMask = 0x1FFFFFFF;
     for (int y = 0; y < height; ++y)
     {
         for (int x = 0; x < width; ++x)
         {
-            const std::uint32_t gid = tiles[y * width + x];
+            const uint32_t gid = tiles[y * width + x];
             if ((gid & kTiledGidMask) == 0)
             {
                 continue;
@@ -1387,8 +1388,8 @@ void draw_text(NSString* text, NSPoint point, NSFont* font, NSColor* color)
 
 - (void)drawBattleStatLabel:(int)label at:(NSPoint)point scale:(CGFloat)scale
 {
-    static constexpr std::array<int, 4> start_x = {0, 16, 40, 56};
-    static constexpr std::array<int, 4> widths = {16, 24, 16, 24};
+    static constexpr array<int, 4> start_x = {0, 16, 40, 56};
+    static constexpr array<int, 4> widths = {16, 24, 16, 24};
     if (_battleStatLabels == nil || label < 0 || label >= static_cast<int>(start_x.size()))
     {
         return;
@@ -1410,7 +1411,7 @@ void draw_text(NSString* text, NSPoint point, NSFont* font, NSColor* color)
     {
         return;
     }
-    std::string number = value < 0 ? "-" : std::to_string(std::min(value, 999));
+    string number = value < 0 ? "-" : to_string(min(value, 999));
     const CGFloat glyph_width = 8.0 * scale;
     CGFloat x = point.x + glyph_width * (3 - static_cast<int>(number.size()));
     for (const char character : number)
@@ -1515,15 +1516,15 @@ void draw_text(NSString* text, NSPoint point, NSFont* font, NSColor* color)
     draw_text(@"Terrain + occupancy · in memory", NSMakePoint(sideX, 65),
               [NSFont systemFontOfSize:13], accent);
 
-    std::ostringstream selection;
+    ostringstream selection;
     selection << "Theme: " << _workshop->theme << "\n"
               << "Class: " << class_name(_workshop->selected_class)
               << " (" << _workshop->selected_class << ")\n"
               << "Subclass: " << _workshop->selected_subclass << " / "
-              << std::max(0, _workshop->selected_subclass_count - 1) << "\n"
+              << max(0, _workshop->selected_subclass_count - 1) << "\n"
               << "Orientation: " << _workshop->selected_orientation << " / "
-              << std::max(0, _workshop->selected_orientation_count - 1);
-    const std::string text = selection.str();
+              << max(0, _workshop->selected_orientation_count - 1);
+    const string text = selection.str();
     NSArray<NSString*>* selectionLines = [[NSString stringWithUTF8String:text.c_str()]
         componentsSeparatedByString:@"\n"];
     CGFloat y = 110;
@@ -1533,7 +1534,7 @@ void draw_text(NSString* text, NSPoint point, NSFont* font, NSColor* color)
         y += 24;
     }
 
-    const std::array<NSString*, 16> instructions = {
+    const array<NSString*, 16> instructions = {
         @"Click            paint",
         @"Right click      sample",
         @"1–5             basic class",
@@ -1662,7 +1663,7 @@ void draw_text(NSString* text, NSPoint point, NSFont* font, NSColor* color)
 
 - (void)exportRecipe
 {
-    const std::string output_path = _workshop->root + "/viewer/exported_recipe.cpp";
+    const string output_path = _workshop->root + "/viewer/exported_recipe.cpp";
     _workshop->export_recipe(output_path);
     [self setNeedsDisplay:YES];
 }
@@ -1683,7 +1684,7 @@ void draw_text(NSString* text, NSPoint point, NSFont* font, NSColor* color)
 @implementation WorkbenchAppDelegate
 - (void)applicationDidFinishLaunching:(NSNotification*)notification
 {
-    const std::string root = FE_TILE_LIBRARY_ROOT;
+    const string root = FE_TILE_LIBRARY_ROOT;
     NSRect frame = NSMakeRect(0, 0, 1320, 790);
     NSWindow* window = [[NSWindow alloc]
         initWithContentRect:frame
@@ -1719,23 +1720,23 @@ int main(int argc, const char* argv[])
         {
             try
             {
-                kRows = std::stoi(argv[1]);
-                kColumns = std::stoi(argv[2]);
+                kRows = stoi(argv[1]);
+                kColumns = stoi(argv[2]);
             }
-            catch (const std::exception&)
+            catch (const exception&)
             {
-                std::cerr << "Usage: fe8_map_workbench [rows columns]\n";
+                cerr << "Usage: fe8_map_workbench [rows columns]\n";
                 return 1;
             }
         }
         else if (argc != 1)
         {
-            std::cerr << "Usage: fe8_map_workbench [rows columns]\n";
+            cerr << "Usage: fe8_map_workbench [rows columns]\n";
             return 1;
         }
         if (kRows <= 0 || kColumns <= 0)
         {
-            std::cerr << "Rows and columns must both be positive.\n";
+            cerr << "Rows and columns must both be positive.\n";
             return 1;
         }
 

@@ -12,6 +12,7 @@
 #include <cmath>
 #include "placement_algo.h"
 #include "piece_config.h"
+using namespace std;
 
 /*
 int actual_army(int x)
@@ -37,11 +38,11 @@ int actual_army(int x)
 }
 */
 
-std::vector<std::vector<char>> canvas;
+vector<vector<char>> canvas;
 
 void resize_canvas(int width, int height)
 {
-    canvas.assign(height, std::vector<char>(width, '.'));
+    canvas.assign(height, vector<char>(width, '.'));
 }
 
 void paint(int x, int y)
@@ -67,18 +68,18 @@ void render()
     for (const auto& row : canvas)
     {
         for (char pixel : row)
-            std::cout << pixel << ' ';
+            cout << pixel << ' ';
 
-        std::cout << '\n';
+        cout << '\n';
     }
 }
 	    
-std::vector<std::vector<int>> create_circle(std::vector<int> startpoint,int army,int orientation, std::vector<int> delta)
+vector<vector<int>> create_circle(vector<int> startpoint,int army,int orientation, vector<int> delta)
 {
-    std::vector<std::vector<int>> out;
+    vector<vector<int>> out;
     if (army <= 0)
         return out;
-    int rows = std::ceil(std::sqrt(army));
+    int rows = ceil(sqrt(army));
     int width = 2 * rows - 1;
     for (int row = 0; row < rows; row++)
     {
@@ -115,10 +116,10 @@ std::vector<std::vector<int>> create_circle(std::vector<int> startpoint,int army
     return out;
 }
 
-bool check_fit(std::vector<std::vector<int>> coord_list, Environment& env, int size) 
+bool check_fit(vector<vector<int>> coord_list, Environment& env, int size) 
 {
     int out = 0;
-    std::vector<std::vector<int>> map = env.map().get_map();
+    vector<vector<int>> map = env.map().get_map();
     for (const auto& coord : coord_list)
     {
 	int x = coord[0];
@@ -136,13 +137,13 @@ bool check_fit(std::vector<std::vector<int>> coord_list, Environment& env, int s
 }
 
 // returns specific placement coords which are valid in terms of placeablility of a particular orientation
-std::vector<std::vector<std::vector<int>>> get_placements(int army,  Environment& env, int inner)
+vector<vector<vector<int>>> get_placements(int army,  Environment& env, int inner)
 {
     int HEIGHT = env.map().get_map().size();
     int WIDTH  = env.map().get_map()[0].size();
 
-    std::vector<std::vector<std::vector<int>>> out;
-    int rows = std::ceil(std::sqrt(army));
+    vector<vector<vector<int>>> out;
+    int rows = ceil(sqrt(army));
     int span = 2 * rows - 1;
     for (int orientation=0; orientation < 4; orientation++)
     {
@@ -152,7 +153,7 @@ std::vector<std::vector<std::vector<int>>> get_placements(int army,  Environment
 	    {
 		for (int offset = 0; offset <= WIDTH - span; offset++)
 		{
-		    std::vector<std::vector<int>> circle = create_circle({0, inner}, army, orientation, {offset, 0});
+		    vector<vector<int>> circle = create_circle({0, inner}, army, orientation, {offset, 0});
 		    if (check_fit(circle, env, army))
 		    {
 			out.push_back(circle);
@@ -163,7 +164,7 @@ std::vector<std::vector<std::vector<int>>> get_placements(int army,  Environment
 	    {
 		for (int offset = 0; offset <= WIDTH - span; offset++)
 		{
-		    std::vector<std::vector<int>> circle = create_circle({0, HEIGHT - 1 - inner}, army, orientation, {offset, 0});
+		    vector<vector<int>> circle = create_circle({0, HEIGHT - 1 - inner}, army, orientation, {offset, 0});
 		    if (check_fit(circle, env, army))
 		    {
 			out.push_back(circle);
@@ -177,7 +178,7 @@ std::vector<std::vector<std::vector<int>>> get_placements(int army,  Environment
 	    {
 		for (int offset = 0; offset <= HEIGHT - span; offset++)
 		{
-		    std::vector<std::vector<int>> circle =
+		    vector<vector<int>> circle =
                     create_circle({inner, 0}, army, orientation, {0, offset});
 
 		    if (check_fit(circle, env, army))
@@ -190,7 +191,7 @@ std::vector<std::vector<std::vector<int>>> get_placements(int army,  Environment
 	    {
 		for (int offset = 0; offset <= HEIGHT - span; offset++)
 		{
-		    std::vector<std::vector<int>> circle =
+		    vector<vector<int>> circle =
                     create_circle({WIDTH-1-inner, 0}, army, orientation, {0, offset});
 
 		    if (check_fit(circle, env, army))
@@ -204,14 +205,14 @@ std::vector<std::vector<std::vector<int>>> get_placements(int army,  Environment
     return out;
 }
 
-std::vector<std::vector<std::vector<int>>> make_pairs(const std::vector<std::vector<int>>& a, const std::vector<std::vector<int>>& b)
+vector<vector<vector<int>>> make_pairs(const vector<vector<int>>& a, const vector<vector<int>>& b)
 {
-    std::vector<std::vector<std::vector<int>>> out;
+    vector<vector<vector<int>>> out;
     for (const auto& x : a) { for (const auto& y : b) { out.push_back({x, y}); } }
     return out;
 }
 
-void process_coordinates(std::vector<std::vector<int>>& top, Environment& env)
+void process_coordinates(vector<vector<int>>& top, Environment& env)
 { 
     for (auto it = top.begin(); it != top.end(); )
     {
@@ -227,22 +228,22 @@ void process_coordinates(std::vector<std::vector<int>>& top, Environment& env)
     }
 }
 
-std::vector<int> find_locus(const std::vector<std::vector<int>>& in, Environment& env)
+vector<int> find_locus(const vector<vector<int>>& in, Environment& env)
 {
     if (in.empty())
     {
-        throw std::invalid_argument("Cannot find the locus of an empty placement.");
+        throw invalid_argument("Cannot find the locus of an empty placement.");
     }
-    std::vector<std::vector<int>> inter = in;
+    vector<vector<int>> inter = in;
     process_coordinates(inter, env);
     if (inter.empty())
     {
-	throw std::invalid_argument("find_locus(const std::vector<std::vector<int>>& in, Environment& env)");
+	throw invalid_argument("find_locus(const vector<vector<int>>& in, Environment& env)");
     }
     int cum_x=0;
     int cum_y=0;
     
-    for (const std::vector<int>& coord : inter)
+    for (const vector<int>& coord : inter)
     {
 	cum_x += coord[0];
 	cum_y += coord[1];
@@ -253,12 +254,12 @@ std::vector<int> find_locus(const std::vector<std::vector<int>>& in, Environment
     return {x, y};
 }
 
-void view_path(std::vector<int> current_coord, std::vector<std::vector<int>>& state, const std::vector<std::vector<int>>& map, terrain::MovementType movement, std::vector<int> target, bool& result)
+void view_path(vector<int> current_coord, vector<vector<int>>& state, const vector<vector<int>>& map, terrain::MovementType movement, vector<int> target, bool& result)
 {
     if (result) return;
-    for (std::vector<int> i : helper)
+    for (vector<int> i : helper)
     {
-        std::vector<int> next_coord = { current_coord[0] + i[0], current_coord[1] + i[1] };
+        vector<int> next_coord = { current_coord[0] + i[0], current_coord[1] + i[1] };
         int x = next_coord[0];
         int y = next_coord[1];
         if (x < 0 || y < 0 || x >= state[0].size() || y >= state.size()) continue;
@@ -276,29 +277,29 @@ void view_path(std::vector<int> current_coord, std::vector<std::vector<int>>& st
     }
 }
 
-bool view_path(const std::vector<std::vector<int>>& map, std::vector<int> current_coord, std::vector<int> target)
+bool view_path(const vector<vector<int>>& map, vector<int> current_coord, vector<int> target)
 {
     terrain::MovementType movement = terrain::MovementType::CommonT1;
-    std::vector<std::vector<int>> state = map;
+    vector<vector<int>> state = map;
     int x = current_coord[1];
     int y = current_coord[0];
-    for (std::vector<int>& row : state) std::fill(row.begin(), row.end(), -1);
+    for (vector<int>& row : state) fill(row.begin(), row.end(), -1);
     bool result = false;
     view_path(current_coord, state, map, movement, target, result);
     return result;
 }
 
 // main algorithm
-std::vector<std::vector<std::vector<int>>> pair_valid(std::vector<std::vector<std::vector<int>>> in, int orientation, Environment& env, int n)
+vector<vector<vector<int>>> pair_valid(vector<vector<vector<int>>> in, int orientation, Environment& env, int n)
 {
     double max = 0.0;
-    std::vector<std::vector<std::vector<int>>> out;
+    vector<vector<vector<int>>> out;
     for (int i=0; i < in.size(); i++)
     {
 	for (int j=i+1; j < in.size(); j++)
 	{
-	    std::vector<std::vector<int>> pair1 = in[i];
-	    std::vector<std::vector<int>> pair2 = in[j];
+	    vector<vector<int>> pair1 = in[i];
+	    vector<vector<int>> pair2 = in[j];
 	    process_coordinates(pair1, env);
 	    process_coordinates(pair2, env);
 	    
@@ -340,8 +341,8 @@ std::vector<std::vector<std::vector<int>>> pair_valid(std::vector<std::vector<st
 
 	    if (valid)
 	    {
-		std::vector<int> vec1 = find_locus(pair1, env);
-		std::vector<int> vec2 = find_locus(pair2, env);
+		vector<int> vec1 = find_locus(pair1, env);
+		vector<int> vec2 = find_locus(pair2, env);
 		if (get_cartesian_distance(vec1, vec2) > max)
 		{
 		    max = get_cartesian_distance(vec1, vec2);
@@ -356,15 +357,15 @@ std::vector<std::vector<std::vector<int>>> pair_valid(std::vector<std::vector<st
 	    }
 	}
     }
-    std::cout << out.size();
+    cout << out.size();
     if (out.size() == 2)
     {
 	return out;
     }
-    else { throw std::invalid_argument("More than two teams!"); }
+    else { throw invalid_argument("More than two teams!"); }
 }
 
-void print_teams(const std::vector<std::vector<std::vector<int>>>& teams)
+void print_teams(const vector<vector<vector<int>>>& teams)
 {
     for (const auto& team : teams)
         for (const auto& coord : team)
@@ -373,7 +374,7 @@ void print_teams(const std::vector<std::vector<std::vector<int>>>& teams)
     render();
 }
 
-void process_coordinates(std::vector<std::vector<std::vector<int>>>& top, Environment& env)
+void process_coordinates(vector<vector<vector<int>>>& top, Environment& env)
 {
     
     for (auto& pair : top)
@@ -393,20 +394,20 @@ void process_coordinates(std::vector<std::vector<std::vector<int>>>& top, Enviro
     }
 }
 
-std::vector<std::vector<std::vector<int>>> run_piece_placement_algorithm(Environment& env, int units_per_team, int depth)
+vector<vector<vector<int>>> run_piece_placement_algorithm(Environment& env, int units_per_team, int depth)
 {
-    const std::vector<std::vector<int>> map = env.map().get_map();
+    const vector<vector<int>> map = env.map().get_map();
     resize_canvas(static_cast<int>(map[0].size()), static_cast<int>(map.size()));
 
-    std::vector<std::vector<std::vector<int>>> combined;
+    vector<vector<vector<int>>> combined;
     for (int k=0; k < depth; k++)
     {
-	std::vector<std::vector<std::vector<int>>> dump = get_placements(units_per_team, env, k);
+	vector<vector<vector<int>>> dump = get_placements(units_per_team, env, k);
 	combined.insert(combined.end(), dump.begin(), dump.end());
     }
-    std::vector<std::vector<std::vector<int>>> top = pair_valid(combined, 0, env, units_per_team);
+    vector<vector<vector<int>>> top = pair_valid(combined, 0, env, units_per_team);
     process_coordinates(top, env);
-    std::cout << '\n' << "Total team locations processed: " << top.size();
+    cout << '\n' << "Total team locations processed: " << top.size();
     return top;
 }
 
@@ -414,24 +415,24 @@ void setup_board(PieceSetConfig set, fe_tiles::AnimationRenderer& render, Enviro
 {
     set(render, env, config);
     int unit_count = env.guilds[0].members.size();
-    std::vector<std::vector<std::vector<int>>> output_coord = run_piece_placement_algorithm(env, unit_count, 5);
+    vector<vector<vector<int>>> output_coord = run_piece_placement_algorithm(env, unit_count, 5);
     for (int team=0; team < env.guilds.size(); team++)
     {
 	for (int i=0; i < unit_count; i++)
 	{
 	    Entity& unit = *env.guilds[team].members[i];
-	    std::vector<int> loc = output_coord[team][i];
+	    vector<int> loc = output_coord[team][i];
 	    config.configure_entity_location(unit, loc);
 	}
     }
     render.sync_units(env.units().live_units());
 }
 
-void setup_guild(Environment& env, Environment::ConfigureEnv& config, fe_tiles::AnimationRenderer& render, std::vector<std::string> names, std::vector<fe_tiles::GuildColor> colors)
+void setup_guild(Environment& env, Environment::ConfigureEnv& config, fe_tiles::AnimationRenderer& render, vector<string> names, vector<fe_tiles::GuildColor> colors)
 {
     if (names.size() != colors.size())
     {
-	throw std::invalid_argument("names and colors should match!");
+	throw invalid_argument("names and colors should match!");
     }
     for (int i=0; i < names.size(); i++)
     {
@@ -441,7 +442,7 @@ void setup_guild(Environment& env, Environment::ConfigureEnv& config, fe_tiles::
 }
 
 void render_placement_overlay(
-    const std::vector<std::vector<std::vector<int>>>& teams,
+    const vector<vector<vector<int>>>& teams,
     Environment& env,
     const maps::MapRecipe& recipe,
     Entity& unit)
@@ -451,7 +452,7 @@ void render_placement_overlay(
     const int width = static_cast<int>(map[0].size());
 
     fe_tiles::RenderGrid output_blue(
-        height, std::vector<int>(width, -1));
+        height, vector<int>(width, -1));
 
     for (const auto& team : teams)
     {

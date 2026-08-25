@@ -7,17 +7,18 @@
 #include <random>
 #include "mechanics_ascii.h"
 #include "pathfinder.h"
+using namespace std;
 
 long seed = 1289428362;
-std::mt19937 generator(seed);
+mt19937 generator(seed);
 bool random_binary(double probability, int seed)
 {
-    std::bernoulli_distribution distribution(probability);
+    bernoulli_distribution distribution(probability);
     return distribution(generator);
 }
 
 
-std::vector<std::vector<int>> WeaponTriangle
+vector<vector<int>> WeaponTriangle
 {
     // S   L   Ax  B   An  Li  D   St
     { 0,  1, -1,  0,  0,  0,  0,  0 }, // SWORD
@@ -30,7 +31,7 @@ std::vector<std::vector<int>> WeaponTriangle
     { 0,  0,  0,  0,  0,  0,  0,  0 }, // STAFF
 };
 
-std::vector<int> WeaponTriangleAdv(const Weapon& A, const Weapon& B)
+vector<int> WeaponTriangleAdv(const Weapon& A, const Weapon& B)
 {
     if (A.CAT == -1 ||  B.CAT == -1)
     {
@@ -62,7 +63,7 @@ bool usability(const Weapon& Aw, const Entity& A, const Entity& B, Mapmaker& map
     {
 	if (cat == Aw.CAT)
 	{
-	    std::vector<std::vector<int>> attack_path = map.standing_attack_range(A, Aw);
+	    vector<vector<int>> attack_path = map.standing_attack_range(A, Aw);
 	    if(attack_path[B.location[1]][B.location[0]] == 1)
 	    {
 		out = true;
@@ -102,7 +103,7 @@ CombatInfo info(const Entity& A,const Entity& B, Mapmaker& map)
 	return {As.HP, 0, 0, false, 0, 0, b_can_counter};
     }
     
-    std::vector<int> WTA;
+    vector<int> WTA;
     Weapon Bw;
 
     if (B.inventory.EquippedSlot < 0 || B.inventory.EquippedSlot >= 5 || !is_weapon(B.inventory.slot[B.inventory.EquippedSlot].ID))
@@ -135,14 +136,14 @@ CombatInfo info(const Entity& A,const Entity& B, Mapmaker& map)
     int ATK_SPD_B = get_ATK_SPD(Bs, Bw);
     bool DB = (ATK_SPD_A - ATK_SPD_B) > 3 ? true : false;
     MT = (MT < 0)? 0 : MT;
-    HIT = std::clamp(HIT, 0, 100);
-    CRIT = std::clamp(CRIT, 0, 100);
+    HIT = clamp(HIT, 0, 100);
+    CRIT = clamp(CRIT, 0, 100);
     return {As.HP, MT, HIT, DB, CRIT, WTA[0], b_can_counter};
 }
 
-std::vector<CombatInfo> interact(const Entity& A,const Entity& B, Mapmaker& map)
+vector<CombatInfo> interact(const Entity& A,const Entity& B, Mapmaker& map)
 {
-    std::vector<CombatInfo> out;
+    vector<CombatInfo> out;
     CombatInfo info_A = info(A, B, map);
     CombatInfo info_B = info(B, A, map);
     out.push_back(info_A);
@@ -159,8 +160,8 @@ int attack_sequence(Entity& A, Entity& B, CombatInfo& A_perf, CombatInfo& B_perf
 	{
 	    if (random_binary(A_perf.CRIT / 100.0, seed))
 	    {
-		std::cout << A.name << "'s turn.....";
-		std::cout << "Critical hit! ";
+		cout << A.name << "'s turn.....";
+		cout << "Critical hit! ";
 		// (1) B Hp reduced (2) A weapon dur -1
 		int temp = B.stats.HP;
 		B.stats.HP -= (A_perf.MT*3);
@@ -170,17 +171,17 @@ int attack_sequence(Entity& A, Entity& B, CombatInfo& A_perf, CombatInfo& B_perf
 		}
 		if (B.stats.HP != temp)
 		{
-		    std::cout << "HP reduced from " << temp << " to " << B.stats.HP << "\n";
+		    cout << "HP reduced from " << temp << " to " << B.stats.HP << "\n";
 		}
 		else
 		{
-		    std::cout << "No damage!" << "\n";
+		    cout << "No damage!" << "\n";
 		}
 		A.inventory.slot[A.inventory.EquippedSlot].usesRemaining --;
 		if (A.inventory.slot[A.inventory.EquippedSlot].usesRemaining <= 0)
 		{
 		    A.inventory.EquippedSlot = -1;
-		    std::cout << "Item broke!" << "\n";
+		    cout << "Item broke!" << "\n";
 		}
 		out = 2;
 		// exp calculation pending.
@@ -188,8 +189,8 @@ int attack_sequence(Entity& A, Entity& B, CombatInfo& A_perf, CombatInfo& B_perf
 	    else
 	    {
 		// normal hit
-		std::cout << A.name << "'s turn.....";
-		std::cout << "Attack hit! ";
+		cout << A.name << "'s turn.....";
+		cout << "Attack hit! ";
 		// (1) B Hp reduced (2) A weapon dur -1
 		int temp = B.stats.HP;
 		B.stats.HP -= (A_perf.MT);
@@ -199,17 +200,17 @@ int attack_sequence(Entity& A, Entity& B, CombatInfo& A_perf, CombatInfo& B_perf
 		}
 		if (B.stats.HP != temp)
 		{
-		    std::cout << "HP reduced from " << temp << " to " << B.stats.HP << "\n";
+		    cout << "HP reduced from " << temp << " to " << B.stats.HP << "\n";
 		}
 		else
 		{
-		    std::cout << "No damage!" << "\n";
+		    cout << "No damage!" << "\n";
 		}
 		A.inventory.slot[A.inventory.EquippedSlot].usesRemaining --;
 		if (A.inventory.slot[A.inventory.EquippedSlot].usesRemaining <= 0)
 		{
 		    A.inventory.EquippedSlot = -1;
-		    std::cout << "Item broke!" << "\n";
+		    cout << "Item broke!" << "\n";
 		}
 		out = 1;
 	    }
@@ -217,15 +218,15 @@ int attack_sequence(Entity& A, Entity& B, CombatInfo& A_perf, CombatInfo& B_perf
 	else
 	{
 	    // miss
-	    std::cout << A.name << "'s turn.....";
-	    std::cout << "Attack miss!" << "\n";
+	    cout << A.name << "'s turn.....";
+	    cout << "Attack miss!" << "\n";
 	    A.inventory.slot[A.inventory.EquippedSlot].usesRemaining --;
 	    if (A.inventory.slot[A.inventory.EquippedSlot].usesRemaining <= 0)
 	    {
 		A.inventory.slot[A.inventory.EquippedSlot].ID = NO_ITEM;
 		A.inventory.slot[A.inventory.EquippedSlot].usesRemaining = 0;
 		A.inventory.EquippedSlot = -1;
-		std::cout << "Item broke! Nothing selected" << "\n";
+		cout << "Item broke! Nothing selected" << "\n";
 	    }
 	    out = -1;
 	}
@@ -248,13 +249,13 @@ Entity* follow_up_attack(Entity& A, Entity& B, CombatInfo& A_perf,  CombatInfo& 
     {
 	return &B;
     }
-    throw std::invalid_argument("Wrong filteration! follow_up_attack(Entity& A, Entity& B, CombatInfo& A_perf,  CombatInfo& B_perf) yet no one doubles!");
+    throw invalid_argument("Wrong filteration! follow_up_attack(Entity& A, Entity& B, CombatInfo& A_perf,  CombatInfo& B_perf) yet no one doubles!");
 }
 
-std::vector<sequence> battle(Entity& actor, Entity& defender, Mapmaker& map)
+vector<sequence> battle(Entity& actor, Entity& defender, Mapmaker& map)
 {
-    std::vector<sequence> outcomes;
-    std::vector<CombatInfo> out = interact(actor, defender, map);
+    vector<sequence> outcomes;
+    vector<CombatInfo> out = interact(actor, defender, map);
     CombatInfo A_perf = out[0]; CombatInfo B_perf = out[1];
     if (!B_perf.counter)
     {
@@ -300,7 +301,7 @@ void Heal(Entity& A, const int invslot)
     Healer elixir = get_heal(HealingData, item);
     if (elixir.CAT == STAFF)
     {
-	throw std::invalid_argument("Use Heal(Entity& Caster, Entity& A, const int id) instead");
+	throw invalid_argument("Use Heal(Entity& Caster, Entity& A, const int id) instead");
     }
     if  (elixir.HEALHP == -1)
     {

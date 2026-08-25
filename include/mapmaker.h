@@ -3,38 +3,39 @@
 #include <vector>
 
 #include "game_types.h"
+using namespace std;
 
 // Terminal render helpers for the sandbox.
 void plot_points(
-    const std::vector<std::vector<int>>& terrain_map,
+    const vector<vector<int>>& terrain_map,
     int min_x,
     int max_x,
     int min_y,
     int max_y,
-    const std::vector<int>& start
+    const vector<int>& start
 );
 
 void plot_state(
-    const std::vector<std::vector<int>>& state,
+    const vector<vector<int>>& state,
     int min_x,
     int max_x,
     int min_y,
     int max_y,
-    const std::vector<int>& start
+    const vector<int>& start
 );
 
 void plot_path_arrows(
-    const std::vector<std::vector<int>>& state,
-    const std::vector<std::vector<int>>& terrain_map,
+    const vector<vector<int>>& state,
+    const vector<vector<int>>& terrain_map,
     int min_x,
     int max_x,
     int min_y,
     int max_y,
-    const std::vector<int>& start
+    const vector<int>& start
 );
 
 void plot_travel_history(
-    const std::vector<std::vector<int>>& route,
+    const vector<vector<int>>& route,
     int current_index,
     int width,
     int height
@@ -43,34 +44,34 @@ void plot_travel_history(
 class Mapmaker
 {
 private:
-    std::vector<std::vector<int>> map;
-    std::vector<int> dimensions;
-    std::vector<std::vector<int>> occupancy;
+    vector<vector<int>> map;
+    vector<int> dimensions;
+    vector<vector<int>> occupancy;
 
-    std::vector<std::vector<int>> generate_map(
-        const std::vector<int>& dimensions
+    vector<vector<int>> generate_map(
+        const vector<int>& dimensions
     );
 
     void pathtrace(
-        std::vector<int> current_coord,
+        vector<int> current_coord,
         int budget,
-        std::vector<std::vector<int>>& state
+        vector<vector<int>>& state
     );
 
     void build_move_path(
         Entity& unit,
-        std::vector<int>& coord,
-        std::vector<std::vector<int>>& out
+        vector<int>& coord,
+        vector<vector<int>>& out
     );
 
 public:
-    Mapmaker(const std::vector<int>& dimensions, int units);
+    Mapmaker(const vector<int>& dimensions, int units);
 
-    std::vector<std::vector<int>> get_generate();
-    std::vector<std::vector<int>> get_map();
+    vector<vector<int>> get_generate();
+    vector<vector<int>> get_map();
 
     void place_unit(Entity& unit);
     void add_random_obstacles(int n, int m);
     void path_trace(Entity& unit);
-    void move(Entity& unit, std::vector<int> destination);
+    void move(Entity& unit, vector<int> destination);
 };

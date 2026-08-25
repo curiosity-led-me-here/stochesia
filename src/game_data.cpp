@@ -1,9 +1,10 @@
 #include <vector>
 #include "game_data.h"
+using namespace std;
 
-std::vector<std::vector<int>> helper({{0, 1}, {0, -1}, {1, 0}, {-1, 0}});
+vector<vector<int>> helper({{0, 1}, {0, -1}, {1, 0}, {-1, 0}});
 
-const std::vector<Weapon> Armory=
+const vector<Weapon> Armory=
 {
     // NAME, CAT_NAME, MIN_RNK, RNKEXP, ID, CAT, DUR, MT, WT, HIT, CRIT, MINRG, MAXRG
 
@@ -19,7 +20,7 @@ const std::vector<Weapon> Armory=
     {"Thunder",    "Anima", "D", 31, THUNDER, ANIMA, 35, 8,  6, 80, 5, 1, 2},
 };
 
-const std::vector<Rank> TierInfo=
+const vector<Rank> TierInfo=
 {
     // ID, minexp, maxexp
 
@@ -31,7 +32,7 @@ const std::vector<Rank> TierInfo=
     {S, 251, 251},
 };
 
-Weapon get_weapon(const std::vector<Weapon>& Armory, int id)
+Weapon get_weapon(const vector<Weapon>& Armory, int id)
 {
     return findbyid(Armory, id);
 }
@@ -56,7 +57,7 @@ void get_next_rank(WeaponLevelExp& x)
 
 bool is_weapon(ItemID item)
 {
-    return std::any_of(
+    return any_of(
         Armory.begin(), Armory.end(),
         [item](const Weapon& weapon)
         {

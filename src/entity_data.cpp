@@ -1,13 +1,15 @@
+
 #include "entity_data.h"
+using namespace std;
 
 namespace
 {
 Entity make_entity(
-    const std::string& name,
+    const string& name,
     int level,
     const Stats& stats,
     const Growth& growth,
-    std::vector<WeaponCategory> weapon_types,
+    vector<WeaponCategory> weapon_types,
     terrain::MovementType movement,
     UnitClass unitclass
 )

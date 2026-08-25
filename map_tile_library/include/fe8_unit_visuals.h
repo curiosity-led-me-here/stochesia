@@ -5,6 +5,7 @@
 #include <optional>
 #include <string_view>
 #include <vector>
+using namespace std;
 
 namespace fe_tiles
 {
@@ -128,10 +129,10 @@ enum class UnitVisual : int
 struct UnitVisualInfo
 {
     UnitVisual visual;
-    std::string_view key;
-    std::string_view move_png; // relative to assets/fe8/
-    std::string_view wait_png; // relative to assets/fe8/; may be empty
-    std::string_view source_motion_symbol;
+    string_view key;
+    string_view move_png; // relative to assets/fe8/
+    string_view wait_png; // relative to assets/fe8/; may be empty
+    string_view source_motion_symbol;
 };
 
 // Literal AP timing program from FE8's const_data_unit_icon_move.s.
@@ -146,14 +147,14 @@ struct MapUnitMotionProgram
 {
     UnitVisual visual;
     int animation_id;
-    std::string_view name;
-    std::vector<MapUnitMotionStep> steps;
+    string_view name;
+    vector<MapUnitMotionStep> steps;
 };
 
 const UnitVisualInfo& unit_visual_info(UnitVisual visual);
-const std::vector<UnitVisualInfo>& all_unit_visuals();
-std::optional<UnitVisual> unit_visual_for_class(int fe8_class_id);
-const std::vector<MapUnitMotionProgram>& all_map_unit_motion_programs();
+const vector<UnitVisualInfo>& all_unit_visuals();
+optional<UnitVisual> unit_visual_for_class(int fe8_class_id);
+const vector<MapUnitMotionProgram>& all_map_unit_motion_programs();
 const MapUnitMotionProgram* map_unit_motion_program(UnitVisual visual,
                                                     int animation_id);
 }

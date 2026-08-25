@@ -10,60 +10,61 @@
 #include <utility>
 #include "maps.h"
 #include "entity_registry.h"
+using namespace std;
 
-extern std::vector<std::vector<int>> select_helper(std::vector<int> coord, std::vector<int> location);
+extern vector<vector<int>> select_helper(vector<int> coord, vector<int> location);
 
-extern bool check_edge(std::vector<int> coord, std::vector<std::vector<int>> path);
+extern bool check_edge(vector<int> coord, vector<vector<int>> path);
 
-extern bool check_valid_coords(std::vector<int> coords, std::vector<avl_for_atk> prompts);
+extern bool check_valid_coords(vector<int> coords, vector<avl_for_atk> prompts);
 
-extern std::vector<int> retry(std::vector<avl_for_atk> prompts);
+extern vector<int> retry(vector<avl_for_atk> prompts);
 
 class Mapmaker
 {
 private:
 
-    std::vector<std::vector<int>> map;
-    std::vector<int> dimensions;
-    std::vector<std::vector<int>> occupancy;
-    std::vector<std::vector<int>> guilds;
-    std::vector<std::vector<int>> generate_map(const std::vector<int>& dimensions);
-    std::vector<std::vector<int>> load_map(const maps::TerrainMap& recipe);
-    std::vector<int>& get_dimensions();
-    std::vector<std::vector<int>>& get_occ();
-    std::vector<std::vector<int>>& get_guilds();
+    vector<vector<int>> map;
+    vector<int> dimensions;
+    vector<vector<int>> occupancy;
+    vector<vector<int>> guilds;
+    vector<vector<int>> generate_map(const vector<int>& dimensions);
+    vector<vector<int>> load_map(const maps::TerrainMap& recipe);
+    vector<int>& get_dimensions();
+    vector<vector<int>>& get_occ();
+    vector<vector<int>>& get_guilds();
     
     void pathtrace(
-        std::vector<int> current_coord,
+        vector<int> current_coord,
         int budget,
-        std::vector<std::vector<int>>& state,
+        vector<vector<int>>& state,
 	int guild_id,
         terrain::MovementType movement);
 
     void move(
         Entity& unit,
-        std::vector<int>& coord,
-        std::vector<std::vector<int>>& out);
+        vector<int>& coord,
+        vector<vector<int>>& out);
 
 public:
-    Mapmaker(const std::vector<int>& dimensions);
+    Mapmaker(const vector<int>& dimensions);
     Mapmaker(maps::TerrainMap);
     Mapmaker(const maps::MapRecipe& recipe);
-    int entity_at(std::vector<int> coordinates);
-    std::vector<std::vector<int>> get_generate();
-    std::vector<std::vector<int>> get_map();
+    int entity_at(vector<int> coordinates);
+    vector<vector<int>> get_generate();
+    vector<vector<int>> get_map();
     void place_unit(Entity& unit);
     void add_random_obstacles(int n, int m);
     void path_trace(Entity& unit);
     void death(Entity& unit);
-    std::vector<std::vector<int>> consider_occupancy(const Entity& unit);
-    std::vector<std::vector<int>> render_move(Entity& unit, std::vector<int> delta_coord);
-    std::vector<avl_for_atk> prompt_attack(Entity& unit);
+    vector<vector<int>> consider_occupancy(const Entity& unit);
+    vector<vector<int>> render_move(Entity& unit, vector<int> delta_coord);
+    vector<avl_for_atk> prompt_attack(Entity& unit);
     void update_attack_range(Entity& unit);
-    std::vector<std::vector<int>> move(Entity& unit, std::vector<int> coord);
+    vector<vector<int>> move(Entity& unit, vector<int> coord);
     void plot_with_units(Registry& registry);
     void plot_movement_frame(Registry& registry, const Entity& moving_unit, int delay_ms = 140);
-    std::vector<std::vector<int>> standing_attack_range(const Entity& unit, const Weapon& weapon);
-    std::vector<std::vector<int>> attack_range(const Entity& unit, const Weapon& weapon);
+    vector<vector<int>> standing_attack_range(const Entity& unit, const Weapon& weapon);
+    vector<vector<int>> attack_range(const Entity& unit, const Weapon& weapon);
     void attack_range(Entity& unit);
 };

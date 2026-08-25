@@ -1,13 +1,15 @@
 #pragma once
 
+#include <string_view>
 #include <vector>
+using namespace std;
 
 namespace maps
 {
 // Every grid in maps:: is indexed [y][x]. Gameplay values are native FE8
 // TerrainId integers; visual values use map_tile_library's stable integer
 // vocabulary (class plus packed {subclass, orientation}).
-using IntGrid = std::vector<std::vector<int>>;
+using IntGrid = vector<vector<int>>;
 using TerrainMap = IntGrid;
 using VisualClassMap = IntGrid;
 using VisualTileMap = IntGrid;
@@ -28,6 +30,27 @@ constexpr int visual_orientation(int tile_code)
 {
     return tile_code % VISUAL_ORIENTATION_STRIDE;
 }
+
+constexpr int DERIVE_TERRAIN = -1;
+
+struct NamedTile
+{
+    string_view name;
+    int tile_class = 0;
+    int tile_code = make_visual_tile_code(0, 0);
+    int terrain_id = DERIVE_TERRAIN;
+};
+
+constexpr NamedTile named_tile(string_view name,
+                               int tile_class,
+                               int subclass = 0,
+                               int orientation = 0,
+                               int terrain_id = DERIVE_TERRAIN)
+{
+    return {name, tile_class, make_visual_tile_code(subclass, orientation), terrain_id};
+}
+
+using TilePalette = vector<NamedTile>;
 
 // The complete handoff between procedural generation, gameplay, and the
 // tile renderer. `terrain` is the only layer Mapmaker needs. `theme`,
@@ -54,6 +77,10 @@ struct MapRecipe
 MapRecipe from_visual(int theme_id,
                        VisualClassMap classes,
                        VisualTileMap tiles);
+
+MapRecipe from_tile_ids(int theme_id,
+                        IntGrid tile_ids,
+                        const TilePalette& palette);
 
 // Use this when your generator independently chooses gameplay terrain and
 // visuals. All three grids must have the same rectangular dimensions.

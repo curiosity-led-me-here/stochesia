@@ -8,6 +8,7 @@
 
 #include "entity_animation.h"
 #include "maps.h"
+using namespace std;
 
 namespace fe_tiles
 {
@@ -19,9 +20,9 @@ class MapMonitor
 public:
     struct Options
     {
-        std::string library_root =
+        string library_root =
             "/Users/ashu/Stochesia/map_tile_library";
-        std::string title = "FE8 Tactical Monitor";
+        string title = "FE8 Tactical Monitor";
         int width = 1280;
         int height = 820;
 
@@ -64,20 +65,20 @@ public:
     // Cursor coordinates use your game convention: {x, y}. Passing an empty
     // vector hides it. Out-of-map coordinates throw instead of drawing in an
     // arbitrary place.
-    void set_cursor(const std::vector<int>& coordinate);
+    void set_cursor(const vector<int>& coordinate);
     void clear_cursor();
 
     // Draws one ordered, presentation-only route on the map. Each coordinate
     // is {x, y}; an arrow on route[n] points toward route[n + 1]. The final
     // coordinate is drawn as a destination marker. This never changes an
     // Entity, occupancy, or Mapmaker state.
-    void show_route_arrows(const std::vector<std::vector<int>>& route);
+    void show_route_arrows(const vector<vector<int>>& route);
 
     // Draws several independent ordered routes at once. Each route gets its
     // own arrow colour; routes are never connected to one another.
     // routes[route_number][step_number] is an {x, y} coordinate.
     void show_route_arrows(
-        const std::vector<std::vector<std::vector<int>>>& routes
+        const vector<vector<vector<int>>>& routes
     );
     void clear_route_arrows();
     bool route_arrows_visible() const;
@@ -86,13 +87,13 @@ public:
     // ASCII character (for example 'c', 'm', or ' '). It executes on Cocoa's
     // main thread while the monitor is open, so it may safely call your
     // Environment/Mapmaker methods and then request_redraw().
-    void on_key(std::function<void(char)> callback);
+    void on_key(function<void(char)> callback);
 
     // Runs once after each of the monitor's 60 Hz renderer ticks. Use this
     // for game-owned timed work such as beginning the next already-resolved
     // combat strike after AnimationRenderer::is_busy() becomes false.
     // The monitor never interprets or retains your game state.
-    void on_frame(std::function<void()> callback);
+    void on_frame(function<void()> callback);
 
     // Changes only the lunge/MISS/hit/death playback rate. Valid values are
     // 0.05 through 1.0; movement timing is unaffected.
@@ -138,7 +139,7 @@ public:
     // only; it does not begin a turn or modify Guild/Entity state. The map
     // sweep ends after 68 frames, while the sidebar phase dialogue remains
     // until the next call or clear_phase_intro().
-    void show_phase_intro(const std::string& guild_name,
+    void show_phase_intro(const string& guild_name,
                           GuildColor color = GuildColor::player());
     void clear_phase_intro();
     bool phase_intro_visible() const;
@@ -156,6 +157,6 @@ public:
     struct Impl;
 
 private:
-    std::unique_ptr<Impl> impl_;
+    unique_ptr<Impl> impl_;
 };
 }

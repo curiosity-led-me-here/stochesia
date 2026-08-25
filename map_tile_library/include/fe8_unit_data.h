@@ -3,6 +3,7 @@
 
 #include <string_view>
 #include <vector>
+using namespace std;
 
 namespace fe_tiles
 {
@@ -24,23 +25,23 @@ struct Fe8StatBlock
 struct Fe8CharacterRecord
 {
     int id = 0;
-    std::string_view symbol;
-    std::string_view name;
+    string_view symbol;
+    string_view name;
     int default_class_id = 0;
     int portrait_id = 0;
     int base_level = 0;
     Fe8StatBlock personal_base;
     Fe8StatBlock growth;
-    std::string_view affinity;
-    std::string_view attributes;
+    string_view affinity;
+    string_view attributes;
     int visit_group = 0;
 };
 
 struct Fe8ClassRecord
 {
     int id = 0;
-    std::string_view symbol;
-    std::string_view name;
+    string_view symbol;
+    string_view name;
     int promotion_id = 0;
     int sms_id = 0;
     bool slow_walking = false;
@@ -48,12 +49,12 @@ struct Fe8ClassRecord
     Fe8StatBlock maximum;
     Fe8StatBlock growth;
     Fe8StatBlock promotion;
-    std::string_view attributes;
-    std::string_view movement_cost_table;
+    string_view attributes;
+    string_view movement_cost_table;
 };
 
-const std::vector<Fe8CharacterRecord>& fe8_characters();
-const std::vector<Fe8ClassRecord>& fe8_classes();
+const vector<Fe8CharacterRecord>& fe8_characters();
+const vector<Fe8ClassRecord>& fe8_classes();
 const Fe8CharacterRecord* fe8_character(int character_id);
 const Fe8ClassRecord* fe8_class(int class_id);
 

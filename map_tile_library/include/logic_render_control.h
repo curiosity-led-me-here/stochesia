@@ -10,10 +10,11 @@
 // renderer reads Entity state; it never calls path_trace(), prompt_attack(),
 // move(), interact(), or battle().
 #include "game_types.h"
+using namespace std;
 
 namespace fe_tiles
 {
-using RenderGrid = std::vector<std::vector<int>>;
+using RenderGrid = vector<vector<int>>;
 
 // This class is the public gameplay-to-renderer boundary.
 //
@@ -46,7 +47,7 @@ public:
     // Rebuild the renderer's private occupancy layer from the live Entity
     // locations. It does not modify Entity::location, Guild, Registry, or
     // Mapmaker occupancy. Dead units are excluded.
-    void sync_units(const std::vector<Entity*>& live_entities);
+    void sync_units(const vector<Entity*>& live_entities);
 
     // Directly consumes the output of YOUR Mapmaker calls:
     //   unit.path         -> blue when value >= 0
@@ -64,7 +65,7 @@ public:
     // `route` must be YOUR already-approved ordered tile route, in {x,y}
     // cells and starting at entity.location. It only starts the 60 Hz visual
     // movement; it never commits the gameplay move.
-    bool begin_move(const Entity& entity, const std::vector<Cell>& route);
+    bool begin_move(const Entity& entity, const vector<Cell>& route);
 
     // Convenience overload for your current route representation:
     // std::vector<std::vector<int>>{{x0,y0}, {x1,y1}, ...}.
@@ -72,14 +73,14 @@ public:
     // coordinate really is an {x,y} pair; the Cell overload remains the
     // canonical presentation API.
     bool begin_move(const Entity& entity,
-                    const std::vector<std::vector<int>>& route_xy);
+                    const vector<vector<int>>& route_xy);
 
     // Use this only after your own Mapmaker::move() has already committed its
     // occupancy and Entity::location. The route remains {{x,y}, ...} from the
     // old tile to the new tile; no gameplay state is changed or rewound.
     bool begin_committed_move(const Entity& entity,
-                              const std::vector<std::vector<int>>& route_xy);
-    std::optional<CompletedMove> take_completed_move();
+                              const vector<vector<int>>& route_xy);
+    optional<CompletedMove> take_completed_move();
 
     // One normal hit. A hit never starts a death fade; schedule begin_death()
     // yourself after the final resolved round has completed.
@@ -117,10 +118,10 @@ public:
     // moving/attacking entity does not also appear at a static tile. During
     // an attack it preserves the defender snapshot even if your battle() has
     // already removed that unit from live occupancy.
-    std::vector<UnitPose> visible_unit_poses() const;
-    const std::optional<MissEffect>& miss_effect() const;
-    const std::optional<HitEffect>& hit_effect() const;
-    const std::vector<DeathEffect>& death_effects() const;
+    vector<UnitPose> visible_unit_poses() const;
+    const optional<MissEffect>& miss_effect() const;
+    const optional<HitEffect>& hit_effect() const;
+    const vector<DeathEffect>& death_effects() const;
 
 private:
     OccupancyGrid occupancy_;
@@ -135,13 +136,13 @@ private:
         GuildColor color = GuildColor::player();
     };
 
-    std::vector<Binding> bindings_;
-    std::optional<UnitPose> held_attacker_pose_;
-    std::optional<UnitPose> held_defender_pose_;
-    std::unordered_set<int> hidden_after_death_ids_;
+    vector<Binding> bindings_;
+    optional<UnitPose> held_attacker_pose_;
+    optional<UnitPose> held_defender_pose_;
+    unordered_set<int> hidden_after_death_ids_;
 
     void require_dimensions(const RenderGrid& grid, const char* name) const;
-    std::optional<Binding> binding_for(int entity_id) const;
-    std::optional<UnitPose> pose_for_entity(const Entity& entity) const;
+    optional<Binding> binding_for(int entity_id) const;
+    optional<UnitPose> pose_for_entity(const Entity& entity) const;
 };
 }

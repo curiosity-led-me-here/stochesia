@@ -3,11 +3,13 @@
 #include <string>
 #include <vector>
 
+#include "fe8_theme_categories.h"
 #include "fe8_theme_ids.h"
+using namespace std;
 
 namespace fe_tiles
 {
-using IntGrid = std::vector<std::vector<int>>;
+using IntGrid = vector<vector<int>>;
 
 // Layer-1 values. They are visual classes, deliberately separate from the
 // sandbox's Terrain IDs. PLAIN is the grass/base-ground class.
@@ -104,7 +106,7 @@ public:
     // owned by this TileCanvas instance.
     int pixel_width() const;
     int pixel_height() const;
-    const std::vector<unsigned char>& rgba() const;
+    const vector<unsigned char>& rgba() const;
 
     // Applies two equally sized layers to this canvas.
     //
@@ -114,26 +116,26 @@ public:
     // tile when a subclass contains exactly one orientation.
     // EMPTY skips the cell, so a later draw() call can be used as an overlay.
     void draw(int theme, const IntGrid& class_layer, const IntGrid& tile_layer,
-              const std::string& library_root);
+              const string& library_root);
 
     // Writes the accumulated canvas as a PNG. scale=3 creates 48x48 pixels
     // per original 16x16 tile with nearest-neighbour pixel scaling.
-    void write_png(const std::string& output_png, int scale = 1) const;
+    void write_png(const string& output_png, int scale = 1) const;
 
 private:
     int rows_ = 0;
     int columns_ = 0;
     int tile_pixels_ = 16;
-    std::vector<unsigned char> rgba_;
+    vector<unsigned char> rgba_;
 };
 
 // Read data/catalogue.tsv to learn valid choices before filling tile_layer.
-int subclass_count(int theme, int tile_class, const std::string& library_root);
+int subclass_count(int theme, int tile_class, const string& library_root);
 int orientation_count(int theme, int tile_class, int subclass,
-                      const std::string& library_root);
+                      const string& library_root);
 
 // A short human-readable string, including source-map theme and all three
 // literal visual levels.
-std::string describe_tile(int theme, int tile_class, int subclass, int orientation,
-                          const std::string& library_root);
+string describe_tile(int theme, int tile_class, int subclass, int orientation,
+                          const string& library_root);
 }

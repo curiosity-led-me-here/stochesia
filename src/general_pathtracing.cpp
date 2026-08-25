@@ -11,38 +11,39 @@
 #include "map_monitor.h"
 #include <algorithm>
 #include <deque>
+using namespace std;
 
-void print(const std::vector<std::vector<int>>& matrix)
+void print(const vector<vector<int>>& matrix)
 {
     for (const auto& row : matrix)
     {
         for (const auto& value : row)
         {
-            std::cout << value << ' ';
+            cout << value << ' ';
         }
-        std::cout << '\n';
+        cout << '\n';
     }
 }
 
-void path(int MOV, const std::vector<int>& start, std::vector<std::vector<int>>& out)
+void path(int MOV, const vector<int>& start, vector<vector<int>>& out)
 {
-    if (MOV < 0) throw std::invalid_argument("Movement budget cannot be negative.");
-    if (start.size() != 2) throw std::invalid_argument("Start coordinate must be {x, y}.");
-    if (out.empty() || out[0].empty()) throw std::invalid_argument("Path grid cannot be empty.");
-    for (const std::vector<int>& row : out)
+    if (MOV < 0) throw invalid_argument("Movement budget cannot be negative.");
+    if (start.size() != 2) throw invalid_argument("Start coordinate must be {x, y}.");
+    if (out.empty() || out[0].empty()) throw invalid_argument("Path grid cannot be empty.");
+    for (const vector<int>& row : out)
     {
-        if (row.size() != out[0].size()) throw std::invalid_argument("Path grid must be rectangular.");
+        if (row.size() != out[0].size()) throw invalid_argument("Path grid must be rectangular.");
     }
     if (start[0] < 0 || start[1] < 0 ||
         start[0] >= out[0].size() || start[1] >= out.size())
     {
-        throw std::out_of_range("Start coordinate is outside the path grid.");
+        throw out_of_range("Start coordinate is outside the path grid.");
     }
 
-    for (const std::vector<int>& help : helper)
+    for (const vector<int>& help : helper)
     {
 	int budget = MOV;
-	std::vector<int> next_coord = {start[0] + help[0], start[1] + help[1]};
+	vector<int> next_coord = {start[0] + help[0], start[1] + help[1]};
 	int new_x = next_coord[0];
 	int new_y = next_coord[1];
 	if (budget == 0) continue;
@@ -64,18 +65,18 @@ void path(int MOV, const std::vector<int>& start, std::vector<std::vector<int>>&
 }
 
 
-void normalize_path(const std::vector<int>& start, std::vector<std::vector<int>>& out)
+void normalize_path(const vector<int>& start, vector<vector<int>>& out)
 {
-    if (start.size() != 2) throw std::invalid_argument("Start coordinate must be {x, y}.");
-    if (out.empty() || out[0].empty()) throw std::invalid_argument("Path grid cannot be empty.");
-    for (const std::vector<int>& row : out)
+    if (start.size() != 2) throw invalid_argument("Start coordinate must be {x, y}.");
+    if (out.empty() || out[0].empty()) throw invalid_argument("Path grid cannot be empty.");
+    for (const vector<int>& row : out)
     {
-        if (row.size() != out[0].size()) throw std::invalid_argument("Path grid must be rectangular.");
+        if (row.size() != out[0].size()) throw invalid_argument("Path grid must be rectangular.");
     }
     if (start[0] < 0 || start[1] < 0 ||
         start[0] >= out[0].size() || start[1] >= out.size())
     {
-        throw std::out_of_range("Start coordinate is outside the path grid.");
+        throw out_of_range("Start coordinate is outside the path grid.");
     }
 
     for (int i=0; i < out.size(); i++)
@@ -95,21 +96,21 @@ void normalize_path(const std::vector<int>& start, std::vector<std::vector<int>>
     out[start[1]][start[0]] = 0;
 }
 
-void trace(std::vector<std::vector<int>>& out_min, std::vector<std::vector<int>>& out_max, const std::vector<int>& start, int MIN, int MAX)
+void trace(vector<vector<int>>& out_min, vector<vector<int>>& out_max, const vector<int>& start, int MIN, int MAX)
 {
     if (MIN < 0 || MAX < 0 || MIN > MAX)
     {
-        throw std::invalid_argument("Range must satisfy 0 <= MIN <= MAX.");
+        throw invalid_argument("Range must satisfy 0 <= MIN <= MAX.");
     }
     if (out_min.size() != out_max.size() || out_min.empty() || out_min[0].empty())
     {
-        throw std::invalid_argument("Range grids must be non-empty and have matching dimensions.");
+        throw invalid_argument("Range grids must be non-empty and have matching dimensions.");
     }
     for (int i=0; i < out_min.size(); i++)
     {
 	if (out_min[i].size() != out_max[i].size())
 	{
-	    throw std::invalid_argument("Range grids must be non-empty and have matching dimensions.");
+	    throw invalid_argument("Range grids must be non-empty and have matching dimensions.");
 	}
     }
 
@@ -130,15 +131,15 @@ void trace(std::vector<std::vector<int>>& out_min, std::vector<std::vector<int>>
 }
 
 void pathtrace(
-    std::vector<int> current_coord,
+    vector<int> current_coord,
     int budget,
-    std::vector<std::vector<int>>& state,
-    const std::vector<std::vector<int>>& map,
+    vector<vector<int>>& state,
+    const vector<vector<int>>& map,
     terrain::MovementType movement)
 {
-    for (std::vector<int> i : helper)
+    for (vector<int> i : helper)
     {
-        std::vector<int> next_coord = { current_coord[0] + i[0], current_coord[1] + i[1] };
+        vector<int> next_coord = { current_coord[0] + i[0], current_coord[1] + i[1] };
         int x = next_coord[0];
         int y = next_coord[1];
         if (x < 0 || y < 0 || x >= state[0].size() || y >= state.size() || !terrain::can_enter(map[y][x], movement)) continue;
@@ -151,22 +152,22 @@ void pathtrace(
     }
 }
 
-std::vector<std::vector<int>> pathtrace(const std::vector<std::vector<int>>& map, std::vector<int> current_coord, Entity& unit)
+vector<vector<int>> pathtrace(const vector<vector<int>>& map, vector<int> current_coord, Entity& unit)
 {
     terrain::MovementType movement = unit.movement;
-    std::vector<std::vector<int>> state = map;
+    vector<vector<int>> state = map;
     int budget = unit.stats.MOV;
     int x = current_coord[1];
     int y = current_coord[0];
-    for (std::vector<int>& row : state) std::fill(row.begin(), row.end(), -1);
+    for (vector<int>& row : state) fill(row.begin(), row.end(), -1);
     state[x][y] = unit.stats.MOV;
     pathtrace(current_coord, budget, state, map, unit.movement);
     return state;
 }
 
-void locate_target(const std::vector<std::vector<int>>& traced, std::vector<int> current_coord, std::vector<std::vector<int>>& out)
+void locate_target(const vector<vector<int>>& traced, vector<int> current_coord, vector<vector<int>>& out)
 {
-    for (std::vector<int> i : helper)
+    for (vector<int> i : helper)
     {
 	int next_x = current_coord[0] + i[0];
 	int next_y = current_coord[1] + i[1];
@@ -185,10 +186,10 @@ void locate_target(const std::vector<std::vector<int>>& traced, std::vector<int>
     }
 }
 
-std::vector<std::vector<int>> get_max_move(const std::vector<std::vector<int>>& map, std::vector<int> current_coord, Entity& unit)
+vector<vector<int>> get_max_move(const vector<vector<int>>& map, vector<int> current_coord, Entity& unit)
 {
-    std::vector<std::vector<int>> out;
-    std::vector<std::vector<int>> state = pathtrace(map, current_coord, unit);
+    vector<vector<int>> out;
+    vector<vector<int>> state = pathtrace(map, current_coord, unit);
     for (int i=0; i < state.size(); i++)
     {
 	for (int j=0; j < state[0].size(); j++)
@@ -202,7 +203,7 @@ std::vector<std::vector<int>> get_max_move(const std::vector<std::vector<int>>& 
     return out;
 }
 
-double get_cartesian_distance(std::vector<int> target, std::vector<int> inp)
+double get_cartesian_distance(vector<int> target, vector<int> inp)
 {
     int x = inp[0];
     int y = inp[1];

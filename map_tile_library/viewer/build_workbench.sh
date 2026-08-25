@@ -3,7 +3,7 @@ set -euo pipefail
 
 library_root="$(cd "$(dirname "$0")/.." && pwd)"
 core_root="$(cd "$library_root/.." && pwd)"
-mkdir -p "$library_root/viewer/build"
+mkdir -p "$core_root/bin/map_tile_library/viewer"
 
 clang++ -std=c++17 -fobjc-arc -Wall -Wextra \
   -Wno-sign-compare -Wno-logical-op-parentheses -Wno-unused-variable \
@@ -32,6 +32,6 @@ clang++ -std=c++17 -fobjc-arc -Wall -Wextra \
   -framework CoreFoundation \
   -framework CoreGraphics \
   -framework ImageIO \
-  -o "$library_root/viewer/build/fe8_map_workbench"
+  -o "$core_root/bin/map_tile_library/viewer/fe8_map_workbench"
 
-echo "Built: $library_root/viewer/build/fe8_map_workbench"
+echo "Built: $core_root/bin/map_tile_library/viewer/fe8_map_workbench"

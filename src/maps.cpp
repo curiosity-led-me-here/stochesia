@@ -11,14 +11,15 @@
 #include <vector>
 
 #include "terrain_data.h"
+using namespace std;
 
 namespace
 {
-const std::string kTileLibraryRoot =
+const string kTileLibraryRoot =
     "/Users/ashu/Stochesia/map_tile_library";
-const std::string kFe8MapRoot =
+const string kFe8MapRoot =
     kTileLibraryRoot + "/reference_gameplay_maps/";
-const std::string kEditorMapRoot =
+const string kEditorMapRoot =
     kTileLibraryRoot + "/reference_layouts";
 const int kTerrainLookupOffset = 0x2000;
 
@@ -28,73 +29,73 @@ struct VisualAddress
     int tile_code = 0;
 };
 
-std::vector<unsigned char> read_binary(const std::string& path)
+vector<unsigned char> read_binary(const string& path)
 {
-    std::ifstream file(path, std::ios::binary);
+    ifstream file(path, ios::binary);
     if (!file)
     {
-        throw std::runtime_error("Could not open FE8 map asset: " + path);
+        throw runtime_error("Could not open FE8 map asset: " + path);
     }
 
-    return std::vector<unsigned char>(
-        std::istreambuf_iterator<char>(file),
-        std::istreambuf_iterator<char>()
+    return vector<unsigned char>(
+        istreambuf_iterator<char>(file),
+        istreambuf_iterator<char>()
     );
 }
 
-std::string read_text(const std::string& path)
+string read_text(const string& path)
 {
-    std::ifstream file(path);
+    ifstream file(path);
     if (!file)
     {
-        throw std::runtime_error("Could not open map metadata: " + path);
+        throw runtime_error("Could not open map metadata: " + path);
     }
     return {
-        std::istreambuf_iterator<char>(file),
-        std::istreambuf_iterator<char>()
+        istreambuf_iterator<char>(file),
+        istreambuf_iterator<char>()
     };
 }
 
-std::vector<std::string> split(const std::string& line, char separator)
+vector<string> split(const string& line, char separator)
 {
-    std::vector<std::string> result;
-    std::stringstream stream(line);
-    std::string part;
-    while (std::getline(stream, part, separator))
+    vector<string> result;
+    stringstream stream(line);
+    string part;
+    while (getline(stream, part, separator))
     {
         result.push_back(part);
     }
     return result;
 }
 
-int read_json_number(const std::string& json, const std::string& key)
+int read_json_number(const string& json, const string& key)
 {
-    std::size_t start = json.find("\"" + key + "\"");
-    if (start == std::string::npos)
+    size_t start = json.find("\"" + key + "\"");
+    if (start == string::npos)
     {
-        throw std::runtime_error("Map metadata is missing " + key);
+        throw runtime_error("Map metadata is missing " + key);
     }
 
     start = json.find(':', start);
-    if (start == std::string::npos)
+    if (start == string::npos)
     {
-        throw std::runtime_error("Map metadata has an invalid " + key);
+        throw runtime_error("Map metadata has an invalid " + key);
     }
-    return std::stoi(json.substr(start + 1));
+    return stoi(json.substr(start + 1));
 }
 
 void require_rectangular(const maps::IntGrid& grid, const char* name)
 {
     if (grid.empty() || grid.front().empty())
     {
-        throw std::invalid_argument(std::string(name) + " must not be empty.");
+        throw invalid_argument(string(name) + " must not be empty.");
     }
-    const std::size_t width = grid.front().size();
-    for (const std::vector<int>& row : grid)
+    const size_t width = grid.front().size();
+    for (const vector<int>& row : grid)
     {
         if (row.size() != width)
         {
-            throw std::invalid_argument(std::string(name) + " must be rectangular.");
+            throw invalid_argument(string(name) + " must be rectangular.");
         }
     }
 }
@@ -108,43 +109,43 @@ void require_same_dimensions(const maps::IntGrid& left,
     require_rectangular(right, right_name);
     if (left.size() != right.size() || left.front().size() != right.front().size())
     {
-        throw std::invalid_argument(
-            std::string(left_name) + " and " + right_name + " have different dimensions."
+        throw invalid_argument(
+            string(left_name) + " and " + right_name + " have different dimensions."
         );
     }
 }
 
-maps::TerrainMap load_terrain(const std::string& layout_name, const std::string& config_name)
+maps::TerrainMap load_terrain(const string& layout_name, const string& config_name)
 {
-    const std::string layout_dir = kFe8MapRoot + "layout/";
-    const std::string metadata = read_text(layout_dir + layout_name + ".json");
+    const string layout_dir = kFe8MapRoot + "layout/";
+    const string metadata = read_text(layout_dir + layout_name + ".json");
     const int width = read_json_number(metadata, "width");
     const int height = read_json_number(metadata, "height");
 
-    const std::vector<unsigned char> layout = read_binary(layout_dir + layout_name + ".mar");
-    const std::vector<unsigned char> config = read_binary(kFe8MapRoot + config_name);
-    if (layout.size() != static_cast<std::size_t>(width * height * 2))
+    const vector<unsigned char> layout = read_binary(layout_dir + layout_name + ".mar");
+    const vector<unsigned char> config = read_binary(kFe8MapRoot + config_name);
+    if (layout.size() != static_cast<size_t>(width * height * 2))
     {
-        throw std::runtime_error("Unexpected layout size for " + layout_name);
+        throw runtime_error("Unexpected layout size for " + layout_name);
     }
 
-    maps::TerrainMap terrain(height, std::vector<int>(width));
+    maps::TerrainMap terrain(height, vector<int>(width));
     for (int y = 0; y < height; ++y)
     {
         for (int x = 0; x < width; ++x)
         {
-            const std::size_t layout_index = static_cast<std::size_t>((y * width + x) * 2);
-            std::uint16_t base_tile = static_cast<std::uint16_t>(layout[layout_index]) |
-                (static_cast<std::uint16_t>(layout[layout_index + 1]) << 8);
+            const size_t layout_index = static_cast<size_t>((y * width + x) * 2);
+            uint16_t base_tile = static_cast<uint16_t>(layout[layout_index]) |
+                (static_cast<uint16_t>(layout[layout_index + 1]) << 8);
 
             // FEBuilder editor map cells encode a base tile in their upper
             // bits. This is the same conversion as FE8's mar_to_map.py.
             base_tile >>= 3;
-            const std::size_t terrain_index =
-                static_cast<std::size_t>(kTerrainLookupOffset + (base_tile >> 2));
+            const size_t terrain_index =
+                static_cast<size_t>(kTerrainLookupOffset + (base_tile >> 2));
             if (terrain_index >= config.size())
             {
-                throw std::runtime_error("Invalid tile ID in " + layout_name);
+                throw runtime_error("Invalid tile ID in " + layout_name);
             }
             terrain[y][x] = config[terrain_index];
         }
@@ -152,66 +153,66 @@ maps::TerrainMap load_terrain(const std::string& layout_name, const std::string&
     return terrain;
 }
 
-int theme_id_for(const std::string& source)
+int theme_id_for(const string& source)
 {
-    std::ifstream file(kTileLibraryRoot + "/data/themes.tsv");
+    ifstream file(kTileLibraryRoot + "/data/themes.tsv");
     if (!file)
     {
-        throw std::runtime_error("Cannot open map_tile_library/data/themes.tsv.");
+        throw runtime_error("Cannot open map_tile_library/data/themes.tsv.");
     }
 
-    std::string line;
-    std::getline(file, line); // header
-    while (std::getline(file, line))
+    string line;
+    getline(file, line); // header
+    while (getline(file, line))
     {
-        const std::vector<std::string> fields = split(line, '\t');
+        const vector<string> fields = split(line, '\t');
         if (fields.size() >= 2 && fields[1] == source)
         {
-            return std::stoi(fields[0]);
+            return stoi(fields[0]);
         }
     }
-    throw std::runtime_error("No visual theme exists for " + source);
+    throw runtime_error("No visual theme exists for " + source);
 }
 
-std::unordered_map<std::string, VisualAddress> catalogue_for_theme(int theme_id)
+unordered_map<string, VisualAddress> catalogue_for_theme(int theme_id)
 {
-    std::ifstream file(kTileLibraryRoot + "/data/catalogue.tsv");
+    ifstream file(kTileLibraryRoot + "/data/catalogue.tsv");
     if (!file)
     {
-        throw std::runtime_error("Cannot open map_tile_library/data/catalogue.tsv.");
+        throw runtime_error("Cannot open map_tile_library/data/catalogue.tsv.");
     }
 
-    std::unordered_map<std::string, VisualAddress> result;
-    std::string line;
-    std::getline(file, line); // header
-    while (std::getline(file, line))
+    unordered_map<string, VisualAddress> result;
+    string line;
+    getline(file, line); // header
+    while (getline(file, line))
     {
-        const std::vector<std::string> fields = split(line, '\t');
-        if (fields.size() < 8 || std::stoi(fields[0]) != theme_id)
+        const vector<string> fields = split(line, '\t');
+        if (fields.size() < 8 || stoi(fields[0]) != theme_id)
         {
             continue;
         }
-        const int tile_class = std::stoi(fields[2]);
-        const int subclass = std::stoi(fields[4]);
-        const int orientation = std::stoi(fields[5]);
+        const int tile_class = stoi(fields[2]);
+        const int subclass = stoi(fields[4]);
+        const int orientation = stoi(fields[5]);
         result.emplace(fields[6], VisualAddress{
             tile_class, maps::make_visual_tile_code(subclass, orientation)
         });
     }
     if (result.empty())
     {
-        throw std::runtime_error("Visual theme has no catalogue entries.");
+        throw runtime_error("Visual theme has no catalogue entries.");
     }
     return result;
 }
 
-std::vector<std::vector<std::string>> read_editor_hash_grid(const std::string& path)
+vector<vector<string>> read_editor_hash_grid(const string& path)
 {
-    const std::string json = read_text(path);
-    std::vector<std::vector<std::string>> rows;
+    const string json = read_text(path);
+    vector<vector<string>> rows;
     int depth = 0;
 
-    for (std::size_t index = 0; index < json.size(); ++index)
+    for (size_t index = 0; index < json.size(); ++index)
     {
         if (json[index] == '[')
         {
@@ -232,10 +233,10 @@ std::vector<std::vector<std::string>> read_editor_hash_grid(const std::string& p
             continue;
         }
 
-        const std::size_t end_quote = json.find('"', index + 1);
-        if (end_quote == std::string::npos)
+        const size_t end_quote = json.find('"', index + 1);
+        if (end_quote == string::npos)
         {
-            throw std::runtime_error("Unterminated tile hash in " + path);
+            throw runtime_error("Unterminated tile hash in " + path);
         }
         if (depth == 2)
         {
@@ -246,22 +247,22 @@ std::vector<std::vector<std::string>> read_editor_hash_grid(const std::string& p
 
     if (rows.empty() || rows.front().empty())
     {
-        throw std::runtime_error("Editor map JSON is empty: " + path);
+        throw runtime_error("Editor map JSON is empty: " + path);
     }
-    const std::size_t width = rows.front().size();
-    for (const std::vector<std::string>& row : rows)
+    const size_t width = rows.front().size();
+    for (const vector<string>& row : rows)
     {
         if (row.size() != width)
         {
-            throw std::runtime_error("Editor map JSON is not rectangular: " + path);
+            throw runtime_error("Editor map JSON is not rectangular: " + path);
         }
     }
     return rows;
 }
 
-maps::MapRecipe load_visual_recipe(const std::string& layout_name,
-                                   const std::string& config_name,
-                                   const std::string& theme_source)
+maps::MapRecipe load_visual_recipe(const string& layout_name,
+                                   const string& config_name,
+                                   const string& theme_source)
 {
     maps::MapRecipe result;
     result.terrain = load_terrain(layout_name, config_name);
@@ -270,25 +271,25 @@ maps::MapRecipe load_visual_recipe(const std::string& layout_name,
     constexpr const char* kFe8Prefix = "Fire Emblem 8/";
     if (theme_source.rfind(kFe8Prefix, 0) != 0)
     {
-        throw std::runtime_error("Unexpected FE8 theme path: " + theme_source);
+        throw runtime_error("Unexpected FE8 theme path: " + theme_source);
     }
-    const std::string editor_map = kEditorMapRoot + "/" +
+    const string editor_map = kEditorMapRoot + "/" +
         theme_source + "/001.png.json";
     const auto hashes = read_editor_hash_grid(editor_map);
     const auto catalogue = catalogue_for_theme(result.theme_id);
 
     result.classes.resize(hashes.size());
     result.tiles.resize(hashes.size());
-    for (std::size_t y = 0; y < hashes.size(); ++y)
+    for (size_t y = 0; y < hashes.size(); ++y)
     {
         result.classes[y].reserve(hashes[y].size());
         result.tiles[y].reserve(hashes[y].size());
-        for (const std::string& hash : hashes[y])
+        for (const string& hash : hashes[y])
         {
             const auto address = catalogue.find(hash);
             if (address == catalogue.end())
             {
-                throw std::runtime_error(
+                throw runtime_error(
                     "Tile hash " + hash + " is absent from visual theme " + theme_source
                 );
             }
@@ -391,7 +392,7 @@ MapRecipe compose(int theme_id,
 {
     if (theme_id <= 0)
     {
-        throw std::invalid_argument("A visual map recipe needs a positive theme ID.");
+        throw invalid_argument("A visual map recipe needs a positive theme ID.");
     }
     require_same_dimensions(terrain, classes, "Gameplay terrain", "Visual class grid");
     require_same_dimensions(terrain, tiles, "Gameplay terrain", "Visual tile grid");
@@ -402,13 +403,73 @@ MapRecipe from_visual(int theme_id, VisualClassMap classes, VisualTileMap tiles)
 {
     require_same_dimensions(classes, tiles, "Visual class grid", "Visual tile grid");
     TerrainMap terrain = classes;
-    for (std::vector<int>& row : terrain)
+    for (vector<int>& row : terrain)
     {
         for (int& tile_class : row)
         {
             tile_class = terrain_for_visual_class(tile_class);
         }
     }
+    return compose(theme_id, std::move(terrain), std::move(classes), std::move(tiles));
+}
+
+MapRecipe from_tile_ids(int theme_id,
+                        IntGrid tile_ids,
+                        const TilePalette& palette)
+{
+    require_rectangular(tile_ids, "Tile ID grid");
+    if (palette.empty())
+    {
+        throw invalid_argument("Tile palette must not be empty.");
+    }
+
+    TerrainMap terrain;
+    VisualClassMap classes;
+    VisualTileMap tiles;
+    terrain.reserve(tile_ids.size());
+    classes.reserve(tile_ids.size());
+    tiles.reserve(tile_ids.size());
+
+    for (const vector<int>& row : tile_ids)
+    {
+        vector<int> terrain_row;
+        vector<int> class_row;
+        vector<int> tile_row;
+        terrain_row.reserve(row.size());
+        class_row.reserve(row.size());
+        tile_row.reserve(row.size());
+
+        for (const int tile_id : row)
+        {
+            if (tile_id < 0 || tile_id >= static_cast<int>(palette.size()))
+            {
+                throw invalid_argument("Tile ID is absent from the palette.");
+            }
+
+            const NamedTile& tile = palette[tile_id];
+            if (tile.name.empty())
+            {
+                throw invalid_argument("Every named tile needs a name.");
+            }
+            if (tile.terrain_id < DERIVE_TERRAIN)
+            {
+                throw invalid_argument("Named tile terrain override is invalid.");
+            }
+
+            terrain_row.push_back(
+                tile.terrain_id == DERIVE_TERRAIN
+                    ? terrain_for_visual_class(tile.tile_class)
+                    : tile.terrain_id
+            );
+            class_row.push_back(tile.tile_class);
+            tile_row.push_back(tile.tile_code);
+        }
+
+        terrain.push_back(std::move(terrain_row));
+        classes.push_back(std::move(class_row));
+        tiles.push_back(std::move(tile_row));
+    }
+
     return compose(theme_id, std::move(terrain), std::move(classes), std::move(tiles));
 }
 

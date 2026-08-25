@@ -12,6 +12,7 @@
 #include <vector>
 #include <map_ascii.h>
 #include <sstream>
+using namespace std;
 
 bool phase_done(Guild& team)
 {
@@ -48,7 +49,7 @@ int all_dead(Guild& team)
     return 0;
 }
 
-bool game_over(std::vector<Guild> guilds)
+bool game_over(vector<Guild> guilds)
 {
     int left = 0;
     for (Guild team : guilds)
@@ -65,7 +66,7 @@ bool game_over(std::vector<Guild> guilds)
     }
 }
 
-Guild survivor(std::vector<Guild> guilds)
+Guild survivor(vector<Guild> guilds)
 {
     for (Guild team : guilds)
     {
@@ -74,18 +75,18 @@ Guild survivor(std::vector<Guild> guilds)
 	    return team;
 	}
     }
-    throw std::invalid_argument("No team survived!");
+    throw invalid_argument("No team survived!");
 }
 
-Command process_command(std::string name)
+Command process_command(string name)
 {
-    std::cout << name << "'s phase > ";
-    std::string raw_str;
-    std::getline(std::cin >> std::ws, raw_str);
+    cout << name << "'s phase > ";
+    string raw_str;
+    getline(cin >> ws, raw_str);
 
-    std::istringstream stream(raw_str);
-    std::vector<std::string> out;
-    std::string token;
+    istringstream stream(raw_str);
+    vector<string> out;
+    string token;
 
     while (stream >> token)
     {
@@ -96,49 +97,49 @@ Command process_command(std::string name)
     {
 	try
 	{
-	    return {out[0], std::stoi(out[1]), {}};
+	    return {out[0], stoi(out[1]), {}};
 	}
-	catch (const std::invalid_argument& e)
+	catch (const invalid_argument& e)
 	{
-	    std::cout << "Command must be {move id dx dy} or {check id}." << '\n';
+	    cout << "Command must be {move id dx dy} or {check id}." << '\n';
 	    return process_command(name);
 	}
-	catch (const std::out_of_range& e)
+	catch (const out_of_range& e)
 	{
-	    std::cout << "Command must be {move id dx dy} or {check id}." << '\n';
+	    cout << "Command must be {move id dx dy} or {check id}." << '\n';
 	    return process_command(name);
 	}
     }
 
     if (out.size() < 4 || out.size() > 4)
     {
-	std::cout << "Command must be {move id dx dy} or {check id}." << '\n';
+	cout << "Command must be {move id dx dy} or {check id}." << '\n';
         return process_command(name);
     }
 
     try
     {
-        std::string name = out[0];
-        int id = std::stoi(out[1]);
-        int x = std::stoi(out[2]);
-        int y = std::stoi(out[3]);
+        string name = out[0];
+        int id = stoi(out[1]);
+        int x = stoi(out[2]);
+        int y = stoi(out[3]);
 
 	if (name != "move")
 	{
-	    std::cout << "Command must be {move id dx dy} or {check id}." << '\n';
+	    cout << "Command must be {move id dx dy} or {check id}." << '\n';
 	    return process_command(name);
 	}
 	
         return {name, id, {x, y}};
     }
-    catch (const std::invalid_argument& e)
+    catch (const invalid_argument& e)
     {
-	std::cout << "Command must be {move id dx dy} or {check id}." << '\n';
+	cout << "Command must be {move id dx dy} or {check id}." << '\n';
         return process_command(name);
     }
-    catch (const std::out_of_range& e)
+    catch (const out_of_range& e)
     {
-	std::cout << "Command must be {move id dx dy} or {check id}." << '\n';
+	cout << "Command must be {move id dx dy} or {check id}." << '\n';
         return process_command(name);
     }
 }
@@ -153,25 +154,25 @@ Environment::Environment(const maps::MapRecipe& recipe)
 
 void Environment::move_up()
 {
-    std::vector<int> new_coords = {cursor[0], cursor[1]-1};
+    vector<int> new_coords = {cursor[0], cursor[1]-1};
     if (new_coords[0] < static_cast<int>(board.get_map()[0].size()) && new_coords[1] < static_cast<int>(board.get_map().size()) && new_coords[0] >= 0 && new_coords[1] >= 0) { cursor = new_coords; }
 }
 
 void Environment::move_down()
 {
-    std::vector<int> new_coords = {cursor[0], cursor[1]+1};
+    vector<int> new_coords = {cursor[0], cursor[1]+1};
     if (new_coords[0] < static_cast<int>(board.get_map()[0].size()) && new_coords[1] < static_cast<int>(board.get_map().size()) && new_coords[0] >= 0 && new_coords[1] >= 0) { cursor = new_coords; }
 }
 
 void Environment::move_right()
 {
-    std::vector<int> new_coords = {cursor[0]+1, cursor[1]};
+    vector<int> new_coords = {cursor[0]+1, cursor[1]};
     if (new_coords[0] < static_cast<int>(board.get_map()[0].size()) && new_coords[1] < static_cast<int>(board.get_map().size()) && new_coords[0] >= 0 && new_coords[1] >= 0) { cursor = new_coords; }
 }
 
 void Environment::move_left()
 {
-    std::vector<int> new_coords = {cursor[0]-1, cursor[1]};
+    vector<int> new_coords = {cursor[0]-1, cursor[1]};
     if (new_coords[0] < static_cast<int>(board.get_map()[0].size()) && new_coords[1] < static_cast<int>(board.get_map().size()) && new_coords[0] >= 0 && new_coords[1] >= 0) { cursor = new_coords; }
 }
 
@@ -207,7 +208,7 @@ const Registry& Environment::units() const
 
 Environment::ConfigureEnv::ConfigureEnv(Environment& env) : env(env) {};
 
-void Environment::ConfigureEnv::add_guild(std::string name, int id)
+void Environment::ConfigureEnv::add_guild(string name, int id)
 {
     assert(id != 0);
     env.guilds.push_back(Guild{});
@@ -224,7 +225,7 @@ Entity& Environment::ConfigureEnv::configure_entity(Entity unit, int id, Guild& 
     return out_unit;
 }
 
-void Environment::ConfigureEnv::configure_entity_location(Entity& out_unit, const std::vector<int> location)
+void Environment::ConfigureEnv::configure_entity_location(Entity& out_unit, const vector<int> location)
 {
     out_unit.location = location;
     out_unit.terrain_id = env.map().get_map()[location[1]][location[0]];
@@ -234,7 +235,7 @@ void Environment::ConfigureEnv::configure_entity_location(Entity& out_unit, cons
 	env.board.path_trace(out_unit);
         return;
     }
-    throw std::invalid_argument("Entity could not be placed on a non-placeable tile!");
+    throw invalid_argument("Entity could not be placed on a non-placeable tile!");
 }
 
 void Environment::ConfigureEnv::configure_render(Entity& unit, fe_tiles::AnimationRenderer& render, fe_tiles::UnitVisual visual)
@@ -255,12 +256,12 @@ void Environment::Game::start()
 	reset_phase(env.guilds[team_id]);
 	while (!phase_done(env.guilds[team_id]))
 	{
-	    std::string raw_str;
+	    string raw_str;
 	    const Guild& current_guild = env.guilds[team_id];
 	    env.board.plot_with_units(env.registry);
 	    print_guild_status(current_guild);
-	    std::cout << '\n';
-	    std::cout << '\n';
+	    cout << '\n';
+	    cout << '\n';
 	    Command cmd;
 	    while (true)
 	    {
@@ -280,7 +281,7 @@ void Environment::Game::start()
 		    plot_state(us, 0, static_cast<int>(env.board.get_map()[0].size()) - 1, 0, static_cast<int>(env.board.get_map().size()) - 1);
 		    break;
 		}
-		std::cout << current_guild.name << "'s phase. Select (1) alive units of (2) this guild only, (3) whose turn is still left."; 
+		cout << current_guild.name << "'s phase. Select (1) alive units of (2) this guild only, (3) whose turn is still left."; 
 	    }
 	    Entity& us = env.registry.get_unit(cmd.id);
 	    if (cmd.name == "move")
@@ -290,5 +291,5 @@ void Environment::Game::start()
 	}
 	team_id++;
     }
-    std::cout << "Game over! " << survivor(env.guilds).name << " WINS" << '\n';
+    cout << "Game over! " << survivor(env.guilds).name << " WINS" << '\n';
 }

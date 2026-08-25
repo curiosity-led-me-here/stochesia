@@ -2,12 +2,13 @@
 #include "fe8_unit_visuals.h"
 
 #include <stdexcept>
+using namespace std;
 
 namespace fe_tiles
 {
 namespace
 {
-const std::vector<UnitVisualInfo> kVisuals = {
+const vector<UnitVisualInfo> kVisuals = {
     {UnitVisual::ArchMogall, "Arch_Mogall", "graphics/unit_icon/move/unit_icon_move_Arch_Mogall_sheet.png", "graphics/unit_icon/wait/unit_icon_wait_Arch_Mogall_sheet.png", "unit_icon_move_Arch_Mogall_motion"},
     {UnitVisual::Archer, "Archer", "graphics/unit_icon/move/unit_icon_move_Archer_sheet.png", "graphics/unit_icon/wait/unit_icon_wait_Archer_sheet.png", "unit_icon_move_Archer_motion"},
     {UnitVisual::ArcherF, "Archer_F", "graphics/unit_icon/move/unit_icon_move_Archer_F_sheet.png", "graphics/unit_icon/wait/unit_icon_wait_Archer_F_sheet.png", "unit_icon_move_Archer_F_motion"},
@@ -117,7 +118,7 @@ const std::vector<UnitVisualInfo> kVisuals = {
     {UnitVisual::WyvernRider, "Wyvern_Rider", "graphics/unit_icon/move/unit_icon_move_Wyvern_Rider_sheet.png", "graphics/unit_icon/wait/unit_icon_wait_Wyvern_Rider_sheet.png", "unit_icon_move_Wyvern_Rider_motion"}
 };
 
-const std::vector<MapUnitMotionProgram> kMotionPrograms = {
+const vector<MapUnitMotionProgram> kMotionPrograms = {
     {UnitVisual::ArchMogall, 0, "left", {{13, 0}, {6, 1}, {13, 2}, {6, 3}}},
     {UnitVisual::ArchMogall, 1, "right", {{13, 4}, {6, 5}, {13, 6}, {6, 7}}},
     {UnitVisual::ArchMogall, 2, "down", {{13, 8}, {6, 9}, {13, 10}, {6, 11}}},
@@ -664,17 +665,17 @@ const UnitVisualInfo& unit_visual_info(UnitVisual visual)
     const int index = static_cast<int>(visual);
     if (index < 0 || index >= static_cast<int>(kVisuals.size()))
     {
-        throw std::out_of_range("Unknown FE8 UnitVisual.");
+        throw out_of_range("Unknown FE8 UnitVisual.");
     }
-    return kVisuals[static_cast<std::size_t>(index)];
+    return kVisuals[static_cast<size_t>(index)];
 }
 
-const std::vector<UnitVisualInfo>& all_unit_visuals()
+const vector<UnitVisualInfo>& all_unit_visuals()
 {
     return kVisuals;
 }
 
-std::optional<UnitVisual> unit_visual_for_class(int fe8_class_id)
+optional<UnitVisual> unit_visual_for_class(int fe8_class_id)
 {
     switch (fe8_class_id)
     {
@@ -805,11 +806,11 @@ std::optional<UnitVisual> unit_visual_for_class(int fe8_class_id)
         case 125: return UnitVisual::ElderBael;
         case 126: return UnitVisual::JourneymanT2;
         case 127: return UnitVisual::PupilT2;
-        default: return std::nullopt;
+        default: return nullopt;
     }
 }
 
-const std::vector<MapUnitMotionProgram>& all_map_unit_motion_programs()
+const vector<MapUnitMotionProgram>& all_map_unit_motion_programs()
 {
     return kMotionPrograms;
 }

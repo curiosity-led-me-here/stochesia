@@ -7,13 +7,14 @@
 #include <random>
 #include "game_data.h"
 #include "pathfinder.h"
+using namespace std;
 
 extern int seed;
-extern std::vector<std::vector<int>> WeaponTriangle;
+extern vector<vector<int>> WeaponTriangle;
 
 bool random_binary(double probability, int seed);
 
-std::vector<int> WeaponTriangleAdv(
+vector<int> WeaponTriangleAdv(
     const Weapon& A,
     const Weapon& B
 );
@@ -28,7 +29,7 @@ CombatInfo info(
     const Entity& B
 );
 
-std::vector<CombatInfo> interact(
+vector<CombatInfo> interact(
     const Entity& A,
     const Entity& B,
     Mapmaker& map
@@ -41,7 +42,7 @@ int attack_sequence(
     CombatInfo& B_perf
 );
 
-std::vector<sequence> entity_attack(
+vector<sequence> entity_attack(
     Entity& A,
     Entity& B,
     CombatInfo& A_perf,
@@ -51,7 +52,7 @@ std::vector<sequence> entity_attack(
     Mapmaker& map
 );
 
-std::vector<sequence> battle(
+vector<sequence> battle(
     Entity& A,
     Entity& B,
     Mapmaker& map

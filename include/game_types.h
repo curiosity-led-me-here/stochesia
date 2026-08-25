@@ -5,6 +5,7 @@
 #include <cassert>
 #include <unordered_map>
 #include "terrain_data.h"
+using namespace std;
 
 // IDs 65–116 select an exact visual group in fe_map_builder. They are renderer
 // only; gameplay terrain uses the native FE8 TerrainId vocabulary.
@@ -113,9 +114,9 @@ enum ItemID
 
 struct Weapon
 {
-    std::string NAME;
-    std::string CAT_NAME;
-    std::string MIN_RNK;
+    string NAME;
+    string CAT_NAME;
+    string MIN_RNK;
     int RNKEXP;
     ItemID ID;
     WeaponCategory CAT;
@@ -126,12 +127,12 @@ struct Weapon
     int CRIT;
     int MINRG;
     int MAXRG;
-    std::vector<UnitClass> effective;
+    vector<UnitClass> effective;
 };
 
 struct Healer
 {
-    std::string Name;
+    string Name;
     ItemID ID;
     WeaponCategory CAT;
     int RNKEXP;
@@ -221,7 +222,7 @@ struct Inventory
 
 struct WeaponAffinity
 {
-   std::vector<WeaponCategory> UsableWeapons;
+   vector<WeaponCategory> UsableWeapons;
 };
 
 struct Guild;
@@ -230,12 +231,12 @@ struct Entity
 {
     bool alive=true;
     bool turn=true;
-    std::string name;
+    string name;
     UnitClass unitclass;
     int entity_id;
-    std::vector<int> location;
-    std::vector<std::vector<int>> path;
-    std::vector<std::vector<int>> attack_range;
+    vector<int> location;
+    vector<vector<int>> path;
+    vector<vector<int>> attack_range;
     WeaponAffinity type;
     int Lvl;
     LevelExp Exp;
@@ -251,9 +252,9 @@ struct Entity
 
 struct Guild
 {
-    std::string name;
+    string name;
     int guild_id = -1; // Guild_ID can never be zero
-    std::vector<Entity*> members;
+    vector<Entity*> members;
     void add(Entity& unit)
     {
 	if (unit.group == nullptr)
@@ -261,7 +262,7 @@ struct Guild
 	    members.push_back(&unit);
 	    unit.group = this;
 	}
-	else throw std::invalid_argument("Already in a guild!");
+	else throw invalid_argument("Already in a guild!");
     }
     void remove(Entity& unit)
     {
@@ -283,16 +284,16 @@ struct CombatInfo
 
 struct avl_for_atk
 {
-    std::vector<int> coords;
+    vector<int> coords;
     Weapon weapon;
     int inventory_id;
 };
 
 struct Command
 {
-    std::string name;
+    string name;
     int id;
-    std::vector<int> coords;
+    vector<int> coords;
 };
 
 struct sequence
@@ -319,6 +320,6 @@ struct sequence
 
 struct paths
 {
-    std::vector<std::vector<int>> pathset;
+    vector<vector<int>> pathset;
     int tries;
 };

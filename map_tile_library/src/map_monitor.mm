@@ -18,6 +18,7 @@
 #include "fe8_unit_visuals.h"
 #include "game_data.h"
 #include "terrain_data.h"
+using namespace std;
 
 namespace
 {
@@ -26,7 +27,7 @@ constexpr CGFloat kSidebarWidth = 270.0;
 
 int map_unit_motion_frame(fe_tiles::UnitVisual visual,
                           int animation_id,
-                          std::uint64_t game_tick,
+                          uint64_t game_tick,
                           int fallback_frame)
 {
     const fe_tiles::MapUnitMotionProgram* program =
@@ -46,7 +47,7 @@ int map_unit_motion_frame(fe_tiles::UnitVisual visual,
         return fallback_frame;
     }
 
-    int phase = static_cast<int>(game_tick % static_cast<std::uint64_t>(cycle_ticks));
+    int phase = static_cast<int>(game_tick % static_cast<uint64_t>(cycle_ticks));
     for (const fe_tiles::MapUnitMotionStep& step : program->steps)
     {
         if (phase < step.ticks)
@@ -73,23 +74,23 @@ int selected_motion_sheet_cell(int motion_frame, int fallback_cell)
 
 struct PaletteColor
 {
-    std::uint8_t r;
-    std::uint8_t g;
-    std::uint8_t b;
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
 };
-using Palette = std::array<PaletteColor, 16>;
+using Palette = array<PaletteColor, 16>;
 
-std::string fe8_asset_path(const std::string& root, const std::string_view relative_path)
+string fe8_asset_path(const string& root, const string_view relative_path)
 {
-    return root + "/assets/fe8/" + std::string(relative_path);
+    return root + "/assets/fe8/" + string(relative_path);
 }
 
-Palette load_gba_palette(const std::string& path)
+Palette load_gba_palette(const string& path)
 {
-    std::ifstream file(path, std::ios::binary);
+    ifstream file(path, ios::binary);
     if (!file)
     {
-        throw std::runtime_error("Could not open map-unit palette: " + path);
+        throw runtime_error("Could not open map-unit palette: " + path);
     }
 
     Palette result{};
@@ -101,18 +102,18 @@ Palette load_gba_palette(const std::string& path)
         file.read(reinterpret_cast<char*>(&high), 1);
         if (!file)
         {
-            throw std::runtime_error("Map-unit palette is incomplete: " + path);
+            throw runtime_error("Map-unit palette is incomplete: " + path);
         }
-        const std::uint16_t bgr555 = static_cast<std::uint16_t>(low) |
-                                     (static_cast<std::uint16_t>(high) << 8);
-        color.r = static_cast<std::uint8_t>(((bgr555 >> 0) & 31) * 255 / 31);
-        color.g = static_cast<std::uint8_t>(((bgr555 >> 5) & 31) * 255 / 31);
-        color.b = static_cast<std::uint8_t>(((bgr555 >> 10) & 31) * 255 / 31);
+        const uint16_t bgr555 = static_cast<uint16_t>(low) |
+                                     (static_cast<uint16_t>(high) << 8);
+        color.r = static_cast<uint8_t>(((bgr555 >> 0) & 31) * 255 / 31);
+        color.g = static_cast<uint8_t>(((bgr555 >> 5) & 31) * 255 / 31);
+        color.b = static_cast<uint8_t>(((bgr555 >> 10) & 31) * 255 / 31);
     }
     return result;
 }
 
-int palette_distance(std::uint8_t r, std::uint8_t g, std::uint8_t b,
+int palette_distance(uint8_t r, uint8_t g, uint8_t b,
                      const PaletteColor& color)
 {
     const int dr = static_cast<int>(r) - color.r;
@@ -121,7 +122,7 @@ int palette_distance(std::uint8_t r, std::uint8_t g, std::uint8_t b,
     return dr * dr + dg * dg + db * db;
 }
 
-NSImage* load_image(const std::string& path)
+NSImage* load_image(const string& path)
 {
     return [[NSImage alloc] initWithContentsOfFile:[NSString stringWithUTF8String:path.c_str()]];
 }
@@ -139,7 +140,7 @@ NSImage* stochesia_ui_text_style(NSString* marker)
     return style;
 }
 
-using StochesiaPixelGlyph = std::array<std::uint8_t, 7>;
+using StochesiaPixelGlyph = array<uint8_t, 7>;
 
 StochesiaPixelGlyph stochesia_pixel_glyph(unichar character)
 {
@@ -195,7 +196,7 @@ StochesiaPixelGlyph stochesia_pixel_glyph(unichar character)
     }
 }
 
-void draw_fe8_bitmap_text(NSImage* style, const std::array<int, 128>&,
+void draw_fe8_bitmap_text(NSImage* style, const array<int, 128>&,
                           NSString* text, NSPoint origin, CGFloat scale)
 {
     if (style == nil || text == nil || text.length == 0)
@@ -214,17 +215,17 @@ void draw_fe8_bitmap_text(NSImage* style, const std::array<int, 128>&,
     // collapsed them to one physical pixel while their rows were two or three
     // times taller. Round upward at this threshold so the same glyph design
     // remains readable and fills the UI rhythm.
-    const CGFloat pixel = std::max<CGFloat>(1.0, std::ceil(0.90 * scale));
+    const CGFloat pixel = max<CGFloat>(1.0, ceil(0.90 * scale));
     const NSString* uppercase_text = [text uppercaseString];
-    CGFloat x = std::round(origin.x);
-    const CGFloat y = std::round(origin.y);
+    CGFloat x = round(origin.x);
+    const CGFloat y = round(origin.y);
     [colour setFill];
     for (NSUInteger index = 0; index < uppercase_text.length; ++index)
     {
         const StochesiaPixelGlyph glyph = stochesia_pixel_glyph(
             [uppercase_text characterAtIndex:index]
         );
-        for (std::size_t row = 0; row < glyph.size(); ++row)
+        for (size_t row = 0; row < glyph.size(); ++row)
         {
             for (int column = 0; column < 5; ++column)
             {
@@ -243,14 +244,14 @@ void draw_fe8_bitmap_text(NSImage* style, const std::array<int, 128>&,
 }
 
 void draw_fe8_outlined_text(NSImage* white_atlas, NSImage* ink_atlas,
-                            const std::array<int, 128>& widths,
+                            const array<int, 128>& widths,
                             NSString* text, NSPoint origin, CGFloat scale)
 {
-    const CGFloat pixel = std::max<CGFloat>(1.0, std::round(scale));
-    for (const std::pair<int, int>& offset : {
-             std::pair{-1, -1}, std::pair{0, -1}, std::pair{1, -1},
-             std::pair{-1,  0},                     std::pair{1,  0},
-             std::pair{-1,  1}, std::pair{0,  1}, std::pair{1,  1}
+    const CGFloat pixel = max<CGFloat>(1.0, round(scale));
+    for (const pair<int, int>& offset : {
+             pair{-1, -1}, pair{0, -1}, pair{1, -1},
+             pair{-1,  0},                     pair{1,  0},
+             pair{-1,  1}, pair{0,  1}, pair{1,  1}
          })
     {
         draw_fe8_bitmap_text(
@@ -281,9 +282,9 @@ NSImage* restore_sprite_transparency(NSImage* source,
         return nil;
     }
 
-    const std::size_t width = CGImageGetWidth(image);
-    const std::size_t height = CGImageGetHeight(image);
-    std::vector<std::uint8_t> pixels(width * height * 4, 0);
+    const size_t width = CGImageGetWidth(image);
+    const size_t height = CGImageGetHeight(image);
+    vector<uint8_t> pixels(width * height * 4, 0);
     CGColorSpaceRef colors = CGColorSpaceCreateDeviceRGB();
     CGContextRef context = CGBitmapContextCreate(
         pixels.data(), width, height, 8, width * 4, colors,
@@ -297,9 +298,9 @@ NSImage* restore_sprite_transparency(NSImage* source,
     CGContextSetBlendMode(context, kCGBlendModeCopy);
     CGContextDrawImage(context, CGRectMake(0.0, 0.0, width, height), image);
 
-    for (std::size_t index = 0; index < width * height; ++index)
+    for (size_t index = 0; index < width * height; ++index)
     {
-        std::uint8_t* rgba = pixels.data() + index * 4;
+        uint8_t* rgba = pixels.data() + index * 4;
         int closest = 0;
         int distance = palette_distance(rgba[0], rgba[1], rgba[2], source_palette[0]);
         for (int entry = 1; entry < 16; ++entry)
@@ -333,35 +334,35 @@ NSImage* restore_sprite_transparency(NSImage* source,
     return result;
 }
 
-Palette custom_team_palette(const Palette& player, std::uint32_t rgb)
+Palette custom_team_palette(const Palette& player, uint32_t rgb)
 {
     Palette result = player;
-    const std::uint8_t red = static_cast<std::uint8_t>((rgb >> 16) & 0xFF);
-    const std::uint8_t green = static_cast<std::uint8_t>((rgb >> 8) & 0xFF);
-    const std::uint8_t blue = static_cast<std::uint8_t>(rgb & 0xFF);
+    const uint8_t red = static_cast<uint8_t>((rgb >> 16) & 0xFF);
+    const uint8_t green = static_cast<uint8_t>((rgb >> 8) & 0xFF);
+    const uint8_t blue = static_cast<uint8_t>(rgb & 0xFF);
 
     // These are the exact entries altered by FE8's Player/Enemy/NPC/P4
     // palettes. Every other entry (skin, steel, white, and transparency)
     // remains untouched. The player-palette brightness supplies the shades.
     for (const int entry : {1, 2, 3, 7, 8, 9, 10, 11})
     {
-        const int brightness = std::max({
+        const int brightness = max({
             static_cast<int>(player[entry].r),
             static_cast<int>(player[entry].g),
             static_cast<int>(player[entry].b)
         });
         result[entry] = PaletteColor{
-            static_cast<std::uint8_t>((static_cast<int>(red) * brightness + 127) / 255),
-            static_cast<std::uint8_t>((static_cast<int>(green) * brightness + 127) / 255),
-            static_cast<std::uint8_t>((static_cast<int>(blue) * brightness + 127) / 255)
+            static_cast<uint8_t>((static_cast<int>(red) * brightness + 127) / 255),
+            static_cast<uint8_t>((static_cast<int>(green) * brightness + 127) / 255),
+            static_cast<uint8_t>((static_cast<int>(blue) * brightness + 127) / 255)
         };
     }
     return result;
 }
 
-std::uint32_t palette_key(const fe_tiles::GuildColor& color)
+uint32_t palette_key(const fe_tiles::GuildColor& color)
 {
-    return (static_cast<std::uint32_t>(color.scheme) << 24) |
+    return (static_cast<uint32_t>(color.scheme) << 24) |
            (color.rgb & 0x00FFFFFF);
 }
 
@@ -373,9 +374,9 @@ NSImage* white_sprite(NSImage* source)
     {
         return nil;
     }
-    const std::size_t width = CGImageGetWidth(image);
-    const std::size_t height = CGImageGetHeight(image);
-    std::vector<std::uint8_t> pixels(width * height * 4, 0);
+    const size_t width = CGImageGetWidth(image);
+    const size_t height = CGImageGetHeight(image);
+    vector<uint8_t> pixels(width * height * 4, 0);
     CGColorSpaceRef colors = CGColorSpaceCreateDeviceRGB();
     CGContextRef context = CGBitmapContextCreate(
         pixels.data(), width, height, 8, width * 4, colors,
@@ -388,9 +389,9 @@ NSImage* white_sprite(NSImage* source)
     }
     CGContextSetBlendMode(context, kCGBlendModeCopy);
     CGContextDrawImage(context, CGRectMake(0.0, 0.0, width, height), image);
-    for (std::size_t index = 0; index < width * height; ++index)
+    for (size_t index = 0; index < width * height; ++index)
     {
-        std::uint8_t* rgba = pixels.data() + index * 4;
+        uint8_t* rgba = pixels.data() + index * 4;
         if (rgba[3] != 0)
         {
             rgba[0] = rgba[1] = rgba[2] = 255;
@@ -413,9 +414,9 @@ NSImage* greyscale_sprite(NSImage* source)
     {
         return nil;
     }
-    const std::size_t width = CGImageGetWidth(image);
-    const std::size_t height = CGImageGetHeight(image);
-    std::vector<std::uint8_t> pixels(width * height * 4, 0);
+    const size_t width = CGImageGetWidth(image);
+    const size_t height = CGImageGetHeight(image);
+    vector<uint8_t> pixels(width * height * 4, 0);
     CGColorSpaceRef colors = CGColorSpaceCreateDeviceRGB();
     CGContextRef context = CGBitmapContextCreate(
         pixels.data(), width, height, 8, width * 4, colors,
@@ -428,12 +429,12 @@ NSImage* greyscale_sprite(NSImage* source)
     }
     CGContextSetBlendMode(context, kCGBlendModeCopy);
     CGContextDrawImage(context, CGRectMake(0.0, 0.0, width, height), image);
-    for (std::size_t index = 0; index < width * height; ++index)
+    for (size_t index = 0; index < width * height; ++index)
     {
-        std::uint8_t* rgba = pixels.data() + index * 4;
+        uint8_t* rgba = pixels.data() + index * 4;
         if (rgba[3] != 0)
         {
-            const std::uint8_t shade = static_cast<std::uint8_t>(
+            const uint8_t shade = static_cast<uint8_t>(
                 (static_cast<unsigned>(rgba[0]) * 30U +
                  static_cast<unsigned>(rgba[1]) * 59U +
                  static_cast<unsigned>(rgba[2]) * 11U) / 100U
@@ -505,7 +506,7 @@ ItemID equipped_item(const Entity& unit)
     return unit.inventory.slot[slot].ID;
 }
 
-std::string item_name_for_forecast(ItemID item)
+string item_name_for_forecast(ItemID item)
 {
     switch (item)
     {
@@ -525,7 +526,7 @@ std::string item_name_for_forecast(ItemID item)
     }
 }
 
-std::string_view item_icon_for_forecast(ItemID item)
+string_view item_icon_for_forecast(ItemID item)
 {
     switch (item)
     {
@@ -552,26 +553,26 @@ struct MapMonitor::Impl
 {
     struct PhaseIntro
     {
-        std::string guild_name;
+        string guild_name;
         GuildColor color = GuildColor::player();
         int tick = 0;
     };
 
     struct PhaseDialogue
     {
-        std::string guild_name;
+        string guild_name;
         GuildColor color = GuildColor::player();
     };
 
     struct GameOver
     {
-        std::uint64_t tick = 0;
+        uint64_t tick = 0;
     };
 
     struct BattleForecast
     {
-        std::string attacker_name;
-        std::string defender_name;
+        string attacker_name;
+        string defender_name;
         int attacker_hp = 0;
         int attacker_max_hp = 0;
         int defender_hp = 0;
@@ -584,17 +585,17 @@ struct MapMonitor::Impl
 
     struct InventoryPanel
     {
-        std::string unit_name;
+        string unit_name;
         int level = 0;
         int max_hp = 0;
         Stats stats{};
-        std::array<ItemID, 5> items = {
+        array<ItemID, 5> items = {
             NO_ITEM, NO_ITEM, NO_ITEM, NO_ITEM, NO_ITEM
         };
-        std::array<int, 5> uses{};
+        array<int, 5> uses{};
         int equipped_slot = -1;
         ItemID equipped_item = NO_ITEM;
-        std::string equipped_name = "Unarmed";
+        string equipped_name = "Unarmed";
         bool equipped_is_weapon = false;
         int weapon_mt = 0;
         int weapon_wt = 0;
@@ -606,7 +607,7 @@ struct MapMonitor::Impl
 
     struct TerrainPanel
     {
-        std::string name;
+        string name;
         int heal_percent = 0;
         int avoid_bonus = 0;
         int defense_bonus = 0;
@@ -616,7 +617,7 @@ struct MapMonitor::Impl
     maps::MapRecipe recipe;
     AnimationRenderer* renderer = nullptr;
     Options options;
-    std::unique_ptr<TileCanvas> canvas;
+    unique_ptr<TileCanvas> canvas;
     NSImage* image = nil;
     // Literal 32x8 FE8 map-animation glyph extracted from Img_MapAnimMISS.
     // It is independent of a unit sheet or team palette.
@@ -624,18 +625,18 @@ struct MapMonitor::Impl
     NSWindow* window = nil;
     NSView* view = nil;
     NSTimer* timer = nil;
-    std::function<void(char)> key_callback;
-    std::function<void()> frame_callback;
-    std::optional<std::pair<int, int>> cursor;
-    std::vector<std::vector<std::pair<int, int>>> route_arrows;
-    std::optional<BattleForecast> battle_forecast;
-    std::optional<InventoryPanel> inventory;
-    std::optional<TerrainPanel> terrain_stats;
-    std::optional<PhaseIntro> phase_intro;
-    std::optional<PhaseDialogue> phase_dialogue;
-    std::optional<GameOver> game_over;
+    function<void(char)> key_callback;
+    function<void()> frame_callback;
+    optional<pair<int, int>> cursor;
+    vector<vector<pair<int, int>>> route_arrows;
+    optional<BattleForecast> battle_forecast;
+    optional<InventoryPanel> inventory;
+    optional<TerrainPanel> terrain_stats;
+    optional<PhaseIntro> phase_intro;
+    optional<PhaseDialogue> phase_dialogue;
+    optional<GameOver> game_over;
     double battle_tick_accumulator = 0.0;
-    std::uint64_t idle_tick = 0;
+    uint64_t idle_tick = 0;
     Palette player_palette{};
     Palette enemy_palette{};
     Palette npc_palette{};
@@ -652,7 +653,7 @@ struct MapMonitor::Impl
     NSImage* forecast_font_ink = nil;
     NSImage* forecast_font_white = nil;
     NSImage* forecast_font_pink = nil;
-    std::array<int, 128> forecast_glyph_widths{};
+    array<int, 128> forecast_glyph_widths{};
 
     Impl(maps::MapRecipe next_recipe, AnimationRenderer& next_renderer, Options next_options)
         : recipe(std::move(next_recipe)), renderer(&next_renderer), options(std::move(next_options))
@@ -665,19 +666,19 @@ struct MapMonitor::Impl
     {
         if (!candidate.has_visuals())
         {
-            throw std::invalid_argument(
+            throw invalid_argument(
                 "MapMonitor needs a maps::MapRecipe with theme/classes/tiles visual layers."
             );
         }
         if (!renderer->has_map())
         {
-            throw std::logic_error("Call AnimationRenderer::load_map(board) before creating MapMonitor.");
+            throw logic_error("Call AnimationRenderer::load_map(board) before creating MapMonitor.");
         }
         const RenderGrid& terrain = renderer->terrain_ids();
         if (candidate.rows() != static_cast<int>(terrain.size()) ||
             candidate.columns() != static_cast<int>(terrain.front().size()))
         {
-            throw std::invalid_argument(
+            throw invalid_argument(
                 "MapRecipe dimensions must match the Mapmaker already loaded by AnimationRenderer."
             );
         }
@@ -686,12 +687,12 @@ struct MapMonitor::Impl
     void rebuild_canvas()
     {
         require_compatible(recipe);
-        canvas = std::make_unique<TileCanvas>(recipe.rows(), recipe.columns());
+        canvas = make_unique<TileCanvas>(recipe.rows(), recipe.columns());
         canvas->draw(recipe.theme_id, recipe.classes, recipe.tiles, options.library_root);
         image = canvas_image(*canvas);
         if (image == nil)
         {
-            throw std::runtime_error("Could not convert the tile canvas to a native monitor image.");
+            throw runtime_error("Could not convert the tile canvas to a native monitor image.");
         }
     }
 
@@ -723,7 +724,7 @@ struct MapMonitor::Impl
         ));
         if (miss_image == nil)
         {
-            throw std::runtime_error(
+            throw runtime_error(
                 "MapMonitor could not load the FE8 MISS map-animation glyph."
             );
         }
@@ -753,7 +754,7 @@ struct MapMonitor::Impl
     NSImage* sheet_for(UnitVisual visual, const GuildColor& color)
     {
         const UnitVisualInfo& info = unit_visual_info(visual);
-        const std::string visual_name(info.key);
+        const string visual_name(info.key);
         NSString* visual_key = [NSString stringWithUTF8String:visual_name.c_str()];
         NSString* key = [NSString stringWithFormat:@"%u:%@", palette_key(color), visual_key];
         NSImage* existing = sheets[key];
@@ -767,8 +768,8 @@ struct MapMonitor::Impl
             raw = load_image(fe8_asset_path(options.library_root, info.move_png));
             if (raw == nil)
             {
-                throw std::runtime_error(
-                    "MapMonitor could not load FE8 map-unit sheet: " + std::string(info.move_png)
+                throw runtime_error(
+                    "MapMonitor could not load FE8 map-unit sheet: " + string(info.move_png)
                 );
             }
             raw_sheets[visual_key] = raw;
@@ -786,7 +787,7 @@ struct MapMonitor::Impl
     NSImage* white_sheet_for(UnitVisual visual, const GuildColor& color)
     {
         const UnitVisualInfo& info = unit_visual_info(visual);
-        const std::string visual_name(info.key);
+        const string visual_name(info.key);
         NSString* visual_key = [NSString stringWithUTF8String:visual_name.c_str()];
         NSString* key = [NSString stringWithFormat:@"%u:%@", palette_key(color), visual_key];
         NSImage* existing = white_sheets[key];
@@ -805,7 +806,7 @@ struct MapMonitor::Impl
     NSImage* greyscale_sheet_for(UnitVisual visual, const GuildColor& color)
     {
         const UnitVisualInfo& info = unit_visual_info(visual);
-        const std::string visual_name(info.key);
+        const string visual_name(info.key);
         NSString* visual_key = [NSString stringWithUTF8String:visual_name.c_str()];
         NSString* key = [NSString stringWithFormat:@"%u:%@", palette_key(color), visual_key];
         NSImage* existing = greyscale_sheets[key];
@@ -828,7 +829,7 @@ struct MapMonitor::Impl
         {
             return nil;
         }
-        const std::string visual_name(info.key);
+        const string visual_name(info.key);
         NSString* visual_key = [NSString stringWithUTF8String:visual_name.c_str()];
         NSString* key = [NSString stringWithFormat:@"%u:%@", palette_key(color), visual_key];
         NSImage* existing = wait_sheets[key];
@@ -842,9 +843,9 @@ struct MapMonitor::Impl
             raw = load_image(fe8_asset_path(options.library_root, info.wait_png));
             if (raw == nil)
             {
-                throw std::runtime_error(
+                throw runtime_error(
                     "MapMonitor could not load FE8 standing map-unit sheet: " +
-                    std::string(info.wait_png)
+                    string(info.wait_png)
                 );
             }
             raw_wait_sheets[visual_key] = raw;
@@ -866,7 +867,7 @@ struct MapMonitor::Impl
         {
             return nil;
         }
-        const std::string visual_name(info.key);
+        const string visual_name(info.key);
         NSString* visual_key = [NSString stringWithUTF8String:visual_name.c_str()];
         NSString* key = [NSString stringWithFormat:@"%u:%@", palette_key(color), visual_key];
         NSImage* existing = greyscale_wait_sheets[key];
@@ -884,12 +885,12 @@ struct MapMonitor::Impl
 
     NSImage* item_icon_for(ItemID item)
     {
-        const std::string_view relative = item_icon_for_forecast(item);
+        const string_view relative = item_icon_for_forecast(item);
         if (relative.empty())
         {
             return nil;
         }
-        NSString* key = [NSString stringWithUTF8String:std::string(relative).c_str()];
+        NSString* key = [NSString stringWithUTF8String:string(relative).c_str()];
         NSImage* existing = item_icons[key];
         if (existing != nil)
         {
@@ -926,9 +927,9 @@ struct MapMonitor::Impl
             return 0.0;
         }
 
-        const std::size_t width = CGImageGetWidth(image);
-        const std::size_t height = CGImageGetHeight(image);
-        std::vector<std::uint8_t> pixels(width * height * 4, 0);
+        const size_t width = CGImageGetWidth(image);
+        const size_t height = CGImageGetHeight(image);
+        vector<uint8_t> pixels(width * height * 4, 0);
         CGColorSpaceRef colors = CGColorSpaceCreateDeviceRGB();
         CGContextRef context = CGBitmapContextCreate(
             pixels.data(), width, height, 8, width * 4, colors,
@@ -943,14 +944,14 @@ struct MapMonitor::Impl
         CGContextDrawImage(context, CGRectMake(0.0, 0.0, width, height), image);
         CGContextRelease(context);
 
-        const int first_row = std::max(0, sheet_cell) * 32;
+        const int first_row = max(0, sheet_cell) * 32;
         int top = 0;
         bool found = false;
         for (int y = 0; y < 32 && first_row + y < static_cast<int>(height); ++y)
         {
             for (int x = 0; x < 32 && x < static_cast<int>(width); ++x)
             {
-                const std::size_t alpha = (static_cast<std::size_t>(first_row + y) * width + x) * 4 + 3;
+                const size_t alpha = (static_cast<size_t>(first_row + y) * width + x) * 4 + 3;
                 if (pixels[alpha] != 0)
                 {
                     top = y;
@@ -992,10 +993,10 @@ struct MapMonitor::Impl
             return 0.0;
         }
 
-        const std::size_t width = CGImageGetWidth(image);
-        const std::size_t height = CGImageGetHeight(image);
-        const int frame_height = std::max(1, static_cast<int>(height / 3));
-        std::vector<std::uint8_t> pixels(width * height * 4, 0);
+        const size_t width = CGImageGetWidth(image);
+        const size_t height = CGImageGetHeight(image);
+        const int frame_height = max(1, static_cast<int>(height / 3));
+        vector<uint8_t> pixels(width * height * 4, 0);
         CGColorSpaceRef colors = CGColorSpaceCreateDeviceRGB();
         CGContextRef context = CGBitmapContextCreate(
             pixels.data(), width, height, 8, width * 4, colors,
@@ -1010,15 +1011,15 @@ struct MapMonitor::Impl
         CGContextDrawImage(context, CGRectMake(0.0, 0.0, width, height), image);
         CGContextRelease(context);
 
-        const int first_row = std::clamp(frame, 0, 2) * frame_height;
+        const int first_row = clamp(frame, 0, 2) * frame_height;
         int top = 0;
         bool found = false;
         for (int y = 0; y < frame_height && first_row + y < static_cast<int>(height); ++y)
         {
             for (int x = 0; x < static_cast<int>(width); ++x)
             {
-                const std::size_t alpha =
-                    (static_cast<std::size_t>(first_row + y) * width + x) * 4 + 3;
+                const size_t alpha =
+                    (static_cast<size_t>(first_row + y) * width + x) * 4 + 3;
                 if (pixels[alpha] != 0)
                 {
                     top = y;
@@ -1038,25 +1039,20 @@ struct MapMonitor::Impl
 };
 }
 
-static NSColor* route_arrow_color(std::size_t route_index)
+static NSColor* route_arrow_color(size_t route_index)
 {
-    switch (route_index % 4)
-    {
-        case 0: return [NSColor colorWithCalibratedRed:1.0 green:0.89 blue:0.24 alpha:0.98];
-        case 1: return [NSColor colorWithCalibratedRed:0.20 green:0.90 blue:1.0 alpha:0.98];
-        case 2: return [NSColor colorWithCalibratedRed:1.0 green:0.36 blue:0.74 alpha:0.98];
-        default: return [NSColor colorWithCalibratedRed:0.54 green:1.0 blue:0.32 alpha:0.98];
-    }
+    const CGFloat hue = fmod(static_cast<CGFloat>(route_index) * 0.61803398875, 1.0);
+    return [NSColor colorWithHue:hue saturation:0.78 brightness:1.0 alpha:0.98];
 }
 
 static void draw_route_arrow(NSRect cell, int dx, int dy, NSColor* color)
 {
-    if (std::abs(dx) + std::abs(dy) != 1)
+    if (abs(dx) + abs(dy) != 1)
     {
         return;
     }
 
-    const CGFloat pixel = std::max<CGFloat>(1.0, std::floor(NSWidth(cell) / 16.0));
+    const CGFloat pixel = max<CGFloat>(1.0, floor(NSWidth(cell) / 16.0));
     const CGFloat cx = NSMidX(cell);
     const CGFloat cy = NSMidY(cell);
     const CGFloat vx = static_cast<CGFloat>(dx);
@@ -1104,7 +1100,7 @@ static void draw_route_arrow(NSRect cell, int dx, int dy, NSColor* color)
 
 static void draw_route_destination(NSRect cell, NSColor* color)
 {
-    const CGFloat pixel = std::max<CGFloat>(1.0, std::floor(NSWidth(cell) / 16.0));
+    const CGFloat pixel = max<CGFloat>(1.0, floor(NSWidth(cell) / 16.0));
     const CGFloat side = 6.0 * pixel;
     const NSRect box = NSMakeRect(NSMidX(cell) - side, NSMidY(cell) - side,
                                   side * 2.0, side * 2.0);
@@ -1163,19 +1159,19 @@ static void draw_route_destination(NSRect cell, NSColor* color)
 - (void)layoutBoard
 {
     auto* state = static_cast<fe_tiles::MapMonitor::Impl*>(_state);
-    const CGFloat available_width = std::max<CGFloat>(
+    const CGFloat available_width = max<CGFloat>(
         1.0, self.bounds.size.width - kSidebarWidth - 3.0 * kMargin
     );
-    const CGFloat available_height = std::max<CGFloat>(1.0, self.bounds.size.height - 2.0 * kMargin);
-    const CGFloat fitted_cell = std::floor(std::min(
+    const CGFloat available_height = max<CGFloat>(1.0, self.bounds.size.height - 2.0 * kMargin);
+    const CGFloat fitted_cell = floor(min(
         available_width / state->recipe.columns(), available_height / state->recipe.rows()
     ));
     // FE8 terrain is 16x16 and its MU cells are 32x32. Snapping the display
     // cell to a 16-pixel multiple means terrain, 32px unit sprites, hit
     // flashes, and one-pixel lunges all receive an integer scale.
     _cell_pixels = fitted_cell >= 16.0
-        ? std::floor(fitted_cell / 16.0) * 16.0
-        : std::max<CGFloat>(1.0, fitted_cell);
+        ? floor(fitted_cell / 16.0) * 16.0
+        : max<CGFloat>(1.0, fitted_cell);
     const CGFloat board_width = _cell_pixels * state->recipe.columns();
     const CGFloat board_height = _cell_pixels * state->recipe.rows();
     _board = NSMakeRect(kMargin, kMargin + (available_height - board_height) * 0.5,
@@ -1270,7 +1266,7 @@ static void draw_route_destination(NSRect cell, NSColor* color)
 
     // Use the same 16-pixel scale as FE8's terrain cell so every edge and
     // every HP segment lands on a crisp pixel block.
-    const CGFloat pixel = std::max<CGFloat>(1.0, std::floor(_cell_pixels / 16.0));
+    const CGFloat pixel = max<CGFloat>(1.0, floor(_cell_pixels / 16.0));
     constexpr int segments = 16;
     const CGFloat inside_width = segments * pixel;
     const CGFloat inside_height = 2.0 * pixel;
@@ -1282,8 +1278,8 @@ static void draw_route_destination(NSRect cell, NSColor* color)
     // Follow the exact sprite representation currently being drawn. Away
     // from the cursor this is the small FE8 wait sheet; hovered, moving, and
     // combat units use the full 32x32 MU sheet.
-    const bool stationary = std::floor(health.x) == health.x &&
-                            std::floor(health.y) == health.y;
+    const bool stationary = floor(health.x) == health.x &&
+                            floor(health.y) == health.y;
     const bool hovered = state->cursor.has_value() &&
         state->cursor->first == static_cast<int>(health.x) &&
         state->cursor->second == static_cast<int>(health.y);
@@ -1322,8 +1318,8 @@ static void draw_route_destination(NSRect cell, NSColor* color)
     const NSRect background = NSMakeRect(x + 2.0 * pixel, y + pixel,
                                          inside_width, inside_height);
 
-    const double ratio = std::clamp(
-        health.displayed_hp / static_cast<double>(std::max(1, health.maximum_hp)),
+    const double ratio = clamp(
+        health.displayed_hp / static_cast<double>(max(1, health.maximum_hp)),
         0.0, 1.0
     );
     NSColor* fill = ratio > 0.50
@@ -1344,7 +1340,7 @@ static void draw_route_destination(NSRect cell, NSColor* color)
     [[NSColor colorWithCalibratedWhite:0.12 alpha:1.0] setFill];
     NSRectFill(background);
 
-    const int filled_segments = static_cast<int>(std::round(ratio * segments));
+    const int filled_segments = static_cast<int>(round(ratio * segments));
     if (filled_segments > 0)
     {
         const NSRect fill_rect = NSMakeRect(
@@ -1381,8 +1377,8 @@ static void draw_route_destination(NSRect cell, NSColor* color)
     CGContextClipToRect([[NSGraphicsContext currentContext] CGContext], NSRectToCGRect(_board));
     if (critical_background_shake)
     {
-        const std::array<int, 2>& offset = active_hit->background_shake[
-            static_cast<std::size_t>(active_hit->tick - 1)
+        const array<int, 2>& offset = active_hit->background_shake[
+            static_cast<size_t>(active_hit->tick - 1)
         ];
         NSAffineTransform* transform = [NSAffineTransform transform];
         [transform translateXBy:offset[0] * source_pixel yBy:offset[1] * source_pixel];
@@ -1429,11 +1425,11 @@ static void draw_route_destination(NSRect cell, NSColor* color)
     // Route arrows are independent of blue/red action paint. They are useful
     // for visualising any already-computed generalized path without letting
     // the monitor infer, commit, or otherwise own that path.
-    for (std::size_t route_index = 0; route_index < state->route_arrows.size(); ++route_index)
+    for (size_t route_index = 0; route_index < state->route_arrows.size(); ++route_index)
     {
-        const std::vector<std::pair<int, int>>& route = state->route_arrows[route_index];
+        const vector<pair<int, int>>& route = state->route_arrows[route_index];
         NSColor* color = route_arrow_color(route_index);
-        for (std::size_t index = 0; index < route.size(); ++index)
+        for (size_t index = 0; index < route.size(); ++index)
         {
             const auto [x, y] = route[index];
             const NSRect cell = NSMakeRect(
@@ -1460,8 +1456,8 @@ static void draw_route_destination(NSRect cell, NSColor* color)
         {
             display_pose.x += sprite_shake_x;
         }
-        const bool stationary = std::floor(display_pose.x) == display_pose.x &&
-                                std::floor(display_pose.y) == display_pose.y;
+        const bool stationary = floor(display_pose.x) == display_pose.x &&
+                                floor(display_pose.y) == display_pose.y;
         const bool hovered = state->cursor.has_value() &&
             state->cursor->first == static_cast<int>(display_pose.x) &&
             state->cursor->second == static_cast<int>(display_pose.y);
@@ -1505,14 +1501,14 @@ static void draw_route_destination(NSRect cell, NSColor* color)
     {
         const int x = state->cursor->first;
         const int y = state->cursor->second;
-        const bool wide = static_cast<int>(std::floor(
+        const bool wide = static_cast<int>(floor(
             [[NSDate date] timeIntervalSinceReferenceDate] * 5.0
         )) % 2 == 0;
         // Four independent 4x4 pixel L glyphs. Keeping the arms below half
         // a tile is essential: 8px arms meet in the middle and become a
         // plain rectangle instead of four visible cursor corners.
         const CGFloat corner = _cell_pixels * 4.0 / 16.0;
-        const CGFloat stroke = std::max<CGFloat>(1.0, _cell_pixels / 16.0);
+        const CGFloat stroke = max<CGFloat>(1.0, _cell_pixels / 16.0);
         // Frame 1: the inward ends of a 4px corner glyph meet the outside
         // of the cell corner. Frame 2: the glyph's outer vertex is exactly
         // on the inside of that same cell corner. This is a distinct 4px
@@ -1568,7 +1564,7 @@ static void draw_route_destination(NSRect cell, NSColor* color)
             }
             else if (tick >= 12 && tick < 33)
             {
-                opacity = std::clamp(
+                opacity = clamp(
                     (33.0 - static_cast<CGFloat>(tick)) / 21.0, 0.0, 1.0
                 );
             }
@@ -1580,8 +1576,8 @@ static void draw_route_destination(NSRect cell, NSColor* color)
             // palette over 20 steps. ProcScr_MuHitFlash switches the MU back
             // to its normal palette after its 17-frame sleep, so the final
             // unfinished part of that fade is intentionally a snap.
-            const int fade_frame = std::max(0, hit->tick - 1);
-            opacity = std::clamp(
+            const int fade_frame = max(0, hit->tick - 1);
+            opacity = clamp(
                 (20.0 - static_cast<CGFloat>(fade_frame)) / 20.0, 0.0, 1.0
             );
         }
@@ -1607,7 +1603,7 @@ static void draw_route_destination(NSRect cell, NSColor* color)
         // MU_StartDeathFade begins with alpha 16, then its 0x20-frame proc
         // lowers the blend coefficient to zero. This is a distinct phase,
         // started only by EntityAnimation::death() after the final round.
-        const int time_left = std::max(0, 0x20 - std::max(0, effect.tick - 1));
+        const int time_left = max(0, 0x20 - max(0, effect.tick - 1));
         const CGFloat opacity = static_cast<CGFloat>(time_left >> 1) / 16.0;
         [NSGraphicsContext saveGraphicsState];
         CGContextSetAlpha([[NSGraphicsContext currentContext] CGContext], opacity);
@@ -1620,14 +1616,14 @@ static void draw_route_destination(NSRect cell, NSColor* color)
         // Its AP script starts very large then settles to normal scale during
         // its first nine 60 Hz frames. Keep the source pixels crisp while
         // using that same readable pop-in shape.
-        const CGFloat settle = std::clamp(static_cast<CGFloat>(miss->tick) / 8.0,
+        const CGFloat settle = clamp(static_cast<CGFloat>(miss->tick) / 8.0,
                                           0.0, 1.0);
         const CGFloat scale = 1.65 - 0.65 * settle;
         const CGFloat width = 2.0 * _cell_pixels * scale;
         const CGFloat height = 0.5 * _cell_pixels * scale;
         const CGFloat fade = miss->tick <= 15
             ? 1.0
-            : std::clamp((20.0 - static_cast<CGFloat>(miss->tick)) / 5.0, 0.0, 1.0);
+            : clamp((20.0 - static_cast<CGFloat>(miss->tick)) / 5.0, 0.0, 1.0);
         const NSRect popup = NSMakeRect(
             NSMinX(_board) + (miss->x + 0.5) * _cell_pixels - width * 0.5,
             NSMinY(_board) + (miss->y + 0.20) * _cell_pixels -
@@ -1659,22 +1655,22 @@ static void draw_route_destination(NSRect cell, NSColor* color)
         const int tick = phase.tick;
         const CGFloat board_width = NSWidth(_board);
         const CGFloat board_height = NSHeight(_board);
-        const std::uint32_t rgb = phase.color.rgb;
+        const uint32_t rgb = phase.color.rgb;
         const CGFloat red = static_cast<CGFloat>((rgb >> 16) & 0xFF) / 255.0;
         const CGFloat green = static_cast<CGFloat>((rgb >> 8) & 0xFF) / 255.0;
         const CGFloat blue_component = static_cast<CGFloat>(rgb & 0xFF) / 255.0;
         const auto clamp01 = [](CGFloat value)
         {
-            return std::clamp(value, 0.0, 1.0);
+            return clamp(value, 0.0, 1.0);
         };
         const auto ease_out_cubic = [](CGFloat value)
         {
-            const CGFloat inverse = 1.0 - std::clamp(value, 0.0, 1.0);
+            const CGFloat inverse = 1.0 - clamp(value, 0.0, 1.0);
             return 1.0 - inverse * inverse * inverse;
         };
         const auto ease_in_cubic = [](CGFloat value)
         {
-            value = std::clamp(value, 0.0, 1.0);
+            value = clamp(value, 0.0, 1.0);
             return value * value * value;
         };
 
@@ -1704,13 +1700,13 @@ static void draw_route_destination(NSRect cell, NSColor* color)
                 if (!squares_exiting)
                 {
                     source_value = (column - square_tick) + (0x15 - row);
-                    source_value = std::clamp(source_value, 0, 0x10);
+                    source_value = clamp(source_value, 0, 0x10);
                     source_value = (0x10 - source_value) & 0xFE;
                 }
                 else
                 {
                     source_value = (1 - square_tick) + (10 + column) + (10 - row);
-                    source_value = std::clamp(source_value, 0, 0x10) & 0xFE;
+                    source_value = clamp(source_value, 0, 0x10) & 0xFE;
                     source_value = 0x10 - source_value;
                 }
                 const CGFloat amount = clamp01(static_cast<CGFloat>(source_value) / 16.0);
@@ -1724,8 +1720,8 @@ static void draw_route_destination(NSRect cell, NSColor* color)
                                             alpha:0.72 * amount] setFill];
                 NSRectFill(NSMakeRect(NSMinX(_board) + column * square_width,
                                       NSMinY(_board) + row * square_height,
-                                      std::ceil(square_width) + 1.0,
-                                      std::ceil(square_height) + 1.0));
+                                      ceil(square_width) + 1.0,
+                                      ceil(square_height) + 1.0));
             }
         }
 
@@ -1741,7 +1737,7 @@ static void draw_route_destination(NSRect cell, NSColor* color)
         {
             box_progress = ease_in_cubic(static_cast<CGFloat>(61 - tick) / 33.0);
         }
-        const CGFloat band_height = std::max<CGFloat>(
+        const CGFloat band_height = max<CGFloat>(
             _cell_pixels * 1.8, board_height * 0.30
         ) * box_progress;
         const CGFloat band_y = NSMidY(_board) - band_height * 0.5;
@@ -1752,7 +1748,7 @@ static void draw_route_destination(NSRect cell, NSColor* color)
                                     green:green * 0.55
                                      blue:blue_component * 0.55
                                     alpha:0.50 * box_progress] setFill];
-        NSRectFill(NSInsetRect(band, 0.0, std::max<CGFloat>(1.0, _cell_pixels / 16.0)));
+        NSRectFill(NSInsetRect(band, 0.0, max<CGFloat>(1.0, _cell_pixels / 16.0)));
 
         // `PhaseIntroText_InLoop`: wait six, RCUBIC -0x1C -> -8 for 16
         // frames. `OutLoop`: CUBIC -0x1C -> -0x38 for another 16. Its real
@@ -1773,13 +1769,13 @@ static void draw_route_destination(NSRect cell, NSColor* color)
                 title_x = NSMidX(_board) - board_width * (1.0 - title_progress);
             }
 
-            std::string label = phase.guild_name + "'S PHASE";
+            string label = phase.guild_name + "'S PHASE";
             for (char& character : label)
             {
-                character = static_cast<char>(std::toupper(static_cast<unsigned char>(character)));
+                character = static_cast<char>(toupper(static_cast<unsigned char>(character)));
             }
             NSString* text = [NSString stringWithUTF8String:label.c_str()];
-            const CGFloat title_scale = std::clamp(_cell_pixels / 16.0, 1.0, 2.0);
+            const CGFloat title_scale = clamp(_cell_pixels / 16.0, 1.0, 2.0);
             CGFloat source_width = 0.0;
             for (NSUInteger index = 0; index < text.length; ++index)
             {
@@ -1823,22 +1819,22 @@ static void draw_route_destination(NSRect cell, NSColor* color)
     {
         const fe_tiles::MapMonitor::Impl::BattleForecast& forecast = *state->battle_forecast;
         const CGFloat side_x = NSMaxX(_board) + kMargin;
-        const CGFloat panel_width = std::max<CGFloat>(
+        const CGFloat panel_width = max<CGFloat>(
             1.0, self.bounds.size.width - side_x - kMargin
         );
         // A persistent phase dialogue occupies the top of the sidebar. Put
         // the combat forecast immediately below it rather than letting the
         // two panels overlap. Constrain its scale by remaining height too.
         const CGFloat phase_dialogue_height = state->phase_dialogue.has_value()
-            ? std::min<CGFloat>(158.0, self.bounds.size.height - 2.0 * kMargin)
+            ? min<CGFloat>(158.0, self.bounds.size.height - 2.0 * kMargin)
             : 0.0;
         const CGFloat forecast_y = state->phase_dialogue.has_value()
             ? kMargin + 16.0 + phase_dialogue_height + 12.0
             : 26.0;
-        const CGFloat remaining_height = std::max<CGFloat>(
+        const CGFloat remaining_height = max<CGFloat>(
             1.0, self.bounds.size.height - forecast_y - kMargin
         );
-        const CGFloat scale = std::min({
+        const CGFloat scale = min({
             3.0,
             panel_width / 120.0,
             remaining_height / 176.0
@@ -1947,7 +1943,7 @@ static void draw_route_destination(NSRect cell, NSColor* color)
             [NSString stringWithUTF8String:forecast.defender_name.c_str()],
             NSMakePoint(px + 9.0 * scale, py + 135.0 * scale), name_scale
         );
-        const std::string defender_item = item_name_for_forecast(forecast.defender_weapon);
+        const string defender_item = item_name_for_forecast(forecast.defender_weapon);
         draw_fe8_outlined_text(
             state->forecast_font_white, state->forecast_font_ink,
             state->forecast_glyph_widths,
@@ -1955,14 +1951,14 @@ static void draw_route_destination(NSRect cell, NSColor* color)
             NSMakePoint(px + 9.0 * scale, py + 153.0 * scale), item_scale
         );
 
-        const std::array<NSString*, 4> labels = {@"HP", @"Mt", @"Hit", @"Crit"};
-        const std::array<int, 4> actor_values = {
+        const array<NSString*, 4> labels = {@"HP", @"Mt", @"Hit", @"Crit"};
+        const array<int, 4> actor_values = {
             forecast.attacker_hp,
             forecast.attacker_combat.MT,
             forecast.attacker_combat.HIT,
             forecast.attacker_combat.CRIT
         };
-        const std::array<int, 4> defender_values = {
+        const array<int, 4> defender_values = {
             forecast.defender_hp,
             forecast.defender_combat.MT,
             forecast.defender_combat.HIT,
@@ -1974,15 +1970,15 @@ static void draw_route_destination(NSRect cell, NSColor* color)
             draw_fe8_bitmap_text(
                 state->forecast_font_ink, state->forecast_glyph_widths,
                 labels[row], NSMakePoint(
-                    px + (label_x + std::max<CGFloat>(3.0, (label_width - 18.0) * 0.5)) * scale,
+                    px + (label_x + max<CGFloat>(3.0, (label_width - 18.0) * 0.5)) * scale,
                     py + y * scale
                 ), label_scale
             );
 
-            const std::string actor = forecast.attacker_weapon == NO_ITEM && row > 0
-                ? "--" : std::to_string(actor_values[row]);
-            const std::string defender = forecast.defender_weapon == NO_ITEM && row > 0
-                ? "--" : std::to_string(defender_values[row]);
+            const string actor = forecast.attacker_weapon == NO_ITEM && row > 0
+                ? "--" : to_string(actor_values[row]);
+            const string defender = forecast.defender_weapon == NO_ITEM && row > 0
+                ? "--" : to_string(defender_values[row]);
             draw_fe8_outlined_text(
                 state->forecast_font_white, state->forecast_font_ink,
                 state->forecast_glyph_widths,
@@ -2001,18 +1997,18 @@ static void draw_route_destination(NSRect cell, NSColor* color)
         // The small orbit is purely the X2 text: there is no badge or circle.
         const double angle = static_cast<double>((state->idle_tick * 4) & 0xFF) *
                              (2.0 * M_PI / 256.0);
-        const CGFloat orbit_x = static_cast<CGFloat>(std::sin(angle) * 1.5) * scale;
-        const CGFloat orbit_y = static_cast<CGFloat>(std::cos(angle) * 1.0) * scale;
+        const CGFloat orbit_x = static_cast<CGFloat>(sin(angle) * 1.5) * scale;
+        const CGFloat orbit_y = static_cast<CGFloat>(cos(angle) * 1.0) * scale;
         const auto draw_multiplier = [&](bool doubled, int mt, CGFloat value_x)
         {
             if (!doubled)
             {
                 return;
             }
-            const CGFloat digit_cell = std::max<CGFloat>(
-                1.0, std::ceil(0.90 * stat_scale)
+            const CGFloat digit_cell = max<CGFloat>(
+                1.0, ceil(0.90 * stat_scale)
             );
-            const CGFloat number_width = static_cast<CGFloat>(std::to_string(mt).size()) *
+            const CGFloat number_width = static_cast<CGFloat>(to_string(mt).size()) *
                 6.0 * digit_cell / scale;
             draw_fe8_outlined_text(
                 state->forecast_font_pink, state->forecast_font_ink,
@@ -2034,20 +2030,20 @@ static void draw_route_destination(NSRect cell, NSColor* color)
     {
         const fe_tiles::MapMonitor::Impl::InventoryPanel& inventory = *state->inventory;
         const CGFloat side_x = NSMaxX(_board) + kMargin;
-        const CGFloat panel_width = std::max<CGFloat>(
+        const CGFloat panel_width = max<CGFloat>(
             1.0, self.bounds.size.width - side_x - kMargin
         );
         const CGFloat phase_dialogue_height = state->phase_dialogue.has_value()
-            ? std::min<CGFloat>(158.0, self.bounds.size.height - 2.0 * kMargin)
+            ? min<CGFloat>(158.0, self.bounds.size.height - 2.0 * kMargin)
             : 0.0;
         const CGFloat inventory_y = state->phase_dialogue.has_value()
             ? kMargin + 16.0 + phase_dialogue_height + 12.0
             : 26.0;
-        const CGFloat remaining_height = std::max<CGFloat>(
+        const CGFloat remaining_height = max<CGFloat>(
             1.0, self.bounds.size.height - inventory_y - kMargin
         );
         const CGFloat minimum_source_column_width = 94.0;
-        const CGFloat scale = std::min({
+        const CGFloat scale = min({
             3.0,
             remaining_height / 216.0,
             panel_width / (minimum_source_column_width * 2.0 + 4.0)
@@ -2120,7 +2116,7 @@ static void draw_route_destination(NSRect cell, NSColor* color)
             state->forecast_font_white, state->forecast_glyph_widths, @"STATS",
             NSMakePoint(px + (stats_x + 9.0) * scale, py + 8.0 * scale), scale * 0.53
         );
-        const std::string level = "Lv " + std::to_string(inventory.level);
+        const string level = "Lv " + to_string(inventory.level);
         draw_fe8_outlined_text(
             state->forecast_font_white, state->forecast_font_ink,
             state->forecast_glyph_widths,
@@ -2143,10 +2139,10 @@ static void draw_route_destination(NSRect cell, NSColor* color)
 
             const ItemID item = inventory.items[slot];
             draw_icon(item, 12.0, row_y + 1.0);
-            const std::string name = item_name_for_forecast(item);
-            const std::string uses = item == NO_ITEM
+            const string name = item_name_for_forecast(item);
+            const string uses = item == NO_ITEM
                 ? "--"
-                : std::to_string(std::max(0, inventory.uses[slot]));
+                : to_string(max(0, inventory.uses[slot]));
             draw_fe8_outlined_text(
                 state->forecast_font_white, state->forecast_font_ink,
                 state->forecast_glyph_widths,
@@ -2181,29 +2177,29 @@ static void draw_route_destination(NSRect cell, NSColor* color)
 
         if (inventory.equipped_is_weapon)
         {
-            const std::array<std::pair<NSString*, std::string>, 5> values = {{
-                {@"Mt", std::to_string(inventory.weapon_mt)},
-                {@"Wt", std::to_string(inventory.weapon_wt)},
-                {@"Hit", std::to_string(inventory.weapon_hit)},
-                {@"Crit", std::to_string(inventory.weapon_crit)},
-                {@"Rng", std::to_string(inventory.weapon_min_range) +
-                         "-" + std::to_string(inventory.weapon_max_range)},
+            const array<pair<NSString*, string>, 5> values = {{
+                {@"Mt", to_string(inventory.weapon_mt)},
+                {@"Wt", to_string(inventory.weapon_wt)},
+                {@"Hit", to_string(inventory.weapon_hit)},
+                {@"Crit", to_string(inventory.weapon_crit)},
+                {@"Rng", to_string(inventory.weapon_min_range) +
+                         "-" + to_string(inventory.weapon_max_range)},
             }};
             // Keep all three rows inside the minimum 216-source-pixel card.
             // On taller sidebars the card background grows, but the FE8-style
             // stat block remains compact rather than spilling below its frame.
             const CGFloat stats_top = 176.0;
-            const CGFloat stats_step = std::max<CGFloat>(12.0, std::min<CGFloat>(
+            const CGFloat stats_step = max<CGFloat>(12.0, min<CGFloat>(
                 20.0, (source_height - 18.0 - stats_top) / 2.0
             ));
-            const std::array<CGFloat, 5> x = {
+            const array<CGFloat, 5> x = {
                 10.0, inventory_width * 0.54, 10.0, inventory_width * 0.54, 10.0
             };
-            const std::array<CGFloat, 5> y = {
+            const array<CGFloat, 5> y = {
                 stats_top, stats_top, stats_top + stats_step,
                 stats_top + stats_step, stats_top + stats_step * 2.0
             };
-            for (std::size_t index = 0; index < values.size(); ++index)
+            for (size_t index = 0; index < values.size(); ++index)
             {
                 draw_fe8_bitmap_text(
                     state->forecast_font_white, state->forecast_glyph_widths,
@@ -2221,7 +2217,7 @@ static void draw_route_destination(NSRect cell, NSColor* color)
         }
         else
         {
-            const std::string detail = inventory.equipped_item == NO_ITEM
+            const string detail = inventory.equipped_item == NO_ITEM
                 ? "UNARMED"
                 : "NO WEAPON DATA";
             draw_fe8_outlined_text(
@@ -2232,17 +2228,17 @@ static void draw_route_destination(NSRect cell, NSColor* color)
             );
         }
 
-        const std::array<std::pair<NSString*, std::string>, 10> unit_stats = {{
-            {@"HP", std::to_string(inventory.stats.HP) + "/" + std::to_string(inventory.max_hp)},
-            {@"Str", std::to_string(inventory.stats.STR)},
-            {@"Mag", std::to_string(inventory.stats.MAG)},
-            {@"Skl", std::to_string(inventory.stats.SKL)},
-            {@"Spd", std::to_string(inventory.stats.SPD)},
-            {@"Lck", std::to_string(inventory.stats.LUC)},
-            {@"Def", std::to_string(inventory.stats.DEF)},
-            {@"Res", std::to_string(inventory.stats.RES)},
-            {@"Mov", std::to_string(inventory.stats.MOV)},
-            {@"Con", std::to_string(inventory.stats.CON)},
+        const array<pair<NSString*, string>, 10> unit_stats = {{
+            {@"HP", to_string(inventory.stats.HP) + "/" + to_string(inventory.max_hp)},
+            {@"Str", to_string(inventory.stats.STR)},
+            {@"Mag", to_string(inventory.stats.MAG)},
+            {@"Skl", to_string(inventory.stats.SKL)},
+            {@"Spd", to_string(inventory.stats.SPD)},
+            {@"Lck", to_string(inventory.stats.LUC)},
+            {@"Def", to_string(inventory.stats.DEF)},
+            {@"Res", to_string(inventory.stats.RES)},
+            {@"Mov", to_string(inventory.stats.MOV)},
+            {@"Con", to_string(inventory.stats.CON)},
         }};
         const CGFloat stats_left_x = stats_x + 10.0;
         const CGFloat stats_right_x = stats_x + stats_width * 0.60;
@@ -2254,7 +2250,7 @@ static void draw_route_destination(NSRect cell, NSColor* color)
 
             for (int column = 0; column < 2; ++column)
             {
-                const std::size_t index = static_cast<std::size_t>(row * 2 + column);
+                const size_t index = static_cast<size_t>(row * 2 + column);
                 const CGFloat x = column == 0 ? stats_left_x : stats_right_x;
                 draw_fe8_bitmap_text(
                     state->forecast_font_white, state->forecast_glyph_widths,
@@ -2289,18 +2285,18 @@ static void draw_route_destination(NSRect cell, NSColor* color)
                 NSMakePoint(px + (stats_x + 10.0) * scale, py + 162.0 * scale), scale * 0.42
             );
 
-            const std::array<std::pair<NSString*, std::string>, 4> terrain_values = {{
-                {@"Def", std::to_string(terrain.defense_bonus)},
-                {@"Avo", std::to_string(terrain.avoid_bonus)},
-                {@"Heal", std::to_string(terrain.heal_percent) + "%"},
+            const array<pair<NSString*, string>, 4> terrain_values = {{
+                {@"Def", to_string(terrain.defense_bonus)},
+                {@"Avo", to_string(terrain.avoid_bonus)},
+                {@"Heal", to_string(terrain.heal_percent) + "%"},
                 {@"Act", terrain.passable_with_action ? "YES" : "NO"},
             }};
-            const std::array<CGFloat, 4> terrain_x = {{
+            const array<CGFloat, 4> terrain_x = {{
                 stats_x + 10.0, stats_x + stats_width * 0.60,
                 stats_x + 10.0, stats_x + stats_width * 0.60,
             }};
-            const std::array<CGFloat, 4> terrain_y = {{172.0, 172.0, 188.0, 188.0}};
-            for (std::size_t index = 0; index < terrain_values.size(); ++index)
+            const array<CGFloat, 4> terrain_y = {{172.0, 172.0, 188.0, 188.0}};
+            for (size_t index = 0; index < terrain_values.size(); ++index)
             {
                 draw_fe8_bitmap_text(
                     state->forecast_font_white, state->forecast_glyph_widths,
@@ -2327,19 +2323,19 @@ static void draw_route_destination(NSRect cell, NSColor* color)
     {
         const fe_tiles::MapMonitor::Impl::TerrainPanel& terrain = *state->terrain_stats;
         const CGFloat side_x = NSMaxX(_board) + kMargin;
-        const CGFloat panel_width = std::max<CGFloat>(
+        const CGFloat panel_width = max<CGFloat>(
             1.0, self.bounds.size.width - side_x - kMargin
         );
         const CGFloat phase_dialogue_height = state->phase_dialogue.has_value()
-            ? std::min<CGFloat>(158.0, self.bounds.size.height - 2.0 * kMargin)
+            ? min<CGFloat>(158.0, self.bounds.size.height - 2.0 * kMargin)
             : 0.0;
         const CGFloat panel_y = state->phase_dialogue.has_value()
             ? kMargin + 16.0 + phase_dialogue_height + 12.0
             : 26.0;
-        const CGFloat available_height = std::max<CGFloat>(
+        const CGFloat available_height = max<CGFloat>(
             1.0, self.bounds.size.height - panel_y - kMargin
         );
-        const CGFloat scale = std::min({3.0, available_height / 92.0, panel_width / 120.0});
+        const CGFloat scale = min({3.0, available_height / 92.0, panel_width / 120.0});
         const CGFloat source_width = panel_width / scale;
         const CGFloat source_height = 92.0;
         const auto rect = [=](CGFloat x, CGFloat y, CGFloat w, CGFloat h)
@@ -2377,15 +2373,15 @@ static void draw_route_destination(NSRect cell, NSColor* color)
             NSMakePoint(side_x + 10.0 * scale, panel_y + 19.0 * scale), scale * 0.50
         );
 
-        const std::array<std::pair<NSString*, std::string>, 4> terrain_values = {{
-            {@"Def", std::to_string(terrain.defense_bonus)},
-            {@"Avo", std::to_string(terrain.avoid_bonus)},
-            {@"Heal", std::to_string(terrain.heal_percent) + "%"},
+        const array<pair<NSString*, string>, 4> terrain_values = {{
+            {@"Def", to_string(terrain.defense_bonus)},
+            {@"Avo", to_string(terrain.avoid_bonus)},
+            {@"Heal", to_string(terrain.heal_percent) + "%"},
             {@"Action", terrain.passable_with_action ? "YES" : "NO"},
         }};
-        const std::array<CGFloat, 4> x = {{10.0, source_width * 0.53, 10.0, source_width * 0.53}};
-        const std::array<CGFloat, 4> y = {{43.0, 43.0, 62.0, 62.0}};
-        for (std::size_t index = 0; index < terrain_values.size(); ++index)
+        const array<CGFloat, 4> x = {{10.0, source_width * 0.53, 10.0, source_width * 0.53}};
+        const array<CGFloat, 4> y = {{43.0, 43.0, 62.0, 62.0}};
+        for (size_t index = 0; index < terrain_values.size(); ++index)
         {
             draw_fe8_bitmap_text(
                 state->forecast_font_white, state->forecast_glyph_widths,
@@ -2422,12 +2418,12 @@ static void draw_route_destination(NSRect cell, NSColor* color)
             else if (tick < 22)
             {
                 const CGFloat progress = static_cast<CGFloat>(tick - 6) / 16.0;
-                const CGFloat inverse = 1.0 - std::clamp(progress, 0.0, 1.0);
+                const CGFloat inverse = 1.0 - clamp(progress, 0.0, 1.0);
                 title_alpha = 1.0 - inverse * inverse * inverse;
             }
             else if (tick >= 52)
             {
-                const CGFloat progress = std::clamp(
+                const CGFloat progress = clamp(
                     static_cast<CGFloat>(tick - 52) / 16.0, 0.0, 1.0
                 );
                 title_alpha = 1.0 - progress * progress * progress;
@@ -2436,20 +2432,20 @@ static void draw_route_destination(NSRect cell, NSColor* color)
 
         if (title_alpha > 0.0)
         {
-            std::string guild_label = phase.guild_name;
+            string guild_label = phase.guild_name;
             for (char& character : guild_label)
             {
-                character = static_cast<char>(std::toupper(static_cast<unsigned char>(character)));
+                character = static_cast<char>(toupper(static_cast<unsigned char>(character)));
             }
             NSString* guild_text = [NSString stringWithUTF8String:guild_label.c_str()];
             NSString* phase_text = @"PHASE";
             const CGFloat side_x = NSMaxX(_board) + kMargin;
-            const CGFloat panel_width = std::max<CGFloat>(
+            const CGFloat panel_width = max<CGFloat>(
                 1.0, self.bounds.size.width - side_x - kMargin
             );
-            const CGFloat panel_height = std::min<CGFloat>(158.0, self.bounds.size.height - 2.0 * kMargin);
+            const CGFloat panel_height = min<CGFloat>(158.0, self.bounds.size.height - 2.0 * kMargin);
             const NSRect panel = NSMakeRect(side_x, kMargin + 16.0, panel_width, panel_height);
-            const std::uint32_t rgb = phase.color.rgb;
+            const uint32_t rgb = phase.color.rgb;
             const CGFloat red = static_cast<CGFloat>((rgb >> 16) & 0xFF) / 255.0;
             const CGFloat green = static_cast<CGFloat>((rgb >> 8) & 0xFF) / 255.0;
             const CGFloat blue_component = static_cast<CGFloat>(rgb & 0xFF) / 255.0;
@@ -2466,10 +2462,10 @@ static void draw_route_destination(NSRect cell, NSColor* color)
                 return width;
             };
             const CGFloat guild_source_width = text_source_width(guild_text);
-            const CGFloat guild_scale = std::clamp(
-                (panel_width - 34.0) / std::max<CGFloat>(1.0, guild_source_width), 0.70, 1.35
+            const CGFloat guild_scale = clamp(
+                (panel_width - 34.0) / max<CGFloat>(1.0, guild_source_width), 0.70, 1.35
             );
-            const CGFloat phase_scale = std::min<CGFloat>(1.55, guild_scale + 0.20);
+            const CGFloat phase_scale = min<CGFloat>(1.55, guild_scale + 0.20);
             const CGFloat guild_width = guild_source_width * guild_scale;
             const CGFloat phase_width = text_source_width(phase_text) * phase_scale;
 
@@ -2508,12 +2504,12 @@ static void draw_route_destination(NSRect cell, NSColor* color)
         // This is deliberately not a normal phase card. Keep the gameplay
         // scene visible beneath a heavy, hostile screen treatment so the
         // player can still read where the final confrontation happened.
-        const std::uint64_t tick = state->game_over->tick;
-        const CGFloat pulse = 0.5 + 0.5 * std::sin(
+        const uint64_t tick = state->game_over->tick;
+        const CGFloat pulse = 0.5 + 0.5 * sin(
             static_cast<double>(tick) * (2.0 * M_PI / 42.0)
         );
-        const CGFloat impact = std::clamp(static_cast<CGFloat>(tick) / 22.0, 0.0, 1.0);
-        const CGFloat slam = 1.0 - std::pow(1.0 - impact, 3.0);
+        const CGFloat impact = clamp(static_cast<CGFloat>(tick) / 22.0, 0.0, 1.0);
+        const CGFloat slam = 1.0 - pow(1.0 - impact, 3.0);
         // Expand from the tactical board into the entire monitor content
         // area. This removes the sidebar for GAME OVER rather than treating
         // it as another small sidebar card.
@@ -2535,8 +2531,8 @@ static void draw_route_destination(NSRect cell, NSColor* color)
 
         // Jagged red diagonal impact streaks: they scroll continuously after
         // the initial slam instead of leaving a dead static overlay.
-        const CGFloat streak_spacing = std::max<CGFloat>(16.0, _cell_pixels * 0.72);
-        const CGFloat streak_offset = std::fmod(static_cast<CGFloat>(tick) * 2.0, streak_spacing);
+        const CGFloat streak_spacing = max<CGFloat>(16.0, _cell_pixels * 0.72);
+        const CGFloat streak_offset = fmod(static_cast<CGFloat>(tick) * 2.0, streak_spacing);
         for (CGFloat diagonal = -NSHeight(game_area) + streak_offset;
              diagonal < NSWidth(game_area) + NSHeight(game_area);
              diagonal += streak_spacing)
@@ -2555,9 +2551,9 @@ static void draw_route_destination(NSRect cell, NSColor* color)
             [stripe fill];
         }
 
-        const CGFloat title_box_width = std::min<CGFloat>(NSWidth(game_area) * 0.82, 760.0);
-        const CGFloat title_box_height = std::min<CGFloat>(
-            NSHeight(game_area) * 0.62, std::max<CGFloat>(_cell_pixels * 4.6, 204.0)
+        const CGFloat title_box_width = min<CGFloat>(NSWidth(game_area) * 0.82, 760.0);
+        const CGFloat title_box_height = min<CGFloat>(
+            NSHeight(game_area) * 0.62, max<CGFloat>(_cell_pixels * 4.6, 204.0)
         );
         const CGFloat title_y = NSMidY(game_area) - title_box_height * 0.5;
         const NSRect title_box = NSMakeRect(
@@ -2594,12 +2590,12 @@ static void draw_route_destination(NSRect cell, NSColor* color)
             }
             return width;
         };
-        const CGFloat game_scale = std::clamp(
-            (NSWidth(landed_box) - 48.0) / std::max<CGFloat>(1.0, bitmap_width(@"GAME")),
+        const CGFloat game_scale = clamp(
+            (NSWidth(landed_box) - 48.0) / max<CGFloat>(1.0, bitmap_width(@"GAME")),
             1.8, 4.60
         );
-        const CGFloat over_scale = std::clamp(
-            (NSWidth(landed_box) - 48.0) / std::max<CGFloat>(1.0, bitmap_width(@"OVER")),
+        const CGFloat over_scale = clamp(
+            (NSWidth(landed_box) - 48.0) / max<CGFloat>(1.0, bitmap_width(@"OVER")),
             1.8, 4.60
         );
         const CGFloat game_width = bitmap_width(@"GAME") * game_scale;
@@ -2725,7 +2721,7 @@ MapMonitor::MapMonitor(const maps::MapRecipe& recipe, AnimationRenderer& rendere
 MapMonitor::MapMonitor(const maps::MapRecipe& recipe,
                        AnimationRenderer& renderer,
                        Options options)
-    : impl_(std::make_unique<Impl>(recipe, renderer, std::move(options)))
+    : impl_(make_unique<Impl>(recipe, renderer, std::move(options)))
 {
 }
 
@@ -2783,7 +2779,7 @@ void MapMonitor::request_redraw()
     [impl_->view setNeedsDisplay:YES];
 }
 
-void MapMonitor::set_cursor(const std::vector<int>& coordinate)
+void MapMonitor::set_cursor(const vector<int>& coordinate)
 {
     if (coordinate.empty())
     {
@@ -2792,15 +2788,15 @@ void MapMonitor::set_cursor(const std::vector<int>& coordinate)
     }
     if (coordinate.size() != 2)
     {
-        throw std::invalid_argument("Monitor cursor coordinate must be {x, y}.");
+        throw invalid_argument("Monitor cursor coordinate must be {x, y}.");
     }
     const int x = coordinate[0];
     const int y = coordinate[1];
     if (x < 0 || y < 0 || x >= impl_->recipe.columns() || y >= impl_->recipe.rows())
     {
-        throw std::out_of_range("Monitor cursor coordinate is outside the map.");
+        throw out_of_range("Monitor cursor coordinate is outside the map.");
     }
-    impl_->cursor = std::make_pair(x, y);
+    impl_->cursor = make_pair(x, y);
     request_redraw();
 }
 
@@ -2810,23 +2806,23 @@ void MapMonitor::clear_cursor()
     request_redraw();
 }
 
-void MapMonitor::show_route_arrows(const std::vector<std::vector<int>>& route)
+void MapMonitor::show_route_arrows(const vector<vector<int>>& route)
 {
-    std::vector<std::pair<int, int>> checked;
+    vector<pair<int, int>> checked;
     checked.reserve(route.size());
 
-    for (const std::vector<int>& coordinate : route)
+    for (const vector<int>& coordinate : route)
     {
         if (coordinate.size() != 2)
         {
-            throw std::invalid_argument("Route coordinates must have the form {x, y}.");
+            throw invalid_argument("Route coordinates must have the form {x, y}.");
         }
 
         const int x = coordinate[0];
         const int y = coordinate[1];
         if (x < 0 || y < 0 || x >= impl_->recipe.columns() || y >= impl_->recipe.rows())
         {
-            throw std::out_of_range("Route coordinate is outside the monitor map.");
+            throw out_of_range("Route coordinate is outside the monitor map.");
         }
         checked.emplace_back(x, y);
     }
@@ -2836,28 +2832,28 @@ void MapMonitor::show_route_arrows(const std::vector<std::vector<int>>& route)
 }
 
 void MapMonitor::show_route_arrows(
-    const std::vector<std::vector<std::vector<int>>>& routes)
+    const vector<vector<vector<int>>>& routes)
 {
-    std::vector<std::vector<std::pair<int, int>>> checked_routes;
+    vector<vector<pair<int, int>>> checked_routes;
     checked_routes.reserve(routes.size());
 
-    for (const std::vector<std::vector<int>>& route : routes)
+    for (const vector<vector<int>>& route : routes)
     {
-        std::vector<std::pair<int, int>> checked;
+        vector<pair<int, int>> checked;
         checked.reserve(route.size());
 
-        for (const std::vector<int>& coordinate : route)
+        for (const vector<int>& coordinate : route)
         {
             if (coordinate.size() != 2)
             {
-                throw std::invalid_argument("Route coordinates must have the form {x, y}.");
+                throw invalid_argument("Route coordinates must have the form {x, y}.");
             }
 
             const int x = coordinate[0];
             const int y = coordinate[1];
             if (x < 0 || y < 0 || x >= impl_->recipe.columns() || y >= impl_->recipe.rows())
             {
-                throw std::out_of_range("Route coordinate is outside the monitor map.");
+                throw out_of_range("Route coordinate is outside the monitor map.");
             }
             checked.emplace_back(x, y);
         }
@@ -2883,19 +2879,19 @@ bool MapMonitor::route_arrows_visible() const
     return !impl_->route_arrows.empty();
 }
 
-void MapMonitor::on_key(std::function<void(char)> callback)
+void MapMonitor::on_key(function<void(char)> callback)
 {
     impl_->key_callback = std::move(callback);
 }
 
-void MapMonitor::on_frame(std::function<void()> callback)
+void MapMonitor::on_frame(function<void()> callback)
 {
     impl_->frame_callback = std::move(callback);
 }
 
 void MapMonitor::set_battle_animation_speed(double speed)
 {
-    impl_->options.battle_animation_speed = std::clamp(speed, 0.05, 1.0);
+    impl_->options.battle_animation_speed = clamp(speed, 0.05, 1.0);
     impl_->battle_tick_accumulator = 0.0;
 }
 
@@ -2967,7 +2963,7 @@ void MapMonitor::show_inventory(const Entity& unit)
                 panel.weapon_min_range = weapon.MINRG;
                 panel.weapon_max_range = weapon.MAXRG;
             }
-            catch (const std::invalid_argument&)
+            catch (const invalid_argument&)
             {
                 // The inventory still displays a non-weapon's slot, icon,
                 // name, and uses; it simply has no weapon stat block.
@@ -2993,7 +2989,7 @@ void MapMonitor::show_terrain_stats(int terrain_id)
 {
     const terrain::TerrainData& data = terrain::get(terrain_id);
     Impl::TerrainPanel panel;
-    panel.name = std::string(data.name);
+    panel.name = string(data.name);
     panel.heal_percent = data.heal_percent;
     panel.avoid_bonus = data.avoid_bonus;
     panel.defense_bonus = data.defense_bonus;
@@ -3013,11 +3009,11 @@ bool MapMonitor::terrain_stats_visible() const
     return impl_->terrain_stats.has_value();
 }
 
-void MapMonitor::show_phase_intro(const std::string& guild_name, GuildColor color)
+void MapMonitor::show_phase_intro(const string& guild_name, GuildColor color)
 {
     if (guild_name.empty())
     {
-        throw std::invalid_argument("Phase intro needs a non-empty guild name.");
+        throw invalid_argument("Phase intro needs a non-empty guild name.");
     }
     impl_->phase_intro = Impl::PhaseIntro{guild_name, color, 0};
     impl_->phase_dialogue = Impl::PhaseDialogue{guild_name, color};

@@ -2,7 +2,9 @@
 set -euo pipefail
 
 root="$(cd "$(dirname "$0")" && pwd)"
+core_root="$(cd "$root/.." && pwd)"
 cd "$root"
+mkdir -p "$core_root/bin/map_tile_library"
 clang++ -std=c++17 -Wall -Wextra \
   -I"$root/include" \
   "$root/examples/layered_example.cpp" \
@@ -10,6 +12,6 @@ clang++ -std=c++17 -Wall -Wextra \
   -framework CoreFoundation \
   -framework CoreGraphics \
   -framework ImageIO \
-  -o "$root/layered_example"
+  -o "$core_root/bin/map_tile_library/layered_example"
 
-"$root/layered_example" "$root"
+"$core_root/bin/map_tile_library/layered_example" "$root"

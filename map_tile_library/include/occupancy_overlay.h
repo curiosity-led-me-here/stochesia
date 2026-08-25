@@ -7,12 +7,13 @@
 #include <vector>
 
 #include "fe8_unit_visuals.h"
+using namespace std;
 
 namespace fe_tiles
 {
 // Indexed [y][x], like TileCanvas's class and visual grids. 0 is empty;
 // every positive value is an entity ID from your Registry/occupancy system.
-using OccupancyGrid = std::vector<std::vector<int>>;
+using OccupancyGrid = vector<vector<int>>;
 
 struct Cell
 {
@@ -40,13 +41,13 @@ struct GuildColor
     };
 
     Scheme scheme = Scheme::Player;
-    std::uint32_t rgb = 0x4A78E8;
+    uint32_t rgb = 0x4A78E8;
 
     static constexpr GuildColor player() { return {Scheme::Player, 0x4A78E8}; }
     static constexpr GuildColor enemy()  { return {Scheme::Enemy,  0xD83232}; }
     static constexpr GuildColor npc()    { return {Scheme::Npc,    0x46A84A}; }
     static constexpr GuildColor fourth() { return {Scheme::Fourth, 0x9A5CD6}; }
-    static constexpr GuildColor custom(std::uint32_t rgb_code)
+    static constexpr GuildColor custom(uint32_t rgb_code)
     {
         return {Scheme::Custom, rgb_code & 0x00FFFFFF};
     }
@@ -106,10 +107,10 @@ struct BattleWindow
 {
     int attacker_id = 0;
     int defender_id = 0;
-    std::string attacker_name;
-    std::string defender_name;
-    std::string attacker_weapon;
-    std::string defender_weapon;
+    string attacker_name;
+    string defender_name;
+    string attacker_weapon;
+    string defender_weapon;
     int attacker_hp_before = 0;
     int attacker_hp_after = 0;
     int attacker_hp_max = 0;
@@ -178,7 +179,7 @@ struct HitEffect
     UnitPose pose;
     int tick = 0;
     bool critical = false;
-    std::array<std::array<int, 2>, 16> background_shake{};
+    array<array<int, 2>, 16> background_shake{};
 };
 
 // A combat turn in which the acting unit has no usable weapon. Both units
@@ -197,30 +198,30 @@ class CombatPresentation
 {
 public:
     void begin(BattleWindow result,
-               const std::optional<UnitPose>& attacker_pose,
-               const std::optional<UnitPose>& defender_pose);
+               const optional<UnitPose>& attacker_pose,
+               const optional<UnitPose>& defender_pose);
     void begin_death(UnitPose pose);
     void tick_fe_frame();
 
     bool is_presenting() const;
-    const std::optional<AttackEffect>& attack_effect() const;
-    const std::optional<MissEffect>& miss_effect() const;
-    const std::optional<HitEffect>& hit_effect() const;
-    const std::vector<DeathEffect>& death_effects() const;
+    const optional<AttackEffect>& attack_effect() const;
+    const optional<MissEffect>& miss_effect() const;
+    const optional<HitEffect>& hit_effect() const;
+    const vector<DeathEffect>& death_effects() const;
 
 private:
-    std::optional<AttackEffect> attack_effect_;
-    std::optional<MissEffect> miss_effect_;
-    std::optional<HitEffect> hit_effect_;
-    std::optional<WaitEffect> wait_effect_;
+    optional<AttackEffect> attack_effect_;
+    optional<MissEffect> miss_effect_;
+    optional<HitEffect> hit_effect_;
+    optional<WaitEffect> wait_effect_;
     bool pending_miss_ = false;
     bool pending_hit_ = false;
     bool pending_critical_ = false;
-    std::optional<UnitPose> target_pose_;
-    std::vector<DeathEffect> death_effects_;
-    std::uint32_t other_rn_ = 0;
+    optional<UnitPose> target_pose_;
+    vector<DeathEffect> death_effects_;
+    uint32_t other_rn_ = 0;
 
-    std::uint32_t next_other_rn();
+    uint32_t next_other_rn();
 };
 
 // Renderer-side FE8 map-unit animation state. It has no knowledge of combat,
@@ -239,29 +240,29 @@ public:
 
     void register_unit(int entity_id, UnitVisual visual,
                        GuildColor color = GuildColor::player());
-    std::optional<Cell> location_of(int entity_id) const;
+    optional<Cell> location_of(int entity_id) const;
 
     // `route` must start at the entity's present occupancy cell, contain
     // cardinally adjacent cells, and end on an empty cell. This is entirely
     // presentation state: SpriteLayer never changes your occupancy grid.
     // Returns false if a move is already animating or the route is bad.
-    bool begin_move(int entity_id, const std::vector<Cell>& route);
+    bool begin_move(int entity_id, const vector<Cell>& route);
 
     // Same visual animation, for a gameplay move that was already committed.
     // The renderer currently contains the entity at route.back(); it briefly
     // presents it from route.front() and restores its private occupancy at the
     // destination when the animation completes.
-    bool begin_committed_move(int entity_id, const std::vector<Cell>& route);
+    bool begin_committed_move(int entity_id, const vector<Cell>& route);
 
     // Call exactly once per displayed FE8 60 Hz frame.
     void tick_fe_frame();
 
     // Returns an arrival exactly once. The caller that owns game state should
     // then update occupancy (or call its own Mapmaker movement commit).
-    std::optional<CompletedMove> take_completed_move();
+    optional<CompletedMove> take_completed_move();
 
     bool is_animating() const;
-    std::vector<UnitPose> poses() const;
+    vector<UnitPose> poses() const;
 
 private:
     struct MotionState;
@@ -274,10 +275,10 @@ private:
         GuildColor color = GuildColor::player();
     };
 
-    std::vector<Definition> definitions_;
-    std::vector<MotionState> states_;
-    std::optional<int> moving_entity_;
-    std::optional<CompletedMove> completed_move_;
+    vector<Definition> definitions_;
+    vector<MotionState> states_;
+    optional<int> moving_entity_;
+    optional<CompletedMove> completed_move_;
     bool committed_move_ = false;
 
     void validate_occupancy() const;

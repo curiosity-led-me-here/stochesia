@@ -1,12 +1,13 @@
 #include "terrain_data.h"
 #include <array>
 #include <cstddef>
+using namespace std;
 
 namespace
 {
 using terrain::MovementType;
 
-constexpr std::array<std::string_view, TERRAIN_COUNT> kNames = {
+constexpr array<string_view, TERRAIN_COUNT> kNames = {
     "Void", "Plains", "Road", "Village", "Closed village", "House", "Armory", "Vendor",
     "Arena", "Room", "Fort", "Castle gate", "Forest", "Thicket", "Sand", "Desert",
     "River", "Mountain", "Peak", "Bridge", "Bridge", "Sea", "Lake", "Floor",
@@ -19,21 +20,21 @@ constexpr std::array<std::string_view, TERRAIN_COUNT> kNames = {
 
 // Direct transcription of FE8's TerrainTable_HealAmount, Avo_Common and
 // Def_Common. Values are applied after combat takes place on a tile.
-constexpr std::array<int, TERRAIN_COUNT> kHeal = {
+constexpr array<int, TERRAIN_COUNT> kHeal = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 20, 10, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10,
     0, 0, 0, 10, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 };
 
-constexpr std::array<int, TERRAIN_COUNT> kAvoid = {
+constexpr array<int, TERRAIN_COUNT> kAvoid = {
     0, 0, 0, 10, 10, 10, 10, 10, 10, 10, 20, 20, 20, 30, 5, 5,
     0, 30, 40, 0, 0, 10, 10, 0, 0, 20, 20, 0, 5, 20, 0, 30,
     0, 0, 0, 30, 15, 0, 0, 5, 5, 5, 0, 0, 0, 0, 0, 0,
     0, 20, 20, 0, 0, 0, 0, 10, 10, 0, 0, 0, 10, 0, 0, 20, 20,
 };
 
-constexpr std::array<int, TERRAIN_COUNT> kDefense = {
+constexpr array<int, TERRAIN_COUNT> kDefense = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 3, 1, 2, 0, 0,
     0, 1, 2, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 3,
     0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -42,9 +43,9 @@ constexpr std::array<int, TERRAIN_COUNT> kDefense = {
 
 // These tiles are impassable in their initial state, but FE8 actions can
 // lower, unlock, or destroy them to open a route.
-constexpr std::array<bool, TERRAIN_COUNT> kPassableWithAction = []
+constexpr array<bool, TERRAIN_COUNT> kPassableWithAction = []
 {
-    std::array<bool, TERRAIN_COUNT> passable{};
+    array<bool, TERRAIN_COUNT> passable{};
     passable[TERRAIN_BRIDGE_14] = true;
     passable[TERRAIN_WALL_DAMAGED] = true;
     passable[TERRAIN_DOOR] = true;
@@ -53,7 +54,7 @@ constexpr std::array<bool, TERRAIN_COUNT> kPassableWithAction = []
 }();
 
 // Rows are FE8's normal-weather movement-cost tables. -1 means impassable.
-constexpr std::array<std::array<int, TERRAIN_COUNT>, 16> kMovementCosts = {{
+constexpr array<array<int, TERRAIN_COUNT>, 16> kMovementCosts = {{
     // CommonT2
     {-1, 1, 1, 1, -1, 1, 1, 1, 1, 1, 2, 1, 2, -1, 1, 2, 5, 4, -1, 1, -1, -1, -1, 1, 1, -1, -1, -1, 1, 2, -1, 1, 1, 1, -1, 1, 1, 2, -1, 2, 2, 2, 1, 1, -1, 1, -1, 1, 1, -1, -1, -1, 1, -1, -1, 1, 1, -1, -1, -1, -1, -1, 1, -1, -1},
     // CommonT1
@@ -88,9 +89,9 @@ constexpr std::array<std::array<int, TERRAIN_COUNT>, 16> kMovementCosts = {{
     {-1, 1, 1, 1, -1, 1, 1, 1, 1, 1, 2, 1, 2, -1, 1, 2, -1, 4, -1, 1, -1, -1, -1, 1, 1, 1, -1, -1, 1, 2, -1, 2, 1, 1, -1, 1, 1, 1, -1, 2, 2, 2, 1, 1, -1, 1, -1, 1, 1, -1, 1, 0, 0, -1, -1, 1, 1, -1, -1, -1, -1, -1, 1, -1, -1},
 }};
 
-const std::array<terrain::TerrainData, TERRAIN_COUNT> kTerrainData = []
+const array<terrain::TerrainData, TERRAIN_COUNT> kTerrainData = []
 {
-    std::array<terrain::TerrainData, TERRAIN_COUNT> data{};
+    array<terrain::TerrainData, TERRAIN_COUNT> data{};
     for (int id = 0; id < TERRAIN_COUNT; ++id)
     {
         data[id] = {
@@ -109,12 +110,12 @@ const terrain::TerrainData kUnknownTerrain = {
     TERRAIN_NONE, "Unknown terrain", 0, 0, 0, false
 };
 
-constexpr std::array<std::string_view, 16> kMovementNames = {
+constexpr array<string_view, 16> kMovementNames = {
     "Common T2", "Common T1", "Armor", "Fighter", "Berserker", "Brigand", "Pirate", "Thief",
     "Magic", "Civilian", "Horse T1", "Horse T2", "Animal T1", "Animal T2", "Fly", "Demon King",
 };
 
-constexpr std::array<int, 65> kV1ToFe8 = {
+constexpr array<int, 65> kV1ToFe8 = {
     TERRAIN_PLAINS, TERRAIN_ROAD, TERRAIN_FOREST, TERRAIN_DESERT,
     TERRAIN_MOUNTAIN, TERRAIN_RIVER, TERRAIN_BRIDGE_REGULAR, TERRAIN_FORT,
     TERRAIN_WALL_REGULAR, TERRAIN_VILLAGE_REGULAR, TERRAIN_FLOOR_REGULAR,
@@ -146,7 +147,7 @@ const TerrainData& get(int terrain_id)
 int movement_cost(int terrain_id, MovementType movement)
 {
     if (!is_known(terrain_id)) return IMPASSABLE;
-    return kMovementCosts[static_cast<std::size_t>(movement)][terrain_id];
+    return kMovementCosts[static_cast<size_t>(movement)][terrain_id];
 }
 
 bool can_enter(int terrain_id, MovementType movement)
@@ -169,14 +170,14 @@ bool is_passable_with_action(int terrain_id)
     return get(terrain_id).passable_with_action;
 }
 
-std::vector<int> default_obstacle_ids()
+vector<int> default_obstacle_ids()
 {
     return {TERRAIN_WALL_REGULAR, TERRAIN_FENCE_REGULAR, TERRAIN_CLIFF, TERRAIN_PEAK};
 }
 
-std::string_view movement_type_name(MovementType movement)
+string_view movement_type_name(MovementType movement)
 {
-    return kMovementNames[static_cast<std::size_t>(movement)];
+    return kMovementNames[static_cast<size_t>(movement)];
 }
 
 int v1_id_to_fe8(int legacy_id)
@@ -188,10 +189,10 @@ int v1_id_to_fe8(int legacy_id)
     return kV1ToFe8[legacy_id];
 }
 
-std::vector<std::vector<int>> v1_map_to_fe8(const std::vector<std::vector<int>>& legacy_map)
+vector<vector<int>> v1_map_to_fe8(const vector<vector<int>>& legacy_map)
 {
-    std::vector<std::vector<int>> converted = legacy_map;
-    for (std::vector<int>& row : converted)
+    vector<vector<int>> converted = legacy_map;
+    for (vector<int>& row : converted)
     {
         for (int& terrain_id : row)
         {

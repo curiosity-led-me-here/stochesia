@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <string>
 #include <unordered_set>
+using namespace std;
 
 namespace fe_tiles
 {
@@ -31,14 +32,14 @@ void face_unit_toward(UnitPose& pose, double target_x, double target_y)
 }
 
 LogicRenderControl::LogicRenderControl(int rows, int columns)
-    : occupancy_(rows > 0 ? rows : 1, std::vector<int>(columns > 0 ? columns : 1, 0)),
+    : occupancy_(rows > 0 ? rows : 1, vector<int>(columns > 0 ? columns : 1, 0)),
       sprites_(occupancy_),
-      movement_(rows > 0 ? rows : 1, std::vector<int>(columns > 0 ? columns : 1, -1)),
-      attack_(rows > 0 ? rows : 1, std::vector<int>(columns > 0 ? columns : 1, 0))
+      movement_(rows > 0 ? rows : 1, vector<int>(columns > 0 ? columns : 1, -1)),
+      attack_(rows > 0 ? rows : 1, vector<int>(columns > 0 ? columns : 1, 0))
 {
     if (rows <= 0 || columns <= 0)
     {
-        throw std::invalid_argument("LogicRenderControl needs positive grid dimensions.");
+        throw invalid_argument("LogicRenderControl needs positive grid dimensions.");
     }
 }
 
@@ -46,9 +47,9 @@ void LogicRenderControl::bind(Entity& entity, UnitVisual visual, GuildColor colo
 {
     if (entity.entity_id <= 0)
     {
-        throw std::invalid_argument("Bind a renderer only after the entity has a positive Registry ID.");
+        throw invalid_argument("Bind a renderer only after the entity has a positive Registry ID.");
     }
-    const auto existing = std::find_if(bindings_.begin(), bindings_.end(),
+    const auto existing = find_if(bindings_.begin(), bindings_.end(),
         [&entity](const Binding& binding) { return binding.entity_id == entity.entity_id; });
     if (existing == bindings_.end())
     {
@@ -62,33 +63,33 @@ void LogicRenderControl::bind(Entity& entity, UnitVisual visual, GuildColor colo
     sprites_.register_unit(entity.entity_id, visual, color);
 }
 
-std::optional<LogicRenderControl::Binding> LogicRenderControl::binding_for(int entity_id) const
+optional<LogicRenderControl::Binding> LogicRenderControl::binding_for(int entity_id) const
 {
-    const auto found = std::find_if(bindings_.begin(), bindings_.end(),
+    const auto found = find_if(bindings_.begin(), bindings_.end(),
         [entity_id](const Binding& binding) { return binding.entity_id == entity_id; });
     if (found == bindings_.end())
     {
-        return std::nullopt;
+        return nullopt;
     }
     return *found;
 }
 
-void LogicRenderControl::sync_units(const std::vector<Entity*>& live_entities)
+void LogicRenderControl::sync_units(const vector<Entity*>& live_entities)
 {
     if (sprites_.is_animating())
     {
-        throw std::logic_error("Do not replace renderer occupancy while a movement animation is active.");
+        throw logic_error("Do not replace renderer occupancy while a movement animation is active.");
     }
     // A normal world-state refresh ends the temporary combat-facing hold.
     held_attacker_pose_.reset();
     held_defender_pose_.reset();
     hidden_after_death_ids_.clear();
-    for (std::vector<int>& row : occupancy_)
+    for (vector<int>& row : occupancy_)
     {
-        std::fill(row.begin(), row.end(), 0);
+        fill(row.begin(), row.end(), 0);
     }
 
-    std::unordered_set<int> seen;
+    unordered_set<int> seen;
     for (Entity* entity : live_entities)
     {
         if (entity == nullptr || !entity->alive)
@@ -97,22 +98,22 @@ void LogicRenderControl::sync_units(const std::vector<Entity*>& live_entities)
         }
         if (entity->location.size() < 2)
         {
-            throw std::invalid_argument("Live Entity location must have the form {x, y}.");
+            throw invalid_argument("Live Entity location must have the form {x, y}.");
         }
         if (!binding_for(entity->entity_id).has_value())
         {
-            throw std::invalid_argument("Every rendered Entity needs bind(entity, visual) first.");
+            throw invalid_argument("Every rendered Entity needs bind(entity, visual) first.");
         }
         const int x = entity->location[0];
         const int y = entity->location[1];
         if (x < 0 || y < 0 || y >= static_cast<int>(occupancy_.size()) ||
             x >= static_cast<int>(occupancy_[y].size()))
         {
-            throw std::out_of_range("Entity location is outside the renderer grid.");
+            throw out_of_range("Entity location is outside the renderer grid.");
         }
         if (!seen.insert(entity->entity_id).second || occupancy_[y][x] != 0)
         {
-            throw std::invalid_argument("Renderer occupancy requires one live Entity per tile and ID.");
+            throw invalid_argument("Renderer occupancy requires one live Entity per tile and ID.");
         }
         occupancy_[y][x] = entity->entity_id;
     }
@@ -122,13 +123,13 @@ void LogicRenderControl::require_dimensions(const RenderGrid& grid, const char* 
 {
     if (grid.size() != occupancy_.size())
     {
-        throw std::invalid_argument(std::string(name) + " height does not match the renderer grid.");
+        throw invalid_argument(string(name) + " height does not match the renderer grid.");
     }
-    for (std::size_t y = 0; y < grid.size(); ++y)
+    for (size_t y = 0; y < grid.size(); ++y)
     {
         if (grid[y].size() != occupancy_[y].size())
         {
-            throw std::invalid_argument(std::string(name) + " width does not match the renderer grid.");
+            throw invalid_argument(string(name) + " width does not match the renderer grid.");
         }
     }
 }
@@ -149,22 +150,22 @@ void LogicRenderControl::show_action_state(const RenderGrid& movement, const Ren
 void LogicRenderControl::show_standing_attack(const RenderGrid& attack)
 {
     require_dimensions(attack, "Standing attack grid");
-    for (std::vector<int>& row : movement_)
+    for (vector<int>& row : movement_)
     {
-        std::fill(row.begin(), row.end(), -1);
+        fill(row.begin(), row.end(), -1);
     }
     attack_ = attack;
 }
 
 void LogicRenderControl::clear_action_state()
 {
-    for (std::vector<int>& row : movement_)
+    for (vector<int>& row : movement_)
     {
-        std::fill(row.begin(), row.end(), -1);
+        fill(row.begin(), row.end(), -1);
     }
-    for (std::vector<int>& row : attack_)
+    for (vector<int>& row : attack_)
     {
-        std::fill(row.begin(), row.end(), 0);
+        fill(row.begin(), row.end(), 0);
     }
 }
 
@@ -183,31 +184,31 @@ const OccupancyGrid& LogicRenderControl::occupancy() const
     return occupancy_;
 }
 
-bool LogicRenderControl::begin_move(const Entity& entity, const std::vector<Cell>& route)
+bool LogicRenderControl::begin_move(const Entity& entity, const vector<Cell>& route)
 {
     if (entity.location.size() < 2)
     {
-        throw std::invalid_argument("Moving Entity location must have the form {x, y}.");
+        throw invalid_argument("Moving Entity location must have the form {x, y}.");
     }
     if (route.empty() || route.front().x != entity.location[0] || route.front().y != entity.location[1])
     {
-        throw std::invalid_argument("Animation route must begin at Entity::location.");
+        throw invalid_argument("Animation route must begin at Entity::location.");
     }
     return sprites_.begin_move(entity.entity_id, route);
 }
 
 bool LogicRenderControl::begin_move(
     const Entity& entity,
-    const std::vector<std::vector<int>>& route_xy
+    const vector<vector<int>>& route_xy
 )
 {
-    std::vector<Cell> route;
+    vector<Cell> route;
     route.reserve(route_xy.size());
-    for (const std::vector<int>& coordinate : route_xy)
+    for (const vector<int>& coordinate : route_xy)
     {
         if (coordinate.size() != 2)
         {
-            throw std::invalid_argument(
+            throw invalid_argument(
                 "Each visual route coordinate must be exactly {x, y}."
             );
         }
@@ -218,45 +219,45 @@ bool LogicRenderControl::begin_move(
 
 bool LogicRenderControl::begin_committed_move(
     const Entity& entity,
-    const std::vector<std::vector<int>>& route_xy
+    const vector<vector<int>>& route_xy
 )
 {
     if (entity.location.size() < 2)
     {
-        throw std::invalid_argument("Moving Entity location must have the form {x, y}.");
+        throw invalid_argument("Moving Entity location must have the form {x, y}.");
     }
-    std::vector<Cell> route;
+    vector<Cell> route;
     route.reserve(route_xy.size());
-    for (const std::vector<int>& coordinate : route_xy)
+    for (const vector<int>& coordinate : route_xy)
     {
         if (coordinate.size() != 2)
         {
-            throw std::invalid_argument("Each visual route coordinate must be exactly {x, y}.");
+            throw invalid_argument("Each visual route coordinate must be exactly {x, y}.");
         }
         route.push_back({coordinate[0], coordinate[1]});
     }
     if (route.empty() || route.back().x != entity.location[0] || route.back().y != entity.location[1])
     {
-        throw std::invalid_argument("Committed animation route must end at Entity::location.");
+        throw invalid_argument("Committed animation route must end at Entity::location.");
     }
     return sprites_.begin_committed_move(entity.entity_id, route);
 }
 
-std::optional<CompletedMove> LogicRenderControl::take_completed_move()
+optional<CompletedMove> LogicRenderControl::take_completed_move()
 {
     return sprites_.take_completed_move();
 }
 
-std::optional<UnitPose> LogicRenderControl::pose_for_entity(const Entity& entity) const
+optional<UnitPose> LogicRenderControl::pose_for_entity(const Entity& entity) const
 {
     if (entity.location.size() < 2)
     {
-        return std::nullopt;
+        return nullopt;
     }
-    const std::optional<Binding> binding = binding_for(entity.entity_id);
+    const optional<Binding> binding = binding_for(entity.entity_id);
     if (!binding.has_value())
     {
-        return std::nullopt;
+        return nullopt;
     }
     return UnitPose{entity.entity_id, binding->visual, binding->color,
                     static_cast<double>(entity.location[0]),
@@ -275,13 +276,13 @@ void LogicRenderControl::begin_strike(const Entity& attacker,
 {
     if (sprites_.is_animating() || combat_.is_presenting())
     {
-        throw std::logic_error("Wait for the current renderer animation before starting an attack.");
+        throw logic_error("Wait for the current renderer animation before starting an attack.");
     }
-    const std::optional<UnitPose> attacker_pose = pose_for_entity(attacker);
-    const std::optional<UnitPose> defender_pose = pose_for_entity(defender);
+    const optional<UnitPose> attacker_pose = pose_for_entity(attacker);
+    const optional<UnitPose> defender_pose = pose_for_entity(defender);
     if (!attacker_pose.has_value() || !defender_pose.has_value())
     {
-        throw std::invalid_argument("Both attack entities need an ID, {x,y} location, and bound visual.");
+        throw invalid_argument("Both attack entities need an ID, {x,y} location, and bound visual.");
     }
     BattleWindow result;
     result.attacker_id = attacker.entity_id;
@@ -299,12 +300,12 @@ void LogicRenderControl::begin_death(const Entity& defeated)
 {
     if (sprites_.is_animating() || combat_.is_presenting())
     {
-        throw std::logic_error("Wait for the current renderer animation before starting a death fade.");
+        throw logic_error("Wait for the current renderer animation before starting a death fade.");
     }
-    const std::optional<UnitPose> pose = pose_for_entity(defeated);
+    const optional<UnitPose> pose = pose_for_entity(defeated);
     if (!pose.has_value())
     {
-        throw std::invalid_argument("A death animation needs an ID, {x,y} location, and bound visual.");
+        throw invalid_argument("A death animation needs an ID, {x,y} location, and bound visual.");
     }
     combat_.begin_death(*pose);
     held_attacker_pose_.reset();
@@ -344,12 +345,12 @@ bool LogicRenderControl::is_busy() const
     return is_moving() || is_presenting_attack();
 }
 
-std::vector<UnitPose> LogicRenderControl::visible_unit_poses() const
+vector<UnitPose> LogicRenderControl::visible_unit_poses() const
 {
-    std::vector<UnitPose> result;
-    const std::optional<AttackEffect>& attack = combat_.attack_effect();
-    std::unordered_set<int> emitted;
-    std::unordered_set<int> fading;
+    vector<UnitPose> result;
+    const optional<AttackEffect>& attack = combat_.attack_effect();
+    unordered_set<int> emitted;
+    unordered_set<int> fading;
     for (const DeathEffect& effect : combat_.death_effects())
     {
         fading.insert(effect.pose.entity_id);
@@ -387,17 +388,17 @@ std::vector<UnitPose> LogicRenderControl::visible_unit_poses() const
     return result;
 }
 
-const std::vector<DeathEffect>& LogicRenderControl::death_effects() const
+const vector<DeathEffect>& LogicRenderControl::death_effects() const
 {
     return combat_.death_effects();
 }
 
-const std::optional<MissEffect>& LogicRenderControl::miss_effect() const
+const optional<MissEffect>& LogicRenderControl::miss_effect() const
 {
     return combat_.miss_effect();
 }
 
-const std::optional<HitEffect>& LogicRenderControl::hit_effect() const
+const optional<HitEffect>& LogicRenderControl::hit_effect() const
 {
     return combat_.hit_effect();
 }

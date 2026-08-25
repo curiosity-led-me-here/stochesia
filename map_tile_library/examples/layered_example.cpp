@@ -3,10 +3,11 @@
 #include <vector>
 
 #include "map_tile_library.h"
+using namespace std;
 
 int main(int argc, const char* argv[])
 {
-    const std::string library_root = argc > 1
+    const string library_root = argc > 1
         ? argv[1]
         : "/Users/ashu/Strategic-Procedural-Generation/map_tile_library";
 
@@ -16,8 +17,8 @@ int main(int argc, const char* argv[])
     constexpr fe_tiles::ThemeId theme = fe_tiles::THEME_CHAPTERS_01;
 
     // Layer 1: class. Layer 2: packed {subclass, orientation} within Ch. 1.
-    fe_tiles::IntGrid classes(height, std::vector<int>(width, fe_tiles::PLAIN));
-    fe_tiles::IntGrid tiles(height, std::vector<int>(width, fe_tiles::make_tile_code(0, 0)));
+    fe_tiles::IntGrid classes(height, vector<int>(width, fe_tiles::PLAIN));
+    fe_tiles::IntGrid tiles(height, vector<int>(width, fe_tiles::make_tile_code(0, 0)));
 
     // A literal map recipe: every integer is independently controllable.
     for (int y = 1; y <= 4; ++y)
@@ -46,13 +47,13 @@ int main(int argc, const char* argv[])
         fe_tiles::TileCanvas canvas(height, width);
         canvas.draw(theme, classes, tiles, library_root);
         canvas.write_png("layered_example.png", 3);
-        std::cout << "Wrote layered_example.png\n";
-        std::cout << fe_tiles::describe_tile(theme, fe_tiles::PLAIN, 0, 0, library_root)
+        cout << "Wrote layered_example.png\n";
+        cout << fe_tiles::describe_tile(theme, fe_tiles::PLAIN, 0, 0, library_root)
                   << '\n';
     }
-    catch (const std::exception& error)
+    catch (const exception& error)
     {
-        std::cerr << "Tile renderer error: " << error.what() << '\n';
+        cerr << "Tile renderer error: " << error.what() << '\n';
         return 1;
     }
 }

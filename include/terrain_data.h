@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <string_view>
 #include <vector>
+using namespace std;
 
 // Native FE8 terrain IDs. Raw chapter maps already use this vocabulary.
 enum TerrainId : int
@@ -45,7 +46,7 @@ namespace terrain
 constexpr int IMPASSABLE = -1;
 
 // Each option corresponds to one of FE8's normal-weather movement tables.
-enum class MovementType : std::uint8_t
+enum class MovementType : uint8_t
 {
     CommonT2, CommonT1, Armor, Fighter, Berserker, Brigand, Pirate, Thief,
     Magic, Civilian, HorseT1, HorseT2, AnimalT1, AnimalT2, Fly, DemonKing,
@@ -54,7 +55,7 @@ enum class MovementType : std::uint8_t
 struct TerrainData
 {
     TerrainId id;
-    std::string_view name;
+    string_view name;
     int heal_percent;
     int avoid_bonus;
     int defense_bonus;
@@ -68,12 +69,12 @@ bool can_enter(int terrain_id, MovementType movement);
 bool is_known(int terrain_id);
 bool blocks_common_foot(int terrain_id);
 bool is_passable_with_action(int terrain_id);
-std::vector<int> default_obstacle_ids();
-std::string_view movement_type_name(MovementType movement);
+vector<int> default_obstacle_ids();
+string_view movement_type_name(MovementType movement);
 
 // One-way import adapter for existing fe_map_builder_api recipes labelled
 // "strategic_procedural_generation_v1". New gameplay maps should use the
 // native TerrainId values above directly.
 int v1_id_to_fe8(int legacy_id);
-std::vector<std::vector<int>> v1_map_to_fe8(const std::vector<std::vector<int>>& legacy_map);
+vector<vector<int>> v1_map_to_fe8(const vector<vector<int>>& legacy_map);
 }

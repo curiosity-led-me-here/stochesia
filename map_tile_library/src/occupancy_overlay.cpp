@@ -5,6 +5,7 @@
 #include <cmath>
 #include <stdexcept>
 #include <unordered_set>
+using namespace std;
 
 namespace
 {
@@ -36,7 +37,7 @@ struct MotionFrame
 };
 
 // Exact FE8 moving-unit programs. Right uses the original left cells flipped.
-constexpr std::array<std::array<MotionFrame, 4>, 5> kMotion = {{
+constexpr array<array<MotionFrame, 4>, 5> kMotion = {{
     {{{0, false, 13}, {1, false, 6}, {2, false, 13}, {3, false, 6}}},
     {{{0, true,  13}, {1, true,  6}, {2, true,  13}, {3, true,  6}}},
     {{{4, false, 13}, {5, false, 6}, {6, false, 13}, {7, false, 6}}},
@@ -59,7 +60,7 @@ Facing facing_toward(double from_x, double from_y, double to_x, double to_y)
 
     // Exact decision shape from FE8's GetFacingDirection(). This matters for
     // a long-range target that is not on one cardinal axis.
-    if (std::abs(dx) * 2.0 < std::abs(dy))
+    if (abs(dx) * 2.0 < abs(dy))
     {
         return dy > 0.0 ? Facing::Down : Facing::Up;
     }
@@ -133,22 +134,22 @@ void update_attack_pose(fe_tiles::AttackEffect& effect)
 
 namespace fe_tiles
 {
-std::uint32_t CombatPresentation::next_other_rn()
+uint32_t CombatPresentation::next_other_rn()
 {
     // FE8's GetOtherRN recurrence. This is deliberately presentation-only:
     // critical feedback must not consume the mechanics RNG.
-    const std::uint32_t scaled = other_rn_ << 2;
+    const uint32_t scaled = other_rn_ << 2;
     other_rn_ = ((scaled + 2) * (scaled + 3)) >> 2;
     return other_rn_;
 }
 
 void CombatPresentation::begin(BattleWindow result,
-                               const std::optional<UnitPose>& attacker_pose,
-                               const std::optional<UnitPose>& defender_pose)
+                               const optional<UnitPose>& attacker_pose,
+                               const optional<UnitPose>& defender_pose)
 {
     if (is_presenting())
     {
-        throw std::logic_error("A map battle presentation is already active.");
+        throw logic_error("A map battle presentation is already active.");
     }
 
     miss_effect_.reset();
@@ -189,7 +190,7 @@ void CombatPresentation::begin_death(UnitPose pose)
 {
     if (is_presenting())
     {
-        throw std::logic_error("A map battle presentation is already active.");
+        throw logic_error("A map battle presentation is already active.");
     }
     attack_effect_.reset();
     miss_effect_.reset();
@@ -294,7 +295,7 @@ void CombatPresentation::tick_fe_frame()
         ++effect.tick;
     }
     death_effects_.erase(
-        std::remove_if(death_effects_.begin(), death_effects_.end(),
+        remove_if(death_effects_.begin(), death_effects_.end(),
             [](const DeathEffect& effect)
             {
                 return effect.tick >= kDeathFadeLifetime;
@@ -309,22 +310,22 @@ bool CombatPresentation::is_presenting() const
            hit_effect_.has_value() || !death_effects_.empty();
 }
 
-const std::optional<AttackEffect>& CombatPresentation::attack_effect() const
+const optional<AttackEffect>& CombatPresentation::attack_effect() const
 {
     return attack_effect_;
 }
 
-const std::optional<MissEffect>& CombatPresentation::miss_effect() const
+const optional<MissEffect>& CombatPresentation::miss_effect() const
 {
     return miss_effect_;
 }
 
-const std::optional<HitEffect>& CombatPresentation::hit_effect() const
+const optional<HitEffect>& CombatPresentation::hit_effect() const
 {
     return hit_effect_;
 }
 
-const std::vector<DeathEffect>& CombatPresentation::death_effects() const
+const vector<DeathEffect>& CombatPresentation::death_effects() const
 {
     return death_effects_;
 }
@@ -337,8 +338,8 @@ struct SpriteLayer::MotionState
     int frame_entry = 0;
     int frame_ticks = 0;
     bool moving = false;
-    std::vector<Cell> route;
-    std::size_t route_step = 0;
+    vector<Cell> route;
+    size_t route_step = 0;
     int x_q4 = 0;
     int y_q4 = 0;
 };
@@ -355,25 +356,25 @@ void SpriteLayer::validate_occupancy() const
 {
     if (occupancy_.empty() || occupancy_.front().empty())
     {
-        throw std::invalid_argument("Occupancy grid must be non-empty.");
+        throw invalid_argument("Occupancy grid must be non-empty.");
     }
-    const std::size_t width = occupancy_.front().size();
-    std::unordered_set<int> seen;
-    for (const std::vector<int>& row : occupancy_)
+    const size_t width = occupancy_.front().size();
+    unordered_set<int> seen;
+    for (const vector<int>& row : occupancy_)
     {
         if (row.size() != width)
         {
-            throw std::invalid_argument("Occupancy grid must be rectangular.");
+            throw invalid_argument("Occupancy grid must be rectangular.");
         }
         for (const int entity_id : row)
         {
             if (entity_id < 0)
             {
-                throw std::invalid_argument("Occupancy entity IDs cannot be negative.");
+                throw invalid_argument("Occupancy entity IDs cannot be negative.");
             }
             if (entity_id > 0 && !seen.insert(entity_id).second)
             {
-                throw std::invalid_argument(
+                throw invalid_argument(
                     "Each entity ID may appear only once in occupancy."
                 );
             }
@@ -385,9 +386,9 @@ void SpriteLayer::register_unit(int entity_id, UnitVisual visual, GuildColor col
 {
     if (entity_id <= 0)
     {
-        throw std::invalid_argument("A unit sprite needs a positive entity ID.");
+        throw invalid_argument("A unit sprite needs a positive entity ID.");
     }
-    const auto existing = std::find_if(definitions_.begin(), definitions_.end(),
+    const auto existing = find_if(definitions_.begin(), definitions_.end(),
         [entity_id](const Definition& unit) { return unit.entity_id == entity_id; });
     if (existing != definitions_.end())
     {
@@ -402,11 +403,11 @@ void SpriteLayer::register_unit(int entity_id, UnitVisual visual, GuildColor col
     states_.push_back(state);
 }
 
-std::optional<Cell> SpriteLayer::location_of(int entity_id) const
+optional<Cell> SpriteLayer::location_of(int entity_id) const
 {
-    for (std::size_t y = 0; y < occupancy_.size(); ++y)
+    for (size_t y = 0; y < occupancy_.size(); ++y)
     {
-        for (std::size_t x = 0; x < occupancy_[y].size(); ++x)
+        for (size_t x = 0; x < occupancy_[y].size(); ++x)
         {
             if (occupancy_[y][x] == entity_id)
             {
@@ -414,10 +415,10 @@ std::optional<Cell> SpriteLayer::location_of(int entity_id) const
             }
         }
     }
-    return std::nullopt;
+    return nullopt;
 }
 
-bool SpriteLayer::begin_move(int entity_id, const std::vector<Cell>& route)
+bool SpriteLayer::begin_move(int entity_id, const vector<Cell>& route)
 {
     validate_occupancy();
     if (moving_entity_.has_value() || route.size() < 2)
@@ -431,18 +432,18 @@ bool SpriteLayer::begin_move(int entity_id, const std::vector<Cell>& route)
     }
     const int height = static_cast<int>(occupancy_.size());
     const int width = static_cast<int>(occupancy_.front().size());
-    for (std::size_t index = 1; index < route.size(); ++index)
+    for (size_t index = 1; index < route.size(); ++index)
     {
         const Cell& previous = route[index - 1];
         const Cell& current = route[index];
         if (current.x < 0 || current.x >= width || current.y < 0 || current.y >= height ||
-            std::abs(current.x - previous.x) + std::abs(current.y - previous.y) != 1 ||
+            abs(current.x - previous.x) + abs(current.y - previous.y) != 1 ||
             occupancy_[current.y][current.x] != 0)
         {
             return false;
         }
     }
-    auto state = std::find_if(states_.begin(), states_.end(),
+    auto state = find_if(states_.begin(), states_.end(),
         [entity_id](const MotionState& value) { return value.entity_id == entity_id; });
     if (state == states_.end())
     {
@@ -462,7 +463,7 @@ bool SpriteLayer::begin_move(int entity_id, const std::vector<Cell>& route)
     return true;
 }
 
-bool SpriteLayer::begin_committed_move(int entity_id, const std::vector<Cell>& route)
+bool SpriteLayer::begin_committed_move(int entity_id, const vector<Cell>& route)
 {
     validate_occupancy();
     if (moving_entity_.has_value() || route.size() < 2)
@@ -478,19 +479,19 @@ bool SpriteLayer::begin_committed_move(int entity_id, const std::vector<Cell>& r
 
     const int height = static_cast<int>(occupancy_.size());
     const int width = static_cast<int>(occupancy_.front().size());
-    for (std::size_t index = 1; index < route.size(); ++index)
+    for (size_t index = 1; index < route.size(); ++index)
     {
         const Cell& previous = route[index - 1];
         const Cell& current = route[index];
         if (previous.x < 0 || previous.x >= width || previous.y < 0 || previous.y >= height ||
             current.x < 0 || current.x >= width || current.y < 0 || current.y >= height ||
-            std::abs(current.x - previous.x) + std::abs(current.y - previous.y) != 1)
+            abs(current.x - previous.x) + abs(current.y - previous.y) != 1)
         {
             return false;
         }
     }
 
-    auto state = std::find_if(states_.begin(), states_.end(),
+    auto state = find_if(states_.begin(), states_.end(),
         [entity_id](const MotionState& value) { return value.entity_id == entity_id; });
     if (state == states_.end() || occupancy_[route.front().y][route.front().x] != 0)
     {
@@ -588,35 +589,35 @@ void SpriteLayer::tick_fe_frame()
     }
 }
 
-std::optional<CompletedMove> SpriteLayer::take_completed_move()
+optional<CompletedMove> SpriteLayer::take_completed_move()
 {
-    const std::optional<CompletedMove> result = completed_move_;
+    const optional<CompletedMove> result = completed_move_;
     completed_move_.reset();
     return result;
 }
 
-std::vector<UnitPose> SpriteLayer::poses() const
+vector<UnitPose> SpriteLayer::poses() const
 {
     validate_occupancy();
-    std::vector<UnitPose> result;
-    std::unordered_set<int> emitted;
+    vector<UnitPose> result;
+    unordered_set<int> emitted;
 
     const auto definition_for = [this](int entity_id) -> const Definition*
     {
-        const auto it = std::find_if(definitions_.begin(), definitions_.end(),
+        const auto it = find_if(definitions_.begin(), definitions_.end(),
             [entity_id](const Definition& unit) { return unit.entity_id == entity_id; });
         return it == definitions_.end() ? nullptr : &*it;
     };
     const auto state_for = [this](int entity_id) -> const MotionState*
     {
-        const auto it = std::find_if(states_.begin(), states_.end(),
+        const auto it = find_if(states_.begin(), states_.end(),
             [entity_id](const MotionState& state) { return state.entity_id == entity_id; });
         return it == states_.end() ? nullptr : &*it;
     };
 
-    for (std::size_t y = 0; y < occupancy_.size(); ++y)
+    for (size_t y = 0; y < occupancy_.size(); ++y)
     {
-        for (std::size_t x = 0; x < occupancy_[y].size(); ++x)
+        for (size_t x = 0; x < occupancy_[y].size(); ++x)
         {
             const int entity_id = occupancy_[y][x];
             if (entity_id == 0 || (moving_entity_.has_value() && entity_id == *moving_entity_))

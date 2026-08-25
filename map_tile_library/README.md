@@ -84,6 +84,13 @@ subclass   = one adjacency-connected visual tileset of that class
 orientation= one exact raw 16×16 tile in that subclass
 ```
 
+`ThemeCategory` adds one browsing level above the exact theme: `NATURE`,
+`CASTLE`, `SHIP`, `DESERT`, or `DUNGEON`. Give a category and its zero-based
+variant to `fe_tiles::theme_id(category, variant)` to obtain the exact source
+artwork ID. For example, two Nature variants may have different grass, forest,
+mountain, and building tiles. `theme_variant_count(category)` returns the
+number of available variants.
+
 The Tile Map Editor metadata does not label tiles as “northwest”, “inner
 corner”, and so on. It gives cardinal compatibility edges instead. Thus
 `orientation` is a stable exact variant code, not a falsely inferred compass
