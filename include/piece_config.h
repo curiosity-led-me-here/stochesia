@@ -11,4 +11,5 @@ namespace PieceSet
 {
     void set1(fe_tiles::AnimationRenderer& render, Environment& env, Environment::ConfigureEnv& config);
     void set2(fe_tiles::AnimationRenderer& render, Environment& env, Environment::ConfigureEnv& config);
+    void set3(fe_tiles::AnimationRenderer& render, Environment& env, Environment::ConfigureEnv& config);
 }

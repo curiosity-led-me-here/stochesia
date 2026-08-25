@@ -40,7 +40,7 @@ void PieceSet::set1(fe_tiles::AnimationRenderer& render, Environment& env, Envir
     }
 }
 
-/*
+
 void PieceSet::set2(fe_tiles::AnimationRenderer& render, Environment& env, Environment::ConfigureEnv& config)
 {
     int guild_count = env.guilds.size();
@@ -48,33 +48,55 @@ void PieceSet::set2(fe_tiles::AnimationRenderer& render, Environment& env, Envir
     for (int i=0; i < guild_count; i++)
     {
 	Entity& P = config.configure_entity(entities::seth(), next_entity_id++, env.guilds[i]);
-	setup(P, IRON_SWORD, config, render, fe_tiles::UnitVisual::Paladin);
+	setup(P, {IRON_SWORD}, config, render, fe_tiles::UnitVisual::Paladin);
 	Entity& Q = config.configure_entity(entities::soldier(), next_entity_id++, env.guilds[i]);
-	setup(Q, IRON_LANCE, config, render, fe_tiles::UnitVisual::Soldier);
+	setup(Q, {IRON_LANCE}, config, render, fe_tiles::UnitVisual::Soldier);
 	Entity& R = config.configure_entity(entities::neimi(), next_entity_id++, env.guilds[i]);
-	setup(R, IRON_BOW, config, render, fe_tiles::UnitVisual::Sniper);
+	setup(R, {IRON_BOW}, config, render, fe_tiles::UnitVisual::Sniper);
 	Entity& S = config.configure_entity(entities::lute(), next_entity_id++, env.guilds[i]);
-	setup(S, LIGHTNING, config, render, fe_tiles::UnitVisual::Sage);
+	setup(S, {LIGHTNING}, config, render, fe_tiles::UnitVisual::Sage);
 	Entity& T = config.configure_entity(entities::lute(), next_entity_id++, env.guilds[i]);
-	setup(T, THUNDER, config, render, fe_tiles::UnitVisual::Valkyrie);
+	setup(T, {THUNDER}, config, render, fe_tiles::UnitVisual::Valkyrie);
 	Entity& U = config.configure_entity(entities::vanessa(), next_entity_id++, env.guilds[i]);
-	setup(U, IRON_LANCE, config, render, fe_tiles::UnitVisual::WyvernRider);
+	setup(U, {IRON_LANCE}, config, render, fe_tiles::UnitVisual::WyvernRider);
 	Entity& V = config.configure_entity(entities::natasha(), next_entity_id++, env.guilds[i]);
-	setup(V, LIGHTNING, config, render, fe_tiles::UnitVisual::Bishop);
+	setup(V, {LIGHTNING}, config, render, fe_tiles::UnitVisual::Bishop);
 	Entity& W = config.configure_entity(entities::joshua(), next_entity_id++, env.guilds[i]);
-	setup(W, IRON_SWORD, config, render, fe_tiles::UnitVisual::Swordmaster);
+	setup(W, {IRON_SWORD}, config, render, fe_tiles::UnitVisual::Swordmaster);
 	Entity& X = config.configure_entity(entities::garcia(), next_entity_id++, env.guilds[i]);
-	setup(X, IRON_AXE, config, render, fe_tiles::UnitVisual::Berserker);
+	setup(X, {IRON_AXE}, config, render, fe_tiles::UnitVisual::Berserker);
 	Entity& Y = config.configure_entity(entities::colm(), next_entity_id++, env.guilds[i]);
-	setup(Y, IRON_SWORD, config, render, fe_tiles::UnitVisual::Assassin);
+	setup(Y, {IRON_SWORD}, config, render, fe_tiles::UnitVisual::Assassin);
 	Entity& Z = config.configure_entity(entities::lute(), next_entity_id++, env.guilds[i]);
-	setup(Z, FLUX, config, render, fe_tiles::UnitVisual::Druid);
+	setup(Z, {FLUX}, config, render, fe_tiles::UnitVisual::Druid);
 	Entity& A = config.configure_entity(entities::artur(), next_entity_id++, env.guilds[i]);
-	setup(A, FLUX, config, render, fe_tiles::UnitVisual::Summoner);
+	setup(A, {FLUX}, config, render, fe_tiles::UnitVisual::Summoner);
 	Entity& B = config.configure_entity(entities::seth(), next_entity_id++, env.guilds[i]);
-	setup(B, IRON_LANCE, config, render, fe_tiles::UnitVisual::EphraimLord);
+	setup(B, {IRON_LANCE}, config, render, fe_tiles::UnitVisual::EphraimLord);
 	Entity& C = config.configure_entity(entities::joshua(), next_entity_id++, env.guilds[i]);
-	setup(C, IRON_SWORD, config, render, fe_tiles::UnitVisual::Hero);
+	setup(C, {IRON_SWORD}, config, render, fe_tiles::UnitVisual::Hero);
     }
 }
-*/
+
+void PieceSet::set3(fe_tiles::AnimationRenderer& render, Environment& env, Environment::ConfigureEnv& config)
+{
+    int guild_count = env.guilds.size();
+    int next_entity_id = 1;
+    for (int i=0; i < guild_count; i++)
+    {
+	Entity& P = config.configure_entity(entities::seth(), next_entity_id++, env.guilds[i]);
+	setup(P, {IRON_SWORD}, config, render, fe_tiles::UnitVisual::Paladin);
+	Entity& Q = config.configure_entity(entities::soldier(), next_entity_id++, env.guilds[i]);
+	setup(Q, {IRON_LANCE}, config, render, fe_tiles::UnitVisual::Soldier);
+	Entity& R = config.configure_entity(entities::neimi(), next_entity_id++, env.guilds[i]);
+	setup(R, {IRON_BOW}, config, render, fe_tiles::UnitVisual::Sniper);
+	Entity& S = config.configure_entity(entities::lute(), next_entity_id++, env.guilds[i]);
+	setup(S, {LIGHTNING}, config, render, fe_tiles::UnitVisual::Sage);
+	Entity& T = config.configure_entity(entities::lute(), next_entity_id++, env.guilds[i]);
+	setup(T, {THUNDER}, config, render, fe_tiles::UnitVisual::Valkyrie);
+	Entity& U = config.configure_entity(entities::vanessa(), next_entity_id++, env.guilds[i]);
+	setup(U, {IRON_LANCE}, config, render, fe_tiles::UnitVisual::WyvernRider);
+	Entity& V = config.configure_entity(entities::natasha(), next_entity_id++, env.guilds[i]);
+	setup(V, {LIGHTNING}, config, render, fe_tiles::UnitVisual::Bishop);
+    }
+}
