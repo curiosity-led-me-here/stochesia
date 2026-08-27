@@ -440,11 +440,37 @@ void plot_paths(const vector<vector<int>>& map,
                 const vector<int>& start)
 {
     maps::IntGrid tiles(map.size(), vector<int>(map[0].size(), 0));
+    for (int y=0; y < map.size(); y++)
+    {
+        for (int x=0; x < map[0].size(); x++)
+        {
+            if (map[y][x] == 2)
+            {
+                tiles[y][x] = 1;
+            }
+            else if (map[y][x] == 3)
+            {
+                tiles[y][x] = 2;
+            }
+            else if (map[y][x] == 4)
+            {
+                tiles[y][x] = 3;
+            }
+            else if (map[y][x] >= 5)
+            {
+                tiles[y][x] = 4;
+            }
+        }
+    }
     maps::TilePalette palette = {
-        maps::named_tile("plain", fe_tiles::PLAIN, 0, 0, TERRAIN_PLAINS)
+        maps::named_tile("plain", fe_tiles::PLAIN, 0, 0, TERRAIN_PLAINS),
+        maps::named_tile("forest", fe_tiles::FOREST, 0, 0, TERRAIN_FOREST),
+        maps::named_tile("thicket", fe_tiles::THICKET, 0, 0, TERRAIN_THICKET),
+        maps::named_tile("mountain", fe_tiles::MOUNTAIN, 0, 0, TERRAIN_MOUNTAIN),
+        maps::named_tile("cliff", fe_tiles::CLIFF, 0, 0, TERRAIN_CLIFF)
     };
     maps::MapRecipe recipe = maps::from_tile_ids(
-        fe_tiles::THEME_CHAPTERS_01, tiles, palette);
+        fe_tiles::THEME_CHAPTERS_06, tiles, palette);
 
     Mapmaker preview(recipe);
     fe_tiles::AnimationRenderer renderer;
@@ -460,21 +486,109 @@ void plot_paths(const vector<vector<int>>& map,
     monitor.run();
 }
 
+void plot_path_slideshow(const vector<vector<int>>& map,
+                         const vector<vector<vector<int>>>& paths,
+                         const vector<int>& start)
+{
+    maps::IntGrid tiles(map.size(), vector<int>(map[0].size(), 0));
+    for (int y=0; y < map.size(); y++)
+    {
+        for (int x=0; x < map[0].size(); x++)
+        {
+            if (map[y][x] == 2)
+            {
+                tiles[y][x] = 1;
+            }
+            else if (map[y][x] == 3)
+            {
+                tiles[y][x] = 2;
+            }
+            else if (map[y][x] == 4)
+            {
+                tiles[y][x] = 3;
+            }
+            else if (map[y][x] >= 5)
+            {
+                tiles[y][x] = 4;
+            }
+        }
+    }
+    maps::TilePalette palette = {
+        maps::named_tile("plain", fe_tiles::PLAIN, 0, 0, TERRAIN_PLAINS),
+        maps::named_tile("forest", fe_tiles::FOREST, 0, 0, TERRAIN_FOREST),
+        maps::named_tile("thicket", fe_tiles::THICKET, 0, 0, TERRAIN_THICKET),
+        maps::named_tile("mountain", fe_tiles::MOUNTAIN, 0, 0, TERRAIN_MOUNTAIN),
+        maps::named_tile("cliff", fe_tiles::CLIFF, 0, 0, TERRAIN_CLIFF)
+    };
+    maps::MapRecipe recipe = maps::from_tile_ids(
+        fe_tiles::THEME_CHAPTERS_06, tiles, palette);
+
+    Mapmaker preview(recipe);
+    fe_tiles::AnimationRenderer renderer;
+    renderer.load_map(preview);
+
+    fe_tiles::MapMonitor::Options options;
+    options.title = "Custom Map Path Slideshow";
+    fe_tiles::MapMonitor monitor(recipe, renderer, options);
+    if (!paths.empty())
+    {
+        int route_index = 0;
+        monitor.show_route_arrows(paths[route_index]);
+        monitor.on_key([&monitor, &paths, &route_index](char key)
+        {
+            if (key == 'n' || key == 'N')
+            {
+                route_index = (route_index + 1) % paths.size();
+            }
+            else if (key == 'p' || key == 'P')
+            {
+                route_index = (route_index - 1 + paths.size()) % paths.size();
+            }
+            else
+            {
+                return;
+            }
+            monitor.show_route_arrows(paths[route_index]);
+        });
+    }
+    monitor.run();
+}
+
+
 int main()
 {
-    int CANVAS_WIDTH = 20;
-    int CANVAS_HEIGHT = 20;
-    vector<vector<int>> map(CANVAS_HEIGHT, vector<int>(CANVAS_WIDTH, 1));
-    vector<int> current_coord = {0, 0};
-    vector<int> target = {19, 19};
+    auto recipe = maps::chapter_4();
+    const auto& terrain_grid = recipe.terrain;
     int MOV = 10;
+    vector<vector<int>> movement_grid(
+    terrain_grid.size(),
+    vector<int>(terrain_grid[0].size())
+    );
+
+    for (int y = 0; y < terrain_grid.size(); ++y)
+    {
+	for (int x = 0; x < terrain_grid[0].size(); ++x)
+	{
+	    int cost = terrain::movement_cost(
+            terrain_grid[y][x],
+            terrain::MovementType::CommonT1
+            );
+	    
+            movement_grid[y][x] = (cost < 0) ? MOV+1 : cost;
+	}
+    }
+    vector<int> current_coord = {4, 3};
+    vector<int> target = {12, 14};
+    
     int heat_width = 2;
     int num_paths = 20;
     // Entry points should not be blocked by heat. Therefore for first N steps no heat would be emitted.
     int initial_exemption = 5;
     // Heat would start to cool down as we approach n distance (beta * total distance) from target.
     double heat_decay_threshold = 0.35;
-    vector<vector<double>> explored(CANVAS_HEIGHT, vector<double>(CANVAS_WIDTH, 0.0));
-    vector<vector<vector<int>>> output = procedurally_generate(current_coord, target, map, MOV, heat_width, explored, num_paths, heat_decay_threshold, initial_exemption);
-    plot_paths(map, output, current_coord);
+    vector<vector<double>> explored(movement_grid.size(), vector<double>(movement_grid[0].size(), 0.0));
+    vector<vector<vector<int>>> output = procedurally_generate(current_coord, target, movement_grid, MOV, heat_width, explored, num_paths, heat_decay_threshold, initial_exemption);
+    plot_path_slideshow(movement_grid, output, current_coord);
+    return 0;
 }
+
