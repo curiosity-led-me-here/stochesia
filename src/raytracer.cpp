@@ -367,7 +367,7 @@ void heat(const vector<int>& current_coord, int budget, const vector<vector<int>
 	
         if (x < 0 || y < 0 || x >= map[0].size() || y >= map.size()) continue;
 
-        int penalty = map[y][x];
+	int penalty = map[y][x];
 	int rem_budget = budget - penalty;
 	if (rem_budget < 0.0) { continue; }
 	if (state[y][x] >= rem_budget) { continue; }
@@ -591,4 +591,3 @@ int main()
     plot_path_slideshow(movement_grid, output, current_coord);
     return 0;
 }
-

@@ -3,6 +3,7 @@
 #include <random>
 #include "plotter.h"
 #include "raytracer.h"
+#include "procedural_generation.h"
 using namespace std;
 
 vector<vector<int>> action_space({{0, 1}, {0, -1}, {1, 0}, {-1, 0}});
@@ -145,9 +146,8 @@ vector<int> find_closest_edge(int WIDTH, int HEIGHT, vector<int> coord)
     return {x, y};
 }
 
-vector<vector<int>> find_separation(int WIDTH, int HEIGHT, const vector<int>& h1, const vector<int>& h2)
+vector<vector<int>> find_separation(vector<int> x, int WIDTH, int HEIGHT, const vector<int>& h1, const vector<int>& h2)
 {
-    vector<int> x = random_edge(WIDTH, HEIGHT);
     vector<vector<int>> coords  = find_perps(WIDTH, HEIGHT, h1, h2, 3);
     bool farthest = cart_dist(x, coords[1]) > (cart_dist(x, coords[0]));
     vector<int> y = (farthest) ? find_closest_edge(WIDTH, HEIGHT, coords[1]) : find_closest_edge(WIDTH, HEIGHT, coords[0]);
@@ -264,34 +264,53 @@ vector<vector<int>> generate_river(const vector<int>& h1, const vector<int>& h2,
     vector<vector<int>> path;
     while (!success)
     {
-	vector<vector<int>> find_set = find_separation(WIDTH, HEIGHT, h1, h2);
+	vector<int> x = random_edge(WIDTH, HEIGHT);
+	vector<vector<int>> find_set = find_separation(x, WIDTH, HEIGHT, h1, h2);
 	path = grow(find_set, map, MOV, success);
 	optimize(path, map);
     }
     return (!path.empty()) ? path : throw invalid_argument("River cannot be constructed in this state!");
 }
 
-void mutate_river(const vector<int>& h1, const vector<int>& h2)
-{
-    
-}
-
 int main()
 {
-    int WIDTH = 15;
-    int HEIGHT = 15;
-    int MOV = 4;
-    Canvas canvas(WIDTH, HEIGHT);
-    // need h1 and h2
-    vector<vector<int>> h1h2 = random_two_coords(WIDTH, HEIGHT);
+    int WIDTH = 20;
+    int HEIGHT = 20;
+    int MOV = 5;
     vector<vector<int>> map(HEIGHT, vector<int>(WIDTH, 1));
-    for (vector<int> coords : h1h2)
+    vector<vector<int>> base_points = {{5, 5}, {14, 14}};
+    vector<int> third_point = {8, 16};
+    vector<vector<int>> mutation_points = {
+	base_points[1], third_point};
+    TerrainSeed terrain_seed(map);
+    vector<vector<int>> river = terrain_seed.generate_river(base_points[0], base_points[1], MOV);
+    vector<vector<vector<int>>> candidates = terrain_seed.mutate_river(mutation_points[0], mutation_points[1], river, MOV);
+
+    if (candidates.empty())
     {
-	map[coords[1]][coords[0]] += MOV;
+	Canvas canvas(WIDTH, HEIGHT);
+	canvas.plot(river, 4);
+	canvas.plot(base_points, 2);
+	canvas.plot(vector<vector<int>>{third_point}, 3);
+	cout << "No healthy mutation candidates\n";
+	canvas.draw();
+	return 0;
     }
-    vector<vector<int>> path = generate_river(h1h2[0], h1h2[1], map, MOV);
-    canvas.plot(path, 1);
-    canvas.plot(h1h2, 2);
-    canvas.draw();
+
+    for (int i=0; i < candidates.size(); i++)
+    {
+	Canvas canvas(WIDTH, HEIGHT);
+	canvas.plot(river, 4);
+	canvas.plot(candidates[i], 1);
+	canvas.plot(base_points, 2);
+	canvas.plot(vector<vector<int>>{third_point}, 3);
+	cout << "Candidate " << i+1 << "/" << candidates.size() << "  yellow=base blue=mutation red=base green=third\n";
+	canvas.draw();
+	if (i < candidates.size()-1)
+	{
+	    cout << "Press Return for the next candidate\n";
+	    cin.get();
+	}
+    }
     return 0;
 }
